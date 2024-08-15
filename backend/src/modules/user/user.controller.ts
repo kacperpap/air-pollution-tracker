@@ -1,8 +1,10 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserType } from 'src/types/create-user';
 import { plainToInstance } from 'class-transformer';
 import { UserType } from 'src/types/user';
+import { TokenGuard } from '../auth/token.guard';
+import { UserID } from 'src/decorators/user.decorator';
 
 @Controller('user')
 export class UserController {
@@ -15,8 +17,9 @@ export class UserController {
     }
 
     @Get('/me')
-    async me(@Body() me: UserType) {
-        const user = await this.userService.findOne(me.id);
+    @UseGuards(TokenGuard)
+    async me(@UserID() userId: number) {
+        const user = await this.userService.findOne(userId);
         return plainToInstance(UserType, user);
     }
 }
