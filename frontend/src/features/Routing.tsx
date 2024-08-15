@@ -1,7 +1,7 @@
-import {Navigate, RouteObject, useRoutes} from "react-router-dom"
-import {Layout} from "../components/Layout"
+import { Navigate, RouteObject, useRoutes } from "react-router-dom"
+import { Layout } from "../components/Layout"
 import Map from "./map/Map"
-import {Login} from "./login/Login"
+import { Login } from "./login/Login"
 
 
 const publicRoutes: RouteObject[] = [
@@ -12,12 +12,19 @@ const publicRoutes: RouteObject[] = [
             {
                 path: '/',
                 element: <Map />
-            },
-            {
-                path: '/login',
-                element: <Login />
             }
         ]
+    },
+    {
+        path: '/login',
+        element: <Login />
+    }
+]
+
+const privateRoutes: RouteObject[] = [
+    {
+        path: '/',
+
     }
 ]
 
