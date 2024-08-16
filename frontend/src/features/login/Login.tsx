@@ -20,6 +20,8 @@ export function Login() {
         name: type === 'register' ? '' : undefined
     })
 
+    // const [notification, setNotification] = useState<{ message: string; description: string; type: 'success' | 'error' | '' }>({ message: '', description: '', type: '' });
+
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target
         setFormData(prevState => ({
@@ -45,8 +47,42 @@ export function Login() {
         }
     }
 
+    // const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    //     event.preventDefault();
+    //     try {
+    //         if (type === 'login') {
+    //             const { email, password } = formData as LoginFormType;
+    //             await login(email, password);
+    //             setNotification({ message: 'Successfully logged in!', description: '', type: 'success' });
+    //             navigate('/');
+    //         } else if (type === 'register') {
+    //             await register(formData as RegisterFormType);
+    //             setNotification({ message: 'Registration successful!', description: 'You can now log in with your credentials.', type: 'success' });
+    //             setType('login');
+    //         }
+    //     } catch (error) {
+    //         setNotification({ message: 'Error', description: 'Invalid credentials or registration failed.', type: 'error' });
+    //         console.log(error);
+    //     }
+    // };
+
+    // const handleCloseNotification = () => {
+    //     setNotification({ message: '', description: '', type: '' });
+    // };
+
     return (
         <>
+
+            {/* {notification.type && (
+                <Notification
+                    message={notification.message}
+                    description={notification.description}
+                    type={notification.type}
+                    duration={3000}
+                    onClose={handleCloseNotification}
+                />
+            )} */}
+
             <div className="flex min-h-full flex-1 flex-col justify-center px-6 pt-32 pb-12 lg:px-8">
                 <div className="sm:mx-auto sm:w-full sm:max-w-lg">
                     <img
