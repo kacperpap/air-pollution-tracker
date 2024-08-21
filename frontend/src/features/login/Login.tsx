@@ -4,6 +4,8 @@ import { LoginFormType } from "../../types/LoginFormType"
 import { RegisterFormType } from "../../types/RegisterFormType"
 import { login } from "./api/login"
 import { register } from "./api/register"
+import { Notification } from "../../components/Notification";
+import { NotificationProps } from "../../types/NotificationPropsType";
 
 
 
@@ -14,13 +16,13 @@ export function Login() {
 
     const [type, setType] = useState<'login' | 'register'>('login')
 
+    const [notification, setNotification] = useState<NotificationProps>({ message: '', description: '', type: ''});
+
     const [formData, setFormData] = useState<LoginFormType | RegisterFormType>({
         email: '',
         password: '',
-        name: type === 'register' ? '' : undefined
+        name: ''  // component during rendering must have controlled or uncontrolled input data, cannot change from undefined to passed value
     })
-
-    // const [notification, setNotification] = useState<{ message: string; description: string; type: 'success' | 'error' | '' }>({ message: '', description: '', type: '' });
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target
@@ -30,58 +32,40 @@ export function Login() {
         }))
     }
 
+
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault()
+        event.preventDefault();
         try {
-            if (type === 'login'){
-                const {email, password} = formData as LoginFormType
-                await login(email, password)
-                navigate('/')
-            } else if(type === 'register'){
-                await register(formData as RegisterFormType)
-                navigate('/login')
-                setType('login')
+            if (type === 'login') {
+                const { email, password } = formData as LoginFormType;
+                await login(email, password);
+                navigate('/');
+            } else if (type === 'register') {
+                await register(formData as RegisterFormType);
+                setNotification({ message: 'Registration successful!', description: 'You can now log in with your credentials.', type: 'success'});
+                setType('login');
             }
         } catch (error) {
-            console.log(error)
+            setNotification({ message: 'Error', description: 'Invalid credentials or registration failed:\n' + error, type: 'error'});
         }
-    }
+    };
 
-    // const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    //     event.preventDefault();
-    //     try {
-    //         if (type === 'login') {
-    //             const { email, password } = formData as LoginFormType;
-    //             await login(email, password);
-    //             setNotification({ message: 'Successfully logged in!', description: '', type: 'success' });
-    //             navigate('/');
-    //         } else if (type === 'register') {
-    //             await register(formData as RegisterFormType);
-    //             setNotification({ message: 'Registration successful!', description: 'You can now log in with your credentials.', type: 'success' });
-    //             setType('login');
-    //         }
-    //     } catch (error) {
-    //         setNotification({ message: 'Error', description: 'Invalid credentials or registration failed.', type: 'error' });
-    //         console.log(error);
-    //     }
-    // };
-
-    // const handleCloseNotification = () => {
-    //     setNotification({ message: '', description: '', type: '' });
-    // };
+    const handleCloseNotification = () => {
+        setNotification({ message: '', description: '', type: ''});
+    };
 
     return (
         <>
 
-            {/* {notification.type && (
+            {notification.type && (
                 <Notification
                     message={notification.message}
                     description={notification.description}
                     type={notification.type}
-                    duration={3000}
+                    duration={4000}
                     onClose={handleCloseNotification}
                 />
-            )} */}
+            )}
 
             <div className="flex min-h-full flex-1 flex-col justify-center px-6 pt-32 pb-12 lg:px-8">
                 <div className="sm:mx-auto sm:w-full sm:max-w-lg">

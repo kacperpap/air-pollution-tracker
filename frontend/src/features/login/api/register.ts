@@ -11,6 +11,7 @@ export const register = async (data: RegisterFormType) => {
         body: JSON.stringify(data)
     })
 
-    if(response.status !== 200) throw new Error('Register failed');
+    if(response.status !== 200) throw new Error('Register failed: ' + response);
+    //TODO: return valid message from response
     return await response.text();
 }
