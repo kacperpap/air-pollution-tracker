@@ -8,7 +8,7 @@ export const Layout = () => {
       <header className="relative z-20">
         <Header />
       </header>
-      <div className="grow relative relative z-10">
+      <div className="grow relative relative z-10 h-screen">
         <Outlet />
       </div>
     </div>
