@@ -93,7 +93,7 @@ export function DroneInput() {
                 description: 'Your drone measurements have been saved.',
                 type: 'success'
             })
-            //TODO: clear all not navigate
+            setFormData({title: '', description: '', measurements: []})
         } catch (error) {
             setNotification({
                 message: 'Error',
