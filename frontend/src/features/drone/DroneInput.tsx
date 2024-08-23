@@ -47,16 +47,34 @@ export function DroneInput() {
     }
 
     const addMeasurement = () => {
-        setFormData((prevForm) => ({
-            ...prevForm,
-            measurements: [...prevForm.measurements, currentMeasurement]
-        }))
-        setCurrentMeasurement({
-            name: '',
-            latitude: null,
-            longitude: null,
-            temperature: null,
-        })
+
+        if(
+            currentMeasurement.name.trim() !== '' &&
+            currentMeasurement.latitude !== null &&
+            !isNaN(currentMeasurement.latitude) &&
+            currentMeasurement.longitude !== null &&
+            !isNaN(currentMeasurement.longitude) &&
+            currentMeasurement.temperature !== null &&
+            !isNaN(currentMeasurement.temperature)
+        ){
+            setFormData((prevForm) => ({
+                ...prevForm,
+                measurements: [...prevForm.measurements, currentMeasurement]
+            }))
+            setCurrentMeasurement({
+                name: '',
+                latitude: null,
+                longitude: null,
+                temperature: null,
+            })
+        } else {
+            setNotification({
+                message: 'Incomplete Measurement',
+                description: 'Please fill out all fields: name, latitude, longitude, and temperature must be provided and have correct types.',
+                type: 'error',
+            });
+        }
+
     }
 
     const removeMeasurement = (index: number) => {
@@ -90,7 +108,7 @@ export function DroneInput() {
     }
 
     return (
-        <div className="max-w-5xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6 overflow-y-scroll">
+        <div className="max-w-5xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6 mb-50 overflow-y-scroll">
           {notification.type && (
             <Notification
               message={notification.message}
