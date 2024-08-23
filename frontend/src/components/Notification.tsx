@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NotificationProps } from '../types/NotificationPropsType';
+import ReactDOM from 'react-dom';
 
 
 export const Notification = ({ message, description = '', type, duration = 3000, onClose = ()=>{} }: NotificationProps) => {
@@ -45,9 +46,9 @@ export const Notification = ({ message, description = '', type, duration = 3000,
         return null;
     }
 
-    return (
+    const notificationContent = (
         <div
-            className={`fixed top-4 left-1/2 transform -translate-x-1/2 max-w-sm mx-auto bg-white border border-gray-200 rounded-md shadow-md p-4 flex items-start space-x-4 transition-opacity duration-300 ${!show ? 'opacity-0' : 'opacity-100'}`}
+            className={`fixed z-50 top-10 left-1/2 transform -translate-x-1/2 max-w-sm mx-auto bg-white border border-gray-200 rounded-md shadow-md p-4 flex items-start space-x-4 transition-opacity duration-300 ${!show ? 'opacity-0' : 'opacity-100'}`}
         >
             <div className="flex-shrink-0">
                 <svg
@@ -86,4 +87,12 @@ export const Notification = ({ message, description = '', type, duration = 3000,
             </button>
         </div>
     );
+
+    const portalRoot = document.getElementById('portal-root')
+
+    if (!portalRoot) {
+        return null
+    }
+
+    return ReactDOM.createPortal(notificationContent, portalRoot);
 };
