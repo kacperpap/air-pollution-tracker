@@ -16,10 +16,6 @@ const publicRoutes: RouteObject[] = [
                 path: '/',
                 element: <Map />
             },
-            {
-                path: '/drone-input',
-                element: <DroneInput />
-            }
         ]
     },
     {
