@@ -6,6 +6,8 @@ import { PrismaModule } from './modules/prisma/prisma.module';
 import { UserModule } from './modules/user/user.module';
 import { TokenModule } from './modules/token/token.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { DroneService } from './modules/drone/drone.service';
+import { DroneModule } from './modules/drone/drone.module';
 
 @Module({
   imports: [
@@ -13,9 +15,10 @@ import { AuthModule } from './modules/auth/auth.module';
     PrismaModule,
     UserModule,
     TokenModule,
-    AuthModule
+    AuthModule,
+    DroneModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, DroneService],
 })
 export class AppModule { }

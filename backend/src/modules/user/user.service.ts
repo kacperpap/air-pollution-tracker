@@ -1,5 +1,5 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { CreateUserType } from 'src/types/create-user';
+import { CreateUserType } from 'src/modules/user/dto/create-user';
 import { PrismaService } from '../prisma/prisma.service';
 import * as argon2 from 'argon2'
 

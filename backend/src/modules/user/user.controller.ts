@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserType } from 'src/types/create-user';
+import { CreateUserType } from 'src/modules/user/dto/create-user';
 import { plainToInstance } from 'class-transformer';
-import { UserType } from 'src/types/user';
+import { UserType } from 'src/modules/user/dto/user';
 import { TokenGuard } from '../auth/token.guard';
 import { UserID } from 'src/decorators/user.decorator';
 
