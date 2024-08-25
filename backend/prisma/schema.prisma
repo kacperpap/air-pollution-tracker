@@ -8,9 +8,29 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String?  @db.VarChar(255)
-  email     String   @unique @db.VarChar(255)
-  password  String   @db.VarChar(255)
-  createdat DateTime @default(now()) @db.Timestamp(6)
+  id           Int           @id @default(autoincrement())
+  name         String?       @db.VarChar(255)
+  email        String        @unique @db.VarChar(255)
+  password     String        @db.VarChar(255)
+  createdAt    DateTime      @default(now()) @db.Timestamp(6)
+  droneFlights DroneFlight[] @relation("UserDroneFlights")
+}
+
+model DroneFlight {
+  id           Int                @id @default(autoincrement())
+  title        String             @db.VarChar(255)
+  description  String?            @db.Text
+  measurements DroneMeasurement[] @relation("FlightMeasurements")
+  userId       Int
+  user         User               @relation("UserDroneFlights", fields: [userId], references: [id])
+}
+
+model DroneMeasurement {
+  id          Int         @id @default(autoincrement())
+  name        String      @db.VarChar(255)
+  latitude    Float
+  longitude   Float
+  temperature Float
+  flightId    Int
+  flight      DroneFlight @relation("FlightMeasurements", fields: [flightId], references: [id])
 }
