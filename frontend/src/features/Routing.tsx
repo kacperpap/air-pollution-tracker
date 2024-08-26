@@ -4,6 +4,7 @@ import { Layout } from "../components/Layout"
 import Map from "./map/Map"
 import { Login } from "./login/Login"
 import { DroneInput } from "./drone/DroneInput"
+import { Overview } from "./overview/Overview"
 import { ErrorPage } from "./error/ErrorPage"
 
 
@@ -40,6 +41,10 @@ const privateRoutes: RouteObject[] = [
             {
                 path: '/drone-input',
                 element: <DroneInput />
+            },
+            {
+                path: '/data-overview',
+                element: <Overview />
             }
         ]
     },
