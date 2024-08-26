@@ -1,6 +1,7 @@
 import { IsNotEmpty, IsNumber, IsString } from "class-validator"
 
 export class DroneMeasurementType {
+    id: number
     @IsString()
     name: string
 
