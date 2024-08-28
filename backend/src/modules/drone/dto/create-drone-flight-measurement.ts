@@ -1,9 +1,9 @@
-import { Exclude } from "class-transformer"
 import { IsNotEmpty, IsNumber, IsString } from "class-validator"
 
-export class DroneMeasurementType {
-    id: number
+export class CreateDroneMeasurementType {
+
     @IsString()
+    @IsNotEmpty()
     name: string
 
     @IsNumber()
@@ -17,7 +17,4 @@ export class DroneMeasurementType {
     @IsNumber()
     @IsNotEmpty()
     temperature: number
-
-    @Exclude()
-    userId: number
 }

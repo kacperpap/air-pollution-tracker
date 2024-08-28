@@ -1,5 +1,6 @@
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsDate, IsNotEmpty, IsOptional, IsString } from "class-validator";
 import { DroneMeasurementType } from "./drone-flight-measurement";
+import { Exclude } from "class-transformer";
 
 export class DroneFlightType {
     id: number
@@ -12,6 +13,13 @@ export class DroneFlightType {
     @IsString()
     description?: string
 
+    @IsOptional()
+    @IsDate()
+    date?: Date
+
     @IsNotEmpty()
     measurements: DroneMeasurementType[];
+
+    @Exclude()
+    userId: number
 }

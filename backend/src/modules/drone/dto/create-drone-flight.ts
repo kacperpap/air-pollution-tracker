@@ -1,5 +1,5 @@
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
-import { DroneMeasurementType } from "./drone-flight-measurement";
+import { IsDate, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { CreateDroneMeasurementType } from "./create-drone-flight-measurement";
 
 export class CreateDroneFlightType {
     
@@ -11,6 +11,10 @@ export class CreateDroneFlightType {
     @IsString()
     description?: string
 
+    @IsOptional()
+    @IsDate()
+    date?: Date
+
     @IsNotEmpty()
-    measurements: DroneMeasurementType[];
+    measurements: CreateDroneMeasurementType[];
 }
