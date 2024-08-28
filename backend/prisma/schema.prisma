@@ -20,6 +20,7 @@ model DroneFlight {
   id           Int                @id @default(autoincrement())
   title        String             @db.VarChar(255)
   description  String?            @db.Text
+  date         DateTime?          @db.Timestamp(6)
   measurements DroneMeasurement[] @relation("FlightMeasurements")
   userId       Int
   user         User               @relation("UserDroneFlights", fields: [userId], references: [id])
