@@ -1,173 +1,127 @@
-import { useState } from 'react';
-import { DocumentIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
-
+import { useEffect, useState } from 'react';
+import { DocumentIcon, ChevronDownIcon, ChevronUpIcon, TrashIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
+import { deleteDroneFlight } from './api/deleteDroneFlight';
+import { Notification } from "../../components/Notification";
+import { NotificationProps } from '../../types/NotificationPropsType';
+import { useNavigate } from 'react-router-dom';
+import { getAllDroneFlights } from './api/getAllDroneFlights';
+import { DroneFlightType } from '../../types/DroneFlightType';
 
 export function Overview() {
+    const navigate = useNavigate()
 
-    const droneFlights1 = [
-        {
-            id: 21332,
-            title: 'Lorem ipsum dolor sit amet',
-            description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed odio orci, tincidunt nec ipsum id, gravida auctor purus. Nulla justo neque, hendrerit sed malesuada id, tristique sit amet libero. Maecenas at rutrum felis. Morbi venenatis lacinia metus ut consequat. Morbi sapien est, auctor non rutrum ac, eleifend quis quam. Integer cursus nisi justo, vitae eleifend est finibus id. Ut feugiat lectus risus, vel fermentum elit sagittis et. Maecenas congue bibendum metus, nec blandit nisi aliquam non. Vivamus vestibulum tortor mattis enim consequat dignissim. In ac venenatis odio. Sed viverra nec ex ac ornare. Vivamus in massa ante. Mauris molestie at dolor non semper. Etiam ac enim lorem. Nullam maximus ipsum ut tellus scelerisque semper.Maecenas eu augue tellus. Ut eget odio quam. Quisque pretium eros id sodales fermentum. Curabitur tempus luctus magna, et malesuada diam vulputate quis. Nam a efficitur eros. Phasellus commodo blandit augue id condimentum. Integer tortor ipsum, tempus eget sapien eu, dapibus fringilla augue. Vestibulum a lectus quis nulla posuere placerat quis semper erat. Integer molestie velit in eros interdum sagittis. Cras vehicula purus ut elit porta, sed imperdiet nulla tempor. Fusce nec finibus nulla. Sed nulla ex, aliquet vel ante vel, pharetra efficitur massa. Suspendisse elit. ',
-            measurements: [
-                {
-                    name: 'Lorem ipsum',
-                    latitude: 0,
-                    longtitude: 0,
-                    temperature: 0
-                },
-                {
-                    name: 'Lorem ipsum',
-                    latitude: 0,
-                    longtitude: 0,
-                    temperature: 0
-                },
-                {
-                    name: 'Lorem ipsum',
-                    latitude: 0,
-                    longtitude: 0,
-                    temperature: 0
-                }
-            ]
-        },
-        {
-            id: 2131322,
-            title: 'Lorem ipsum dolor sit amet',
-            description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed odio orci, tincidunt nec ipsum id, gravida auctor purus. Nulla justo neque, hendrerit sed malesuada id, tristique sit amet libero. Maecenas at rutrum felis. Morbi venenatis lacinia metus ut consequat. Morbi sapien est, auctor non rutrum ac, eleifend quis quam. Integer cursus nisi justo, vitae eleifend est finibus id. Ut feugiat lectus risus, vel fermentum elit sagittis et. Maecenas congue bibendum metus, nec blandit nisi aliquam non. Vivamus vestibulum tortor mattis enim consequat dignissim. In ac venenatis odio. Sed viverra nec ex ac ornare. Vivamus in massa ante. Mauris molestie at dolor non semper. Etiam ac enim lorem. Nullam maximus ipsum ut tellus scelerisque semper.Maecenas eu augue tellus. Ut eget odio quam. Quisque pretium eros id sodales fermentum. Curabitur tempus luctus magna, et malesuada diam vulputate quis. Nam a efficitur eros. Phasellus commodo blandit augue id condimentum. Integer tortor ipsum, tempus eget sapien eu, dapibus fringilla augue. Vestibulum a lectus quis nulla posuere placerat quis semper erat. Integer molestie velit in eros interdum sagittis. Cras vehicula purus ut elit porta, sed imperdiet nulla tempor. Fusce nec finibus nulla. Sed nulla ex, aliquet vel ante vel, pharetra efficitur massa. Suspendisse elit. ',
-            measurements: [
-                {
-                    name: 'Lorem ipsum',
-                    latitude: 0,
-                    longtitude: 0,
-                    temperature: 0
-                },
-                {
-                    name: 'Lorem ipsum',
-                    latitude: 0,
-                    longtitude: 0,
-                    temperature: 0
-                }
-            ]
-        },
-        {
-            id: 532322,
-            title: 'Lorem ipsum dolor sit amet',
-            description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed odio orci, tincidunt nec ipsum id, gravida auctor purus. Nulla justo neque, hendrerit sed malesuada id, tristique sit amet libero. Maecenas at rutrum felis. Morbi venenatis lacinia metus ut consequat. Morbi sapien est, auctor non rutrum ac, eleifend quis quam. Integer cursus nisi justo, vitae eleifend est finibus id. Ut feugiat lectus risus, vel fermentum elit sagittis et. Maecenas congue bibendum metus, nec blandit nisi aliquam non. Vivamus vestibulum tortor mattis enim consequat dignissim. In ac venenatis odio. Sed viverra nec ex ac ornare. Vivamus in massa ante. Mauris molestie at dolor non semper. Etiam ac enim lorem. Nullam maximus ipsum ut tellus scelerisque semper.Maecenas eu augue tellus. Ut eget odio quam. Quisque pretium eros id sodales fermentum. Curabitur tempus luctus magna, et malesuada diam vulputate quis. Nam a efficitur eros. Phasellus commodo blandit augue id condimentum. Integer tortor ipsum, tempus eget sapien eu, dapibus fringilla augue. Vestibulum a lectus quis nulla posuere placerat quis semper erat. Integer molestie velit in eros interdum sagittis. Cras vehicula purus ut elit porta, sed imperdiet nulla tempor. Fusce nec finibus nulla. Sed nulla ex, aliquet vel ante vel, pharetra efficitur massa. Suspendisse elit. ',
-            measurements: [
-                {
-                    name: 'Lorem ipsum',
-                    latitude: 0,
-                    longtitude: 0,
-                    temperature: 0
-                },
-                {
-                    name: 'Lorem ipsum',
-                    latitude: 0,
-                    longtitude: 0,
-                    temperature: 0
-                },
-                {
-                    name: 'Lorem ipsum',
-                    latitude: 0,
-                    longtitude: 0,
-                    temperature: 0
-                },
-                {
-                    name: 'Lorem ipsum',
-                    latitude: 0,
-                    longtitude: 0,
-                    temperature: 0
-                },
-                {
-                    name: 'Lorem ipsum',
-                    latitude: 0,
-                    longtitude: 0,
-                    temperature: 0
-                },
-                {
-                    name: 'Lorem ipsum',
-                    latitude: 0,
-                    longtitude: 0,
-                    temperature: 0
-                },
-                {
-                    name: 'Lorem ipsum',
-                    latitude: 0,
-                    longtitude: 0,
-                    temperature: 0
-                }
-            ]
-        }
-    ]
-
-    const droneFlights = [
-        {
-          id: 21332,
-          title: 'Flight 1',
-          description: 'Description for Flight 1',
-          measurements: [
-            { name: 'Point A', latitude: 0, longitude: 0, temperature: 20 },
-            { name: 'Point B', latitude: 0, longitude: 0, temperature: 22 },
-            { name: 'Point C', latitude: 0, longitude: 0, temperature: 21 },
-          ],
-        },
-        {
-          id: 2131322,
-          title: 'Flight 2',
-          description: 'Description for Flight 2',
-          measurements: [
-            { name: 'Point A', latitude: 0, longitude: 0, temperature: 19 },
-            { name: 'Point B', latitude: 0, longitude: 0, temperature: 21 },
-          ],
-        },
-        {
-          id: 532322,
-          title: 'Flight 3',
-          description: 'Description for Flight 3',
-          measurements: [
-            { name: 'Point A', latitude: 0, longitude: 0, temperature: 18 },
-            { name: 'Point B', latitude: 0, longitude: 0, temperature: 20 },
-            { name: 'Point C', latitude: 0, longitude: 0, temperature: 22 },
-            { name: 'Point D', latitude: 0, longitude: 0, temperature: 21 },
-          ],
-        },
-      ];
-
+    const [droneFlights, setDroneFlights] = useState<DroneFlightType[]>([]);
+    const [notification, setNotification] = useState<NotificationProps>({message: "",description: "",type: ""});
+    const [openDialog, setOpenDialog] = useState<number | null>(null);
     const [expandedFlight, setExpandedFlight] = useState<number | null>(null);
 
+    useEffect(() => {
+      const fetchData = async () => {
+          try {
+              const flights = await getAllDroneFlights();
+              setDroneFlights(flights);
+          } catch (error) {
+            setNotification({
+              message: 'Error',
+              description: 'Failed to fetch data: ' + error,
+              type: 'error'
+            })
+          }
+      };
+
+      fetchData();
+    }, []);
 
     const toggleExpand = (flightId: number | null) => {
         setExpandedFlight(expandedFlight === flightId ? null : flightId);
     };
 
+    const openDeleteDialog = (flightId: number) => {
+        setOpenDialog(flightId);
+    };
+
+    const closeDeleteDialog = () => {
+        setOpenDialog(null);
+    };
+
+    const handleDeleteFlight = async (flightId: number) => {
+      try {
+        await deleteDroneFlight(flightId)
+        
+        setDroneFlights((prevFlights) => prevFlights.filter(flight => flight.id !== flightId));
+
+        setNotification({
+          message: 'Drone flight deleted!',
+          description: 'Your drone flight has been deleted.',
+          type: 'success'
+        })
+        navigate('/data-overview')
+      } catch (error) {
+        setNotification({
+          message: 'Error',
+          description: 'Failed to delete data: ' + error,
+          type: 'error'
+        })
+      }
+      closeDeleteDialog();
+    };
+
+    const handleCloseNotification = () => {
+      setNotification({ message: '', description: '', type: ''});
+    }
+
+
     return (
-        <div className="max-w-[96rem] mx-auto p-6 bg-white shadow-md rounded-lg mt-6 mb-50 overflow-y-scroll">
-          <ul role="list" className="divide-y divide-gray-100">
-            {droneFlights.map((droneFlight) => (
-              <li key={droneFlight.id} className="flex flex-col gap-y-4 py-5">
-                <div className="flex justify-between items-center gap-x-6">
-                  <div className="flex items-center gap-x-4">
-                    <DocumentIcon className="h-12 w-12 flex-none rounded-full bg-gray-50" />
-                    <div>
-                      <p className="text-sm font-semibold leading-6 text-gray-900">{droneFlight.title}</p>
-                      <p className="mt-1 text-xs leading-5 text-gray-500">{droneFlight.description}</p>
-                    </div>
+      <div className="max-w-[96rem] mx-auto p-6 bg-white shadow-md rounded-lg mt-6 mb-50 overflow-y-auto">
+        {notification.type && (
+            <Notification
+              message={notification.message}
+              description={notification.description}
+              type={notification.type}
+              duration={4000}
+              onClose={handleCloseNotification}
+            />
+          )}
+        <ul role="list" className="divide-y divide-gray-100">
+          {droneFlights.map((droneFlight) => (
+            <li key={droneFlight.id} className="flex flex-col gap-y-4 py-5">
+              <div className="flex justify-between items-center gap-x-6">
+                <div className="flex items-center gap-x-4">
+                  <div className="flex h-12 w-12 flex-none items-center justify-center rounded-lg bg-gray-50 hover:bg-white">
+                    <DocumentIcon className="h-6 w-6 text-gray-600 hover:text-indigo-600" />
                   </div>
-                  <div className="flex items-center gap-x-4">
-                    <p className="text-sm leading-6 text-gray-900">
-                      {droneFlight.measurements.length} {droneFlight.measurements.length === 1 ? 'measurement' : 'measurements'}
-                    </p>
-                    <button onClick={() => toggleExpand(droneFlight.id)} className="flex items-center gap-x-1 text-sm font-semibold leading-6 text-gray-900">
-                      {expandedFlight === droneFlight.id ? 'Collapse' : 'Expand'}
-                      {expandedFlight === droneFlight.id ? (
-                        <ChevronUpIcon aria-hidden="true" className="h-5 w-5 flex-none text-gray-400" />
-                      ) : (
-                        <ChevronDownIcon aria-hidden="true" className="h-5 w-5 flex-none text-gray-400" />
-                      )}
-                    </button>
+                  <div>
+                    <p className="text-sm font-semibold leading-6 text-gray-900">{droneFlight.title}</p>
                   </div>
                 </div>
-                {expandedFlight === droneFlight.id && (
+                <div className="flex items-center gap-x-4">
+                  <p className="text-sm leading-6 text-gray-900">
+                  Flight date: {droneFlight.date ? new Date(droneFlight.date).toISOString().substring(0,10) : 'Date not available'}
+                  </p>
+                  <p className="text-sm leading-6 text-gray-900">
+                    {droneFlight.measurements.length} {droneFlight.measurements.length === 1 ? 'measurement' : 'measurements'}
+                  </p>
+                  <button onClick={() => toggleExpand(droneFlight.id)} className="flex items-center gap-x-1 text-sm font-semibold leading-6 text-gray-900">
+                    {expandedFlight === droneFlight.id ? 'Collapse' : 'Expand'}
+                    {expandedFlight === droneFlight.id ? (
+                      <ChevronUpIcon aria-hidden="true" className="h-5 w-5 flex-none text-gray-400" />
+                    ) : (
+                      <ChevronDownIcon aria-hidden="true" className="h-5 w-5 flex-none text-gray-400" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => openDeleteDialog(droneFlight.id)}
+                    className="flex h-12 w-12 flex-none items-center justify-center rounded-lg bg-gray-50 hover:bg-white hover:text-red-500"
+                  >
+                    <TrashIcon aria-hidden="true" className="h-6 w-6 text-gray-600 hover:text-red-500" />
+                  </button>
+                </div>
+              </div>
+              {expandedFlight === droneFlight.id && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">Flight description</h3>
+                  <p className="mt-3 text-sm leading-5 text-gray-800">{droneFlight.description}</p>
                   <div className="mt-4">
                     <h3 className="text-lg font-semibold text-gray-800">Measurement Points</h3>
                     <div className="mt-2 max-h-56 overflow-y-auto bg-gray-100 rounded-md shadow-sm p-4">
@@ -189,19 +143,77 @@ export function Overview() {
                         </div>
                       ))}
                     </div>
-                    <div className="mt-4 flex justify-end">
+                    <div className="mt-4 flex justify-end gap-6">
+                      <button
+                        type="button"
+                        className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                      >
+                        Show on map
+                      </button>
                       <button
                         type="button"
                         className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                       >
-                        Add measurement
+                        Edit measurement
                       </button>
                     </div>
                   </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      );
+                </div>
+              )}
+  
+              {openDialog === droneFlight.id && (
+                <Dialog open={true} onClose={closeDeleteDialog} className="relative z-10">
+                  <DialogBackdrop
+                    transition
+                    className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                  />
+                  <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+                    <div className="flex min-h-full items-center justify-center p-4 text-center">
+                      <DialogPanel
+                        transition
+                        className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg"
+                      >
+                        <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                          <div className="sm:flex sm:items-start">
+                            <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                              <ExclamationTriangleIcon aria-hidden="true" className="h-6 w-6 text-red-600" />
+                            </div>
+                            <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                              <DialogTitle as="h3" className="text-base font-semibold leading-6 text-gray-900">
+                                Delete Flight
+                              </DialogTitle>
+                              <div className="mt-2">
+                                <p className="text-sm text-gray-500">
+                                  Are you sure you want to delete this flight? This action cannot be undone.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteFlight(droneFlight.id)}
+                            className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            type="button"
+                            onClick={closeDeleteDialog}
+                            className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </DialogPanel>
+                    </div>
+                  </div>
+                </Dialog>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
 }
