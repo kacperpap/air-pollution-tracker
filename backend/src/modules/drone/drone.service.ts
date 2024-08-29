@@ -49,6 +49,23 @@ export class DroneService {
     }
 
     async addDroneFlight(data: CreateDroneFlightType, userId: number) {
+        if (typeof data.date === 'string') {
+            data.date = new Date(data.date);
+        }
+    
+        const measurements = data.measurements.map(measurement => {
+            const latitude = typeof measurement.latitude === 'string' ? parseFloat(measurement.latitude) : measurement.latitude;
+            const longitude = typeof measurement.longitude === 'string' ? parseFloat(measurement.longitude) : measurement.longitude;
+            const temperature = typeof measurement.temperature === 'string' ? parseFloat(measurement.temperature) : measurement.temperature;
+    
+            return {
+                name: measurement.name,
+                latitude,
+                longitude,
+                temperature,
+            };
+        });
+    
         return this.prisma.droneFlight.create({
             data: {
                 title: data.title,
@@ -56,12 +73,7 @@ export class DroneService {
                 date: data.date,
                 userId: userId,
                 measurements: {
-                    create: data.measurements.map(measurement => ({
-                        name: measurement.name,
-                        latitude: measurement.latitude,
-                        longitude: measurement.longitude,
-                        temperature: measurement.temperature,
-                    }))
+                    create: measurements,
                 }
             }
         });
@@ -79,18 +91,35 @@ export class DroneService {
 
 
     async editDroneFlight(data: EditDroneFlightType, userId: number, id: number) {
-    /*
-    Edit drone flight takes new data: EditDroneFlightType and updates all variables,
-    also updates measurements: EditDroneFlightMeasurementType, which means, it removes all
-    and add new defined in formula
-    */
-        
+        /*
+        Edit drone flight takes new data: EditDroneFlightType and updates all variables,
+        also updates measurements: EditDroneFlightMeasurementType, which means, it removes all
+        and add new defined in formula
+        */
+    
+        if (typeof data.date === 'string') {
+            data.date = new Date(data.date);
+        }
+    
+        const measurements = data.measurements.map(measurement => {
+            const latitude = typeof measurement.latitude === 'string' ? parseFloat(measurement.latitude) : measurement.latitude;
+            const longitude = typeof measurement.longitude === 'string' ? parseFloat(measurement.longitude) : measurement.longitude;
+            const temperature = typeof measurement.temperature === 'string' ? parseFloat(measurement.temperature) : measurement.temperature;
+    
+            return {
+                name: measurement.name,
+                latitude,
+                longitude,
+                temperature,
+            };
+        });
+    
         await this.prisma.droneMeasurement.deleteMany({
             where: {
                 flightId: id
             }
         });
-
+    
         return this.prisma.droneFlight.update({
             where: {
                 userId: userId,
@@ -101,17 +130,10 @@ export class DroneService {
                 description: data.description,
                 date: data.date,
                 measurements: {
-                    create: data.measurements.map(measurement => ({
-                        name: measurement.name,
-                        latitude: measurement.latitude,
-                        longitude: measurement.longitude, 
-                        temperature: measurement.temperature,
-                    }))
+                    create: measurements,
                 }
             }
         });
     }
-    
-    
     
 }

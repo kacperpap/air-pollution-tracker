@@ -11,9 +11,15 @@ export class CreateDroneFlightType {
     @IsString()
     description?: string
 
+    /**
+     * Formally, frontend creates Date instance and converts it to the ISOstring
+     * then passes it via fetch post methond in body.stringify, which makes all 
+     * in request a json strings, so geting date on backend site requires taking it as
+     * an ISOstring, and converting it to the Date instance and then saving into db as timestamp
+     */
     @IsOptional()
-    @IsDate()
-    date?: Date
+    @IsString()
+    date?: Date | string
 
     @IsNotEmpty()
     measurements: CreateDroneMeasurementType[];

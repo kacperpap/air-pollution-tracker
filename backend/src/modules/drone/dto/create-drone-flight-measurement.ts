@@ -6,15 +6,12 @@ export class CreateDroneMeasurementType {
     @IsNotEmpty()
     name: string
 
-    @IsNumber()
     @IsNotEmpty()
-    latitude: number
+    latitude: string | number
 
-    @IsNumber()
     @IsNotEmpty()
-    longitude: number
+    longitude: string | number
 
-    @IsNumber()
     @IsNotEmpty()
-    temperature: number
+    temperature: string | number
 }
