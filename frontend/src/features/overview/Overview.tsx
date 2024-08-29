@@ -12,6 +12,8 @@ export function Overview() {
     const navigate = useNavigate()
 
     const [droneFlights, setDroneFlights] = useState<DroneFlightType[]>([]);
+    const [loadingDroneFlights, setLoadingDroneFlights] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [notification, setNotification] = useState<NotificationProps>({message: "",description: "",type: ""});
     const [openDialog, setOpenDialog] = useState<number | null>(null);
     const [expandedFlight, setExpandedFlight] = useState<number | null>(null);
@@ -21,15 +23,15 @@ export function Overview() {
           try {
               const flights = await getAllDroneFlights();
               setDroneFlights(flights);
+              setError(null);
           } catch (error) {
-            setNotification({
-              message: 'Error',
-              description: 'Failed to fetch data: ' + error,
-              type: 'error'
-            })
+              setError('Failed to fetch data');
+              setDroneFlights([]);
+          } finally {
+              setLoadingDroneFlights(false);
           }
       };
-
+  
       fetchData();
     }, []);
 
@@ -71,6 +73,44 @@ export function Overview() {
       setNotification({ message: '', description: '', type: ''});
     }
 
+
+    if (loadingDroneFlights) {
+      return (
+        <div className="flex items-center justify-center h-full w-full bg-gray-100">
+            <div className="space-x-4">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-solid border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_2s_linear_infinite]" role="status">
+                    <span className="sr-only">Loading...</span>
+                </div>
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-green-500 border-solid border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_2s_linear_infinite]" role="status">
+                    <span className="sr-only">Loading...</span>
+                </div>
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-red-500 border-solid border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_2s_linear_infinite]" role="status">
+                    <span className="sr-only">Loading...</span>
+                </div>
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-yellow-500 border-solid border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_2s_linear_infinite]" role="status">
+                    <span className="sr-only">Loading...</span>
+                </div>
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-solid border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_2s_linear_infinite]" role="status">
+                    <span className="sr-only">Loading...</span>
+                </div>
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-solid border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_2s_linear_infinite]" role="status">
+                    <span className="sr-only">Loading...</span>
+                </div>
+            </div>
+        </div>
+    );
+    }
+
+    if (error) {
+      return (
+          <div className="flex items-center justify-center h-full w-full bg-gray-100">
+              <div className="text-center p-4">
+                  <h1 className="text-xl font-bold text-gray-800">Error</h1>
+                  <p className="mt-2 font-semibold text-gray-600">{error}</p>
+              </div>
+          </div>
+      );
+    }
 
     return (
       <div className="max-w-[96rem] mx-auto p-6 bg-white shadow-md rounded-lg mt-6 mb-50 overflow-y-auto">

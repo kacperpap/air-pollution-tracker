@@ -53,6 +53,7 @@ export default function Header() {
       await logout()
       navigate('/')
       setNotification({ message: 'Logout successfull', description: "You have successfully loged out from your account", type: 'success' })
+      navigate('/')
     } catch (error) {
       setNotification({ message: 'Logout Failed', description: "" + error, type: 'error' })
     }
@@ -136,10 +137,10 @@ export default function Header() {
               </Popover>
             )}
 
-            <a href="#" className="text-sm font-semibold leading-6 text-gray-900">
+            <a href="/quick-start" className="text-sm font-semibold leading-6 text-gray-900">
               Quick start
             </a>
-            <a href="#" className="text-sm font-semibold leading-6 text-gray-900">
+            <a href="/documentation" className="text-sm font-semibold leading-6 text-gray-900">
               Documentation
             </a>
           </PopoverGroup>
@@ -232,10 +233,10 @@ export default function Header() {
                     </Disclosure>
                   )}
 
-                  <a href="#" className="-mx-3 block rounded-lg py-2 px-3 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-400/10">
+                  <a href="/quick-start" className="-mx-3 block rounded-lg py-2 px-3 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-400/10">
                     Quick start
                   </a>
-                  <a href="#" className="-mx-3 block rounded-lg py-2 px-3 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-400/10">
+                  <a href="/documentation" className="-mx-3 block rounded-lg py-2 px-3 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-400/10">
                     Documentation
                   </a>
                 </div>
