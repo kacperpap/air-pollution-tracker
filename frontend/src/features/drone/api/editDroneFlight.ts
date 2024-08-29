@@ -11,6 +11,6 @@ export const editDroneFlight = async (editInput: DroneFlightFormType, flightId: 
         body: JSON.stringify(editInput)
     })
 
-    if(response.status !== 201) throw new Error('Edit failed');
+    if(response.status !== 200) throw new Error('Edit failed');
     return await response.text();
 }

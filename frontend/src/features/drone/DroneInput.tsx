@@ -1,15 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DroneMeasurementType } from "../../types/DroneMeasurementType"
 import { DroneFlightFormType } from "../../types/DroneFlightFormType"
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Notification } from "../../components/Notification";
 import { NotificationProps } from "../../types/NotificationPropsType";
 import { saveDroneFlight } from "./api/saveDroneFlight";
+import { getDroneFlightById } from "./api/getDroneFlightById";
+import { editDroneFlight } from "./api/editDroneFlight";
 
 
 export function DroneInput() {
 
     const navigate = useNavigate()
+
+    const { flightId } = useParams();
+
+    const [isEditMode, setIsEditMode] = useState(false);
 
     const [notification, setNotification] = useState<NotificationProps>({
         message: "",
@@ -30,6 +36,29 @@ export function DroneInput() {
         longitude: null,
         temperature: null,
     });
+
+    useEffect(() => {
+        if (flightId) {
+            setIsEditMode(true);
+            const fetchFlightData = async () => {
+                try {
+                    const flight = await getDroneFlightById(Number(flightId));
+                    const flightData = {
+                        ...flight,
+                        date: flight.date ? new Date(flight.date) : undefined
+                    }
+                    setFormData(flightData);
+                } catch (error) {
+                    setNotification({
+                        message: 'Error',
+                        description: 'Failed to fetch flight data: ' + error,
+                        type: 'error'
+                    });
+                }
+            };
+            fetchFlightData();
+        }
+    }, [flightId]);
 
 
     const handleCurrentMeasurementChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,14 +135,45 @@ export function DroneInput() {
             });
             return;
         }
+
+        
+        /**
+         * If we edit data, there is userId and id for flight existing in the formulae,
+         * so we need to delete that info from form data, and pass userID (with credentials in token)
+         * and flightId as separete parameter
+         */
+        const preparedEditData: DroneFlightFormType = {
+            title: formData.title,
+            description: formData.description,
+            date: new Date(formData.date), 
+            measurements: formData.measurements.map(measurement => ({
+                name: measurement.name,
+                latitude: measurement.latitude,
+                longitude: measurement.longitude,
+                temperature: measurement.temperature,
+            })),
+        };
+        
+        
         try {
-            await saveDroneFlight(formData)
-            setNotification({
-                message: 'Data saved successfully!',
-                description: 'Your drone measurements have been saved.',
-                type: 'success'
-            })
-            setFormData({title: '', description: '', date: undefined, measurements: []})
+            if (isEditMode && flightId) {
+                await editDroneFlight(preparedEditData, Number(flightId));
+                setNotification({
+                    message: 'Data updated successfully!',
+                    description: 'Your drone measurements have been updated.',
+                    type: 'success'
+                });
+                setFormData({title: '', description: '', date: undefined, measurements: []})
+
+            } else {
+                await saveDroneFlight(formData)
+                setNotification({
+                    message: 'Data saved successfully!',
+                    description: 'Your drone measurements have been saved.',
+                    type: 'success'
+                })
+                setFormData({title: '', description: '', date: undefined, measurements: []})
+            }
         } catch (error) {
             setNotification({
                 message: 'Error',
@@ -336,16 +396,22 @@ export function DroneInput() {
                 <div className="flex items-center justify-end gap-x-6">
                     <button 
                         type="button"
-                        onClick={() => {setFormData({title: '', description: '', measurements: []})}}
+                        onClick={() => {
+                            if (isEditMode) {
+                              navigate('/data-overview');
+                            } else {
+                              setFormData({ title: '', description: '', measurements: [] });
+                            }
+                          }}
                         className="text-sm font-semibold leading-6 text-gray-900"
                     >
                         Cancel
                     </button>
-                    <button 
+                    <button
                         type="submit"
                         className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                     >
-                        Save
+                        {isEditMode ? 'Save Edit' : 'Save'}
                     </button>
                 </div>
             </div>
