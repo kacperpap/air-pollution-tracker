@@ -81,6 +81,16 @@ export class DroneService {
     
 
     async deleteDroneFlight(userId: number, id: number) {
+        
+        /**
+         * Need to delete ON CASCADE drone measurements when deleting drone flight
+         */
+        await this.prisma.droneMeasurement.deleteMany({
+            where: {
+                flightId: id
+            }
+        });
+
         return this.prisma.droneFlight.delete({
             where: {
                 userId: userId,
