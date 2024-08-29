@@ -47,6 +47,10 @@ export function Overview() {
         setOpenDialog(null);
     };
 
+    const editDroneInput = (flightId: number) => {
+        navigate(`/drone-input/${flightId}`)
+    }
+
     const handleDeleteFlight = async (flightId: number) => {
       try {
         await deleteDroneFlight(flightId)
@@ -192,6 +196,7 @@ export function Overview() {
                       </button>
                       <button
                         type="button"
+                        onClick={() => editDroneInput(expandedFlight)}
                         className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                       >
                         Edit measurement

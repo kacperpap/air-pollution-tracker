@@ -43,6 +43,10 @@ const privateRoutes: RouteObject[] = [
                 element: <DroneInput />
             },
             {
+                path: '/drone-input/:flightId',
+                element: <DroneInput />
+            },
+            {
                 path: '/data-overview',
                 element: <Overview />
             }
