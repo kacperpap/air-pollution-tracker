@@ -4,6 +4,7 @@ import { DroneFlightFormType } from "../../types/DroneFlightFormType"
 import { useNavigate } from "react-router-dom";
 import { Notification } from "../../components/Notification";
 import { NotificationProps } from "../../types/NotificationPropsType";
+import { save } from "./api/save";
 
 
 export function DroneInput() {
@@ -19,6 +20,7 @@ export function DroneInput() {
     const [formData, setFormData] = useState<DroneFlightFormType>({
         title: '',
         description: '',
+        date: undefined,
         measurements: []
     })
 
@@ -42,7 +44,7 @@ export function DroneInput() {
         const { name, value } = event.target
         setFormData((prevForm) => ({
             ...prevForm,
-            [name]: value
+            [name]: name === 'date' ? new Date(value) : value
         }))
     }
 
@@ -86,14 +88,32 @@ export function DroneInput() {
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
+
+        if (!formData.title.trim()) {
+            setNotification({ message: 'Validation Error', description: 'Title is required.', type: 'error'
+            });
+            return;
+        }
+    
+        if (!formData.date) {
+            setNotification({ message: 'Validation Error', description: 'Date is required.', type: 'error'
+            });
+            return;
+        }
+    
+        if (formData.measurements.length === 0) {
+            setNotification({ message: 'Validation Error', description: 'At least one measurement is required.', type: 'error'
+            });
+            return;
+        }
         try {
-            //add to db
+            await save(formData)
             setNotification({
                 message: 'Data saved successfully!',
                 description: 'Your drone measurements have been saved.',
                 type: 'success'
             })
-            setFormData({title: '', description: '', measurements: []})
+            setFormData({title: '', description: '', date: undefined, measurements: []})
         } catch (error) {
             setNotification({
                 message: 'Error',
@@ -143,6 +163,21 @@ export function DroneInput() {
                   />
                 </div>
               </div>
+            </div>
+
+            <div className="sm:col-span-4">
+                <label className="block text-sm font-medium leading-6 text-gray-900">Flight Date</label>
+                <div className="mt-2">
+                    <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
+                    <input 
+                        type="date" 
+                        name="date"
+                        value={formData.date instanceof Date && !isNaN(formData.date.getTime()) ? formData.date.toISOString().substring(0,10) : ''}
+                        onChange={handleFormChange}
+                        className="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:date-gray-400 focus:ring-0 sm:text-sm sm:leading-6" 
+                    />
+                    </div>
+                </div>
             </div>
     
             <div className="col-span-full">
