@@ -1,7 +1,7 @@
 import { API_URL } from "../../../config";
 import { DroneFlightFormType } from "../../../types/DroneFlightFormType";
 
-export const save = async (dataInput: DroneFlightFormType) => {
+export const saveDroneFlight = async (dataInput: DroneFlightFormType) => {
     const response = await fetch(`${API_URL}/drone`, {
         method: 'POST',
         headers: {

@@ -4,7 +4,7 @@ import { DroneFlightFormType } from "../../types/DroneFlightFormType"
 import { useNavigate } from "react-router-dom";
 import { Notification } from "../../components/Notification";
 import { NotificationProps } from "../../types/NotificationPropsType";
-import { save } from "./api/save";
+import { saveDroneFlight } from "./api/saveDroneFlight";
 
 
 export function DroneInput() {
@@ -107,7 +107,7 @@ export function DroneInput() {
             return;
         }
         try {
-            await save(formData)
+            await saveDroneFlight(formData)
             setNotification({
                 message: 'Data saved successfully!',
                 description: 'Your drone measurements have been saved.',
@@ -128,7 +128,7 @@ export function DroneInput() {
     }
 
     return (
-        <div className="max-w-5xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6 mb-50 overflow-y-scroll">
+        <div className="max-w-5xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6 mb-50 overflow-y-auto">
           {notification.type && (
             <Notification
               message={notification.message}
