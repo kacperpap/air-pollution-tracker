@@ -49,6 +49,10 @@ const privateRoutes: RouteObject[] = [
             {
                 path: '/data-overview',
                 element: <Overview />
+            },
+            {
+                path: '/map/:flightId',
+                element: <Map />
             }
         ]
     },
