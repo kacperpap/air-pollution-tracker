@@ -119,11 +119,10 @@ export default function Map() {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    if (flightId || flightExample) {
+    if (flightId) {
       const fetchFlightData = async () => {
         try {
-          // const flight = await getDroneFlightById(Number(flightId));
-          const flight = flightExample
+          const flight = await getDroneFlightById(Number(flightId));
           const flightData = {
             ...flight,
             date: flight.date ? new Date(flight.date) : undefined
@@ -138,92 +137,46 @@ export default function Map() {
             map.fitBounds(bounds);
 
             validPoints.forEach((point: DroneMeasurementType) => {
-              const marker = L.marker([point.latitude!, point.longitude!]).addTo(map);
-
-
-
-              <div className="leaflet-marker-icon marker-default leaflet-zoom-animated leaflet-clickable" style={{ marginLeft: '-6px', marginTop: '-6px', width: '12px', height: '12px', transform: 'translate3d(1252px, 147px, 0px)', zIndex: 147 }} tabIndex={0}>
-                <div>
-                  <span className="city-bullet"></span>
-                  <div className="city-data">
-                    <div className="row city-main-info">
-                      <span className="city-weather">33 </span>
-                      <span className="city-name weather-very-hot">Ech&nbsp;Chettia</span>
+              const marker = L.marker([point.latitude!, point.longitude!], {
+                icon: L.divIcon({
+                  className: 'custom-marker',
+                  html: `
+                    <div class="custom-box flex">
+                      <div class="inline-block whitespace-nowrap text-xs font-semibold text-white px-2 py-1 bg-[#48484A]">
+                        ${point.temperature ?? 'N/A'}ºC
                       </div>
-                      <div className="row city-full-info">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th colSpan={2} className="city-param weather-very-hot">Ech&nbsp;Chettia</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                              <td className="city-param-name">country</td>
-                              <td className="city-param">DZ</td>
-                            </tr>
-                            <tr>
-                              <td className="city-param-name">temp</td>
-                              <td className="city-param">33.46ºC</td>
-                            </tr>
-                            <tr>
-                              <td className="city-param-name">clouds</td>
-                              <td className="city-param">0%</td>
-                            </tr>
-                            <tr>
-                              <td className="city-param-name">humidity</td>
-                              <td className="city-param">41%</td>
-                            </tr>
-                            <tr>
-                              <td className="city-param-name">pressure</td>
-                              <td className="city-param">1010hPa</td>
-                            </tr>
-                            <tr>
-                              <td className="city-param-name">wind direction</td>
-                              <td className="city-param">346°</td>
-                            </tr>
-                            <tr>
-                              <td className="city-param-name">wind speed</td>
-                              <td className="city-param">5m/s</td>
-                            </tr>
-                          </tbody>
-                        </table>
+                      <div class="inline-block whitespace-nowrap text-xs font-semibold text-white px-2 py-1 bg-[#F56048]">
+                        ${point.name}
                       </div>
                     </div>
-                  </div>
-                </div>
+                  `,
+                  iconSize: [0, 0],
+                  iconAnchor: [10, 10],
+                })
+              }).addTo(map);
 
+            const expandedTooltipContent = `
+              <div class="bg-white p-4 rounded-lg shadow-lg">
+                <h3 class="text-lg font-bold mb-2">${point.name}</h3>
+                <ul class="text-sm">
+                  <li>Name: ${point.name ?? 'N/A'}</li>
+                  <li>Temp: ${point.temperature ?? 'N/A'}ºC</li>
+                  <li>Humidity: ${point.temperature ?? 'N/A'}%</li>
+                  <li>Pressure: ${point.temperature ?? 'N/A'}hPa</li>
+                  <li>Wind Direction: ${point.temperature ?? 'N/A'}°</li>
+                  <li>Wind Speed: ${point.temperature ?? 'N/A'}m/s</li>
+                </ul>
+              </div>
+            `;
 
-              const tooltipContent = `
-                <div className="city-data">
-                  <div className="row city-main-info flex items-center">
-                    <span className="city-weather font-bold text-lg">${point.temperature ?? 'N/A'}ºC </span>
-                    <span className="city-name font-semibold ml-2">${point.name}</span>
-                  </div>
-                  <div className="row city-full-info mt-2">
-                    <table className="text-left">
-                      <tbody>
-                        <tr><td className="pr-2 font-semibold">Country</td><td>PL</td></tr>
-                        <tr><td className="pr-2 font-semibold">Temp</td><td>${point.temperature ?? 'N/A'}ºC</td></tr>
-                        <!-- Możesz dodać dodatkowe dane tutaj -->
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              `;
-
-              marker.bindTooltip(tooltipContent, {
+              marker.bindTooltip(expandedTooltipContent, {
                 permanent: false,
-                direction: 'top',
-                className: 'custom-tooltip p-2 rounded-lg shadow-lg bg-white',
+                direction: 'bottom',
+                className: 'expanded-tooltip',
               });
 
-              marker.on('mouseover', function () {
-                marker.getElement()!.classList.add('marker-expanded');
-              });
-
-              marker.on('mouseout', function () {
-                marker.getElement()!.classList.remove('marker-expanded');
+              marker.on('click', function () {
+                marker.toggleTooltip();
               });
             });
           }

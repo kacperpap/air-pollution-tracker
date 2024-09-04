@@ -51,6 +51,10 @@ export function Overview() {
         navigate(`/drone-input/${flightId}`)
     }
 
+    const showOnMap = (flightId: number) => {
+      navigate(`/map/${flightId}`)
+    }
+
     const handleDeleteFlight = async (flightId: number) => {
       try {
         await deleteDroneFlight(flightId)
@@ -190,6 +194,7 @@ export function Overview() {
                     <div className="mt-4 flex justify-end gap-6">
                       <button
                         type="button"
+                        onClick={() => showOnMap(expandedFlight)}
                         className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                       >
                         Show on map
