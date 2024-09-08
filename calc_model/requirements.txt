@@ -3,3 +3,8 @@ requests-cache
 retry-requests
 numpy 
 pandas
+matplotlib
+scipy
+fastapi
+pika
+uvicorn
