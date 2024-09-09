@@ -1,2 +1,3 @@
 .cache.sqlite
 weather_data*
+models/euler_volume_muliboxes_model/*.png 
