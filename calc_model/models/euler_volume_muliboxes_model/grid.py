@@ -3,173 +3,21 @@ from scipy.spatial import KDTree
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-data_2 = [
-    {
-        "id": 42,
-        "name": "Point 1",
-        "latitude": 23.12,
-        "longitude": 23.1,
-        "some_value_1": 1,
-        "temperature": 32.21
-    },
-    {
-        "id": 43,
-        "name": "Point 2",
-        "latitude": 23.13,
-        "longitude": 24,
-        "some_value_1": 1,
-        "temperature": 32.2
-    },
-    {
-        "id": 44,
-        "name": "Point 3",
-        "latitude": 23.14,
-        "longitude": 23.8,
-        "some_value_1": 1,
-        "temperature": 32.19
-    },
-    {
-        "id": 45,
-        "name": "Point 4",
-        "latitude": 23.15,
-        "longitude": 23.5,
-        "some_value_1": 1,
-        "temperature": 32.18
-    },
-    {
-        "id": 46,
-        "name": "Point 5",
-        "latitude": 23.15,
-        "longitude": 23.8,
-        "some_value_1": 1,
-        "temperature": 32.21
-    },
-    {
-        "id": 47,
-        "name": "Point 6",
-        "latitude": 23.18,
-        "longitude": 23.6,
-        "some_value_1": 1,
-        "temperature": 32.3
-    }
-]
-
-
-data = [
-  {
-    "id": 48,
-    "name": "Point 1 - Wawel",
-    "latitude": 50.0545,
-    "longitude": 19.9353,
-    "temperature": 22.5,
-    "flightId": 6
-  },
-  {
-    "id": 49,
-    "name": "Point 2 - Main Square",
-    "latitude": 50.0614,
-    "longitude": 19.9372,
-    "temperature": 23.1,
-    "flightId": 6
-  },
-  {
-    "id": 50,
-    "name": "Point 3 - Kazimierz",
-    "latitude": 50.0487,
-    "longitude": 19.9445,
-    "temperature": 22.8,
-    "flightId": 6
-  },
-  {
-    "id": 51,
-    "name": "Point 4 - Vistula River",
-    "latitude": 50.051,
-    "longitude": 19.9366,
-    "temperature": 22.3,
-    "flightId": 6
-  },
-  {
-    "id": 52,
-    "name": "Point 5 - Krakow University",
-    "latitude": 50.0647,
-    "longitude": 19.9248,
-    "temperature": 23.4,
-    "flightId": 6
-  },
-  {
-    "id": 53,
-    "name": "Point 6 - St. Mary's Basilica",
-    "latitude": 50.0616,
-    "longitude": 19.9393,
-    "temperature": 23.0,
-    "flightId": 6
-  },
-  {
-    "id": 54,
-    "name": "Point 7 - Planty Park",
-    "latitude": 50.0594,
-    "longitude": 19.9336,
-    "temperature": 22.7,
-    "flightId": 6
-  },
-  {
-    "id": 55,
-    "name": "Point 8 - Krakow Barbican",
-    "latitude": 50.0642,
-    "longitude": 19.942,
-    "temperature": 22.9,
-    "flightId": 6
-  },
-  {
-    "id": 56,
-    "name": "Point 9 - Floriańska Street",
-    "latitude": 50.0636,
-    "longitude": 19.9383,
-    "temperature": 23.2,
-    "flightId": 6
-  },
-  {
-    "id": 57,
-    "name": "Point 10 - Blonia Park",
-    "latitude": 50.0617,
-    "longitude": 19.9115,
-    "temperature": 23.3,
-    "flightId": 6
-  },
-  {
-    "id": 58,
-    "name": "Point 11 - Nowa Huta",
-    "latitude": 50.07,
-    "longitude": 20.0374,
-    "temperature": 23.0,
-    "flightId": 6
-  },
-  {
-    "id": 59,
-    "name": "Point 12 - Wieliczka",
-    "latitude": 49.9873,
-    "longitude": 20.0652,
-    "temperature": 22.6,
-    "flightId": 6
-  }
-]
-
 def create_uniform_boxes(data, box_size=0.01, min_box_size=0.001, max_box_size=0.02, margin=0.005):
     """
-    Tworzy siatkę pudełek o jednakowej wielkości na podstawie punktów pomiarowych. Pudełka pokrywają cały obszar
-    wyznaczony przez punkty pomiarowe, z marginesem na granicach oraz minimalnym i maksymalnym rozmiarem.
+    Tworzy siatkę pudełek o rozmiarze opartym na średniej odległości między punktami pomiarowymi.
     
     Parametry:
     - data: lista punktów pomiarowych (zawiera latitude i longitude)
-    - box_size: początkowy rozmiar każdego pudełka (w stopniach)
     - min_box_size: minimalny rozmiar pudełka (w stopniach)
     - max_box_size: maksymalny rozmiar pudełka (w stopniach)
     - margin: dodatkowy margines na granicach (w stopniach)
     
     Zwraca:
     - boxes: lista granic geograficznych pudełek w formacie [(lat_min, lat_max, lon_min, lon_max), ...]
-    - box_values: wartości (np. temperatura) przypisane do pudełek
+    - box_values: wartości pomiarów przypisane do pudełek
     """
+
     latitudes = np.array([point["latitude"] for point in data])
     longitudes = np.array([point["longitude"] for point in data])
     temperatures = np.array([point["temperature"] for point in data])
@@ -182,31 +30,17 @@ def create_uniform_boxes(data, box_size=0.01, min_box_size=0.001, max_box_size=0
     lon_min -= margin
     lon_max += margin
     
-    def adjust_box_size(lat_min, lat_max, lon_min, lon_max, box_size):
-      """Dostosowuje rozmiar pudełek, aby wypełniały cały obszar z uwzględnieniem minimalnego i maksymalnego rozmiaru."""
-      num_lat_boxes = int(np.ceil((lat_max - lat_min) / box_size))
-      num_lon_boxes = int(np.ceil((lon_max - lon_min) / box_size))
-        
-      lat_size = (lat_max - lat_min) / num_lat_boxes
-      lon_size = (lon_max - lon_min) / num_lon_boxes
-        
-      if lat_size < min_box_size:
-          lat_size = min_box_size
-          num_lat_boxes = int(np.ceil((lat_max - lat_min) / lat_size))
-      elif lat_size > max_box_size:
-          lat_size = max_box_size
-          num_lat_boxes = int(np.ceil((lat_max - lat_min) / lat_size))
-        
-      if lon_size < min_box_size:
-          lon_size = min_box_size
-          num_lon_boxes = int(np.ceil((lon_max - lon_min) / lon_size))
-      elif lon_size > max_box_size:
-          lon_size = max_box_size
-          num_lon_boxes = int(np.ceil((lon_max - lon_min) / lon_size))
-        
-      return lat_size, lon_size, num_lat_boxes, num_lon_boxes
+    lat_diffs = np.diff(np.sort(latitudes))
+    lon_diffs = np.diff(np.sort(longitudes))
     
-    box_size_lat, box_size_lon, num_lat_boxes, num_lon_boxes = adjust_box_size(lat_min, lat_max, lon_min, lon_max, box_size)
+    avg_lat_diff = np.mean(lat_diffs) if len(lat_diffs) > 0 else max_box_size
+    avg_lon_diff = np.mean(lon_diffs) if len(lon_diffs) > 0 else max_box_size
+    
+    box_size_lat = np.clip(avg_lat_diff, min_box_size, max_box_size)
+    box_size_lon = np.clip(avg_lon_diff, min_box_size, max_box_size)
+    
+    num_lat_boxes = int(np.ceil((lat_max - lat_min) / box_size_lat))
+    num_lon_boxes = int(np.ceil((lon_max - lon_min) / box_size_lon))
     
     boxes = []
     box_values = np.full((num_lat_boxes, num_lon_boxes), None)
@@ -214,14 +48,16 @@ def create_uniform_boxes(data, box_size=0.01, min_box_size=0.001, max_box_size=0
     # obliczanie indeksów pudełek do których przypisujemy dane pomiarowe
     # lat - lat_min określa położenie na szerokości geograficzniej danego punktu pomiarowego jako odległość o poczatku siatki,
     # po czym podzielenie przez szerokość pudełka i zaokraglenie w górę daje nam index pudełka do którego przypisujemy zmierzone wartości 
-    for i, (lat, lon, temp) in enumerate(zip(latitudes, longitudes, temperatures)):
-        lat_idx = int((lat - lat_min) / box_size)
-        lon_idx = int((lon - lon_min) / box_size)
+    for lat, lon, temp in zip(latitudes, longitudes, temperatures):
+        lat_idx = int((lat - lat_min) / box_size_lat)
+        lon_idx = int((lon - lon_min) / box_size_lon)
         
-        if box_values[lat_idx, lon_idx] is None:
-            box_values[lat_idx, lon_idx] = temp
-        else:
-            box_values[lat_idx, lon_idx] = (box_values[lat_idx, lon_idx] + temp) / 2
+        if 0 <= lat_idx < num_lat_boxes and 0 <= lon_idx < num_lon_boxes:
+            if box_values[lat_idx, lon_idx] is None:
+                box_values[lat_idx, lon_idx] = temp
+            else:
+                box_values[lat_idx, lon_idx] = (box_values[lat_idx, lon_idx] + temp) / 2
+
 
 
     for i in range(num_lat_boxes):
@@ -355,6 +191,10 @@ def create_multibox_grid_with_interpolated_measurements(measurements,
     - margin: dodatkowy margines na granicach (w stopniach)
     - save_grid_image: boolean, jeśli True, zapisuje obraz do pliku
     - image_path: ścieżka do pliku, w którym zapisany zostanie obraz (jeśli save_grid_image=True)
+
+    Zwraca:
+    - boxes: lista granic geograficznych pudełek w formacie [(lat_min, lat_max, lon_min, lon_max), ...]
+    - box_values: wartości pomiarów przypisane do pudełek (po interpolacji wartości pomiędzy pudełkami)
     """
     
     boxes, box_values = create_uniform_boxes(measurements, box_size, min_box_size, max_box_size, margin)
@@ -368,5 +208,6 @@ def create_multibox_grid_with_interpolated_measurements(measurements,
     if save_grid_image:
       plot_boxes_with_values(boxes, box_values, measurements, save_image=save_grid_image, image_path=image_path)
 
+    return boxes, box_values
 
-create_multibox_grid_with_interpolated_measurements(data, save_grid_image=True)
+
