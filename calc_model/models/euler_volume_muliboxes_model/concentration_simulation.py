@@ -12,6 +12,7 @@ data_2 = [
         "longitude": 23.1,
         "wind_speed": 2.1,   
         "wind_direction": 45,
+        "CO_concentration": 8900,
         "temperature": 32.21
     },
     {
@@ -21,6 +22,7 @@ data_2 = [
         "longitude": 24,
         "wind_speed": 2.2,   
         "wind_direction": 56,
+        "CO_concentration": 9800,
         "temperature": 32.2
     },
     {
@@ -30,6 +32,7 @@ data_2 = [
         "longitude": 23.8,
         "wind_speed": 1.8,   
         "wind_direction": 33,
+        "CO_concentration": 7899,
         "temperature": 32.19
     },
     {
@@ -39,6 +42,7 @@ data_2 = [
         "longitude": 23.5,
         "wind_speed": 2.3,   
         "wind_direction": 48,
+        "CO_concentration": 7980,
         "temperature": 32.18
     },
     {
@@ -48,6 +52,7 @@ data_2 = [
         "longitude": 23.8,
         "wind_speed": 2.0,   
         "wind_direction": 102,
+        "CO_concentration": 6790,
         "temperature": 32.21
     },
     {
@@ -57,6 +62,7 @@ data_2 = [
         "longitude": 23.6,
         "wind_speed": 2.2,   
         "wind_direction": 79,
+        "CO_concentration": 5600,
         "temperature": 32.3
     }
 ]
@@ -71,6 +77,7 @@ data = [
     "temperature": 22.5,
     "wind_speed": 2.5,   
     "wind_direction": 45,
+    "CO_concentration": 5234,
     "flightId": 6
   },
   {
@@ -81,6 +88,7 @@ data = [
     "temperature": 23.1,
     "wind_speed": 3.0,   
     "wind_direction": 90,
+    "CO_concentration": 7894,
     "flightId": 6
   },
   {
@@ -91,6 +99,7 @@ data = [
     "temperature": 22.8,
     "wind_speed": 2.0,   
     "wind_direction": 135,
+    "CO_concentration": 8900,
     "flightId": 6
   },
   {
@@ -101,6 +110,7 @@ data = [
     "temperature": 22.3,
     "wind_speed": 1.8,   
     "wind_direction": 60,
+    "CO_concentration": 4560,
     "flightId": 6
   },
   {
@@ -111,6 +121,7 @@ data = [
     "temperature": 23.4,
     "wind_speed": 2.6,   
     "wind_direction": 120,
+    "CO_concentration": 7800,
     "flightId": 6
   },
   {
@@ -121,6 +132,7 @@ data = [
     "temperature": 23.0,
     "wind_speed": 2.8,   
     "wind_direction": 100,
+    "CO_concentration": 7900,
     "flightId": 6
   },
   {
@@ -131,6 +143,7 @@ data = [
     "temperature": 22.7,
     "wind_speed": 1.8,   
     "wind_direction": 78,
+    "CO_concentration": 8900,
     "flightId": 6
   },
   {
@@ -141,6 +154,7 @@ data = [
     "temperature": 22.9,
     "wind_speed": 2.1,   
     "wind_direction": 108,
+    "CO_concentration": 11230,
     "flightId": 6
   },
   {
@@ -151,6 +165,7 @@ data = [
     "temperature": 23.2,
     "wind_speed": 2.8,   
     "wind_direction": 132,
+    "CO_concentration": 10900,
     "flightId": 6
   },
   {
@@ -161,6 +176,7 @@ data = [
     "temperature": 23.3,
     "wind_speed": 2.3,   
     "wind_direction": 34,
+    "CO_concentration": 9300,
     "flightId": 6
   },
   {
@@ -171,6 +187,7 @@ data = [
     "temperature": 23.0,
     "wind_speed": 2.2,   
     "wind_direction": 22,
+    "CO_concentration": 14600,
     "flightId": 6
   },
   {
@@ -181,6 +198,7 @@ data = [
     "temperature": 22.6,
     "wind_speed": 2.2,   
     "wind_direction": 78,
+    "CO_concentration": 6770,
     "flightId": 6
   }
 ]
@@ -194,8 +212,8 @@ def update_concentration(C, u, v, K_x, K_y, dx, dy, dt, S_c, nx, ny):
     - C: 2D macierz (nx, ny) stężenia zanieczyszczeń.
     - u: 2D macierz (nx, ny) prędkości wiatru w kierunku x.
     - v: 2D macierz (nx, ny) prędkości wiatru w kierunku y.
-    - K_x: współczynnik dyfuzji w kierunku x.
-    - K_y: współczynnik dyfuzji w kierunku y.
+    - K_x: 2D macierz współczynnika dyfuzji w kierunku x.
+    - K_y: 2D macierz współczynnika dyfuzji w kierunku y.
     - dx, dy: wymiary pudełka.
     - dt: krok czasowy.
     - S_c: źródła emisji zanieczyszczeń.
@@ -213,8 +231,8 @@ def update_concentration(C, u, v, K_x, K_y, dx, dy, dt, S_c, nx, ny):
             conv_y = -v[i, j] * (C[i, j] - C[i, j-1]) / dy
 
             # Dyfuzja (rozpraszanie zanieczyszczeń)
-            diff_x = K_x * ((C[i+1, j] - C[i, j]) - (C[i, j] - C[i-1, j])) / (dx**2)
-            diff_y = K_y * ((C[i, j+1] - C[i, j]) - (C[i, j] - C[i, j-1])) / (dy**2)
+            diff_x = K_x[i, j] * ((C[i+1, j] - C[i, j]) - (C[i, j] - C[i-1, j])) / (dx**2)
+            diff_y = K_y[i, j] * ((C[i, j+1] - C[i, j]) - (C[i, j] - C[i, j-1])) / (dy**2)
 
             # Źródło emisji
             source = S_c[i, j]
@@ -224,6 +242,32 @@ def update_concentration(C, u, v, K_x, K_y, dx, dy, dt, S_c, nx, ny):
 
     C_new = C + dC_dt * dt
     return C_new
+
+
+def calculate_diffusion_coefficient(pollutant, temperature, pressure=101325, additional_params=None):
+    """
+    Oblicza współczynnik dyfuzji w powietrzu dla zanieczyszczenia w zależności od temperatury, ciśnienia i innych parametrów.
+    
+    Parametry:
+    - pollutant: str, nazwa zanieczyszczenia (np. 'CO')
+    - temperature: temperatura w stopniach Celsjusza
+    - pressure: ciśnienie w Pa (domyślnie 101325 Pa)
+    - additional_params: dodatkowe parametry, jeśli są potrzebne do obliczeń (opcjonalnie)
+    
+    Zwraca:
+    - Współczynnik dyfuzji (K) w [m^2/s]
+    """
+    if pollutant == 'CO':
+        T_kelvin = temperature + 273.15  # zamiana temperatury na Kelwiny
+        D_0 = 0.16  # Współczynnik dyfuzji CO w powietrzu w standardowych warunkach [cm^2/s]
+        D_0 /= 10000  # Zamiana z cm^2/s na m^2/s
+
+        # Empiryczna zależność od temperatury, na podstawie prawa Arrheniusa
+        K = D_0 * (T_kelvin / 293.15) ** 1.75
+        return K
+    else:
+        raise ValueError(f"Nieznane zanieczyszczenie: {pollutant}")
+
 
 def plot_concentration_grid(boxes, concentration_values, measurements, save_image=False, image_path=None):
     """
@@ -280,13 +324,14 @@ def simulate_pollution_spread(data, num_steps, dt, min_box_size=0.001, max_box_s
     - dt: krok czasowy
     - min_box_size, max_box_size: minimalny i maksymalny rozmiar pudełek
     - margin: margines w obszarze siatki
+    - debug: jeśli True, zapisuje obrazy debugowania
 
     Zwraca:
     - Ostateczne stężenie zanieczyszczeń po symulacji
     """
 
     if debug is False:
-      boxes, temp_values, u_values, v_values = create_multibox_grid_with_interpolated_measurements(
+      boxes, temp_values, u_values, v_values, co_values = create_multibox_grid_with_interpolated_measurements(
         data, min_box_size=min_box_size, max_box_size=max_box_size, margin=margin)
     else:
       timestamp = datetime.now().strftime("%Y_%m_%d_%H%M%S")
@@ -295,7 +340,7 @@ def simulate_pollution_spread(data, num_steps, dt, min_box_size=0.001, max_box_s
       if not os.path.exists(directory):
         os.makedirs(directory)
 
-      boxes, temp_values, u_values, v_values = create_multibox_grid_with_interpolated_measurements(
+      boxes, temp_values, u_values, v_values, co_values = create_multibox_grid_with_interpolated_measurements(
         data, min_box_size=min_box_size, max_box_size=max_box_size, margin=margin, save_grid_images=True, save_path=directory) 
 
     x_coords = sorted(set([box[0] for box in boxes]))
@@ -304,19 +349,26 @@ def simulate_pollution_spread(data, num_steps, dt, min_box_size=0.001, max_box_s
     nx = len(x_coords)
     ny = len(y_coords)
 
-    C = np.random.uniform(0, 1, size=(nx, ny)) 
+    # uogólnij dla różnych zanieczyszczeń nie tylko CO 
+    C = np.array(co_values).reshape((nx, ny))
+
+    K_x = np.zeros_like(C)
+    K_y = np.zeros_like(C)
+
+    for i in range(nx):
+        for j in range(ny):
+            K = calculate_diffusion_coefficient('CO', temp_values[i * ny + j])  
+            K_x[i, j] = K
+            K_y[i, j] = K
 
     u = np.array(u_values).reshape((nx, ny))  
     v = np.array(v_values).reshape((nx, ny)) 
-
-    K_x = 0.1  
-    K_y = 0.1 
-
+ 
     dx = (x_coords[1] - x_coords[0])  
     dy = (y_coords[1] - y_coords[0]) 
 
-    S_c = np.zeros_like(C)
-    S_c[0, 0] = 1  
+    # założenie - brak dodatkowych źródeł emisji 
+    S_c = np.zeros_like(C) 
 
     if debug is True:
       image_path = f'models/euler_volume_muliboxes_model/debug/{timestamp}/plots/start_pollutant_concentration_grid.png'
@@ -338,4 +390,4 @@ def simulate_pollution_spread(data, num_steps, dt, min_box_size=0.001, max_box_s
 num_steps = 100  
 dt = 0.01  
 
-final_concentration = simulate_pollution_spread(data_2, num_steps, dt, debug=True)
+final_concentration = simulate_pollution_spread(data, num_steps, dt, debug=True)

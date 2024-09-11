@@ -24,6 +24,7 @@ def create_uniform_boxes(data, box_size=0.01, min_box_size=0.001, max_box_size=0
     temperatures = np.array([point["temperature"] for point in data])
     wind_speeds = np.array([point["wind_speed"] for point in data])
     wind_directions = np.array([point["wind_direction"] for point in data])
+    co_concentrations = np.array([point["CO_concentration"] for point in data])
     
 
     """
@@ -59,13 +60,14 @@ def create_uniform_boxes(data, box_size=0.01, min_box_size=0.001, max_box_size=0
     
     boxes = []
     temperature_values = np.full((num_lat_boxes, num_lon_boxes), None)
+    co_values = np.full((num_lat_boxes, num_lon_boxes), None)
     u_grid = np.full((num_lat_boxes, num_lon_boxes), None)
     v_grid = np.full((num_lat_boxes, num_lon_boxes), None)
     
     # obliczanie indeksów pudełek do których przypisujemy dane pomiarowe
     # lat - lat_min określa położenie na szerokości geograficzniej danego punktu pomiarowego jako odległość o poczatku siatki,
     # po czym podzielenie przez szerokość pudełka i zaokraglenie w górę daje nam index pudełka do którego przypisujemy zmierzone wartości 
-    for lat, lon, temp, u, v in zip(latitudes, longitudes, temperatures, u_values, v_values):
+    for lat, lon, temp, u, v, co in zip(latitudes, longitudes, temperatures, u_values, v_values, co_concentrations):
         lat_idx = int((lat - lat_min) / box_size_lat)
         lon_idx = int((lon - lon_min) / box_size_lon)
         
@@ -74,10 +76,13 @@ def create_uniform_boxes(data, box_size=0.01, min_box_size=0.001, max_box_size=0
                 temperature_values[lat_idx, lon_idx] = temp
                 u_grid[lat_idx, lon_idx] = u
                 v_grid[lat_idx, lon_idx] = v
+                co_values[lat_idx, lon_idx] = co
             else:
                 temperature_values[lat_idx, lon_idx] = (temperature_values[lat_idx, lon_idx] + temp) / 2
                 u_grid[lat_idx, lon_idx] = (u_grid[lat_idx, lon_idx] + u) / 2
                 v_grid[lat_idx, lon_idx] = (v_grid[lat_idx, lon_idx] + v) / 2
+                co_values[lat_idx, lon_idx] = (co_values[lat_idx, lon_idx] + co) / 2
+
 
 
 
@@ -90,7 +95,7 @@ def create_uniform_boxes(data, box_size=0.01, min_box_size=0.001, max_box_size=0
             
         boxes.append((lat_min_box, lat_max_box, lon_min_box, lon_max_box))
     
-    return boxes, temperature_values.flatten(), u_grid.flatten(), v_grid.flatten()
+    return boxes, temperature_values.flatten(), u_grid.flatten(), v_grid.flatten(), co_values.flatten()
 
 def interpolate_empty_boxes(boxes, box_values, max_distance=0.01):
     """
@@ -120,7 +125,7 @@ def interpolate_empty_boxes(boxes, box_values, max_distance=0.01):
     
     return box_values
 
-def recursive_interpolation_until_filled(boxes, temp_values, u_values, v_values, initial_distance=0.01, max_increment=0.01):
+def recursive_interpolation_until_filled(boxes, temp_values, u_values, v_values, co_values, initial_distance=0.01, max_increment=0.01):
     """
     Rekursywna interpolacja dla temperatury i prędkości wiatru, która kontynuuje, dopóki wszystkie pudełka nie zostaną wypełnione wartościami.
     
@@ -134,13 +139,14 @@ def recursive_interpolation_until_filled(boxes, temp_values, u_values, v_values,
     - zaktualizowane temp_values, u_values, v_values
     """
     distance = initial_distance
-    while any(value is None for value in temp_values) or any(value is None for value in u_values) or any(value is None for value in v_values):
+    while any(value is None for value in temp_values) or any(value is None for value in u_values) or any(value is None for value in v_values) or any(value is None for value in co_values):
         temp_values = interpolate_empty_boxes(boxes, temp_values, max_distance=distance)
         u_values = interpolate_empty_boxes(boxes, u_values, max_distance=distance)
         v_values = interpolate_empty_boxes(boxes, v_values, max_distance=distance)
+        co_values = interpolate_empty_boxes(boxes, co_values, max_distance=distance)
         distance += max_increment
     
-    return temp_values, u_values, v_values
+    return temp_values, u_values, v_values, co_values
 
 
 def plot_temperature_grid(boxes, temp_values, measurements, save_image=False, image_path=None):
@@ -292,13 +298,13 @@ def create_multibox_grid_with_interpolated_measurements(measurements,
     - box_values: wartości pomiarów przypisane do pudełek (po interpolacji wartości pomiędzy pudełkami)
     """
     
-    boxes, temp_values, u_values, v_values = create_uniform_boxes(measurements, 
+    boxes, temp_values, u_values, v_values, co_values = create_uniform_boxes(measurements, 
                                                                   box_size=box_size, 
                                                                   min_box_size=min_box_size, 
                                                                   max_box_size=max_box_size, 
                                                                   margin=margin)
     
-    temp_values, u_values, v_values = recursive_interpolation_until_filled(boxes, temp_values, u_values, v_values)
+    temp_values, u_values, v_values, co_values = recursive_interpolation_until_filled(boxes, temp_values, u_values, v_values, co_values)
     
     if save_grid_images:
         image_path_wind_plot = f'{save_path}/multibox_grid_with_interpolated_wind_values.png'
@@ -306,6 +312,6 @@ def create_multibox_grid_with_interpolated_measurements(measurements,
         plot_temperature_grid(boxes, temp_values, measurements, save_image=save_grid_images, image_path=image_path_temp_plot)
         plot_wind_grid(boxes, u_values, v_values, measurements, save_image=save_grid_images, image_path=image_path_wind_plot)
 
-    return boxes, temp_values, u_values, v_values
+    return boxes, temp_values, u_values, v_values, co_values
 
 
