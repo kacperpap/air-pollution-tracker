@@ -628,7 +628,7 @@ def calculate_diffusion_coefficient(pollutant, temperature, pressure=101325, add
         raise ValueError(f"Nieznane zanieczyszczenie: {pollutant}")
 
 
-def plot_concentration_grid(boxes, concentration_values, measurements, save_image=False, image_path=None):
+def plot_concentration_grid(boxes, concentration_values, measurements, pollutant=None, save_image=False, image_path=None):
     """
     Rysuje siatkę pudełek z interpolowanymi/obliczonymi w kolejnych krokach symulacji wartościami stężeń oraz opcjonalnie zapisuje obraz.
     
@@ -651,29 +651,30 @@ def plot_concentration_grid(boxes, concentration_values, measurements, save_imag
     for i, (lat_min, lat_max, lon_min, lon_max) in enumerate(boxes):
         color_value = concentration_values[i]
         if color_value is not None:
-            normalized_value = (color_value - min_value) / (max_value - min_value)
-            color = plt.cm.plasma(normalized_value)  
+            color = plt.cm.plasma((color_value - min_value) / (max_value - min_value))  
         else:
             color = 'lightgrey'
         
         rect = plt.Rectangle((lon_min, lat_min), lon_max - lon_min, lat_max - lat_min, 
-                             linewidth=1, edgecolor='blue', facecolor=color)
+                             linewidth=0.5, edgecolor='black', facecolor=color)
         ax.add_patch(rect)
 
     latitudes = np.array([point["latitude"] for point in measurements])
     longitudes = np.array([point["longitude"] for point in measurements])
-    plt.scatter(longitudes, latitudes, c='black', edgecolor='k', s=100, zorder=5)
+    concentration_values_measurements = np.array([point[f'{pollutant}'] for point in measurements])
+
+    scatter = plt.scatter(longitudes, latitudes, c=concentration_values_measurements, cmap='plasma', edgecolor='k', s=100, zorder=5)
 
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Latitude')
-    plt.colorbar(label='Pollutant Concentration')
+    plt.colorbar(scatter, label='Pollutant Concentration')
     plt.grid(True)
 
     if save_image and image_path:
         plt.savefig(image_path)
 
 
-def simulate_pollution_spread(data, num_steps, dt, box_size=None, grid_density="medium", urbanized=False, margin_boxes=1, debug=False):
+def simulate_pollution_spread(data, num_steps, dt, box_size=None, grid_density="medium", urbanized=False, margin_boxes=1, initial_distance=1, max_increment=1, debug=False):
     """
     Symuluje rozprzestrzenianie się zanieczyszczeń w powietrzu w modelu eulerowskim.
 
@@ -691,7 +692,7 @@ def simulate_pollution_spread(data, num_steps, dt, box_size=None, grid_density="
 
     if debug is False:
       boxes, temp_values, u_values, v_values, co_values = create_multibox_grid_with_interpolated_measurements(
-        data, box_size=box_size, grid_density=grid_density, urbanized=urbanized, margin_boxes=margin_boxes)
+        data, box_size=box_size, grid_density=grid_density, urbanized=urbanized, margin_boxes=margin_boxes, initial_distance=initial_distance, max_increment=max_increment)
     else:
       timestamp = datetime.now().strftime("%Y_%m_%d_%H%M%S")
       directory = f'models/euler_modified_multiboxes_model/Procedural/debug/{timestamp}/plots/'
@@ -700,7 +701,7 @@ def simulate_pollution_spread(data, num_steps, dt, box_size=None, grid_density="
         os.makedirs(directory)
 
       boxes, temp_values, u_values, v_values, co_values = create_multibox_grid_with_interpolated_measurements(
-        data, box_size=box_size, grid_density=grid_density, urbanized=urbanized, margin_boxes=margin_boxes, save_grid_images=True, save_path=directory) 
+        data, box_size=box_size, grid_density=grid_density, urbanized=urbanized, margin_boxes=margin_boxes, initial_distance=initial_distance, max_increment=max_increment, save_grid_images=True, save_path=directory) 
 
     x_coords = sorted(set([box[0] for box in boxes]))
     y_coords = sorted(set([box[2] for box in boxes]))
@@ -731,7 +732,7 @@ def simulate_pollution_spread(data, num_steps, dt, box_size=None, grid_density="
 
     if debug is True:
       image_path = f'models/euler_modified_multiboxes_model/Procedural/debug/{timestamp}/plots/start_pollutant_concentration_grid.png'
-      plot_concentration_grid(boxes, C.flatten(), data, True, image_path)
+      plot_concentration_grid(boxes, C.flatten(), data, "CO_concentration" , True, image_path)
 
     for step in range(num_steps):
         C = update_concentration(C, u, v, K_x, K_y, dx, dy, dt, S_c, nx, ny)
@@ -741,7 +742,7 @@ def simulate_pollution_spread(data, num_steps, dt, box_size=None, grid_density="
         
     if debug is True and step == num_steps-1:
       image_path = f'models/euler_modified_multiboxes_model/Procedural/debug/{timestamp}/plots/final_pollutant_concentration_grid.png'
-      plot_concentration_grid(boxes, C.flatten(), data, True, image_path)
+      plot_concentration_grid(boxes, C.flatten(), data, "CO_concentration", True, image_path)
        
     return C
 
@@ -749,5 +750,11 @@ def simulate_pollution_spread(data, num_steps, dt, box_size=None, grid_density="
 num_steps = 100  
 dt = 0.01  
 
-final_concentration = simulate_pollution_spread(data_2, num_steps, dt, box_size=(0.01,0.2), grid_density="medium", urbanized=False, margin_boxes=5, debug=True)
+# final_concentration = simulate_pollution_spread(data_2, num_steps, dt, box_size=(None, None), grid_density="medium", urbanized=False, margin_boxes=5, debug=True)
+
+# final_concentration = simulate_pollution_spread(data, num_steps, dt, box_size=(None, None), grid_density="medium", urbanized=False, margin_boxes=5, debug=True)
+
+# final_concentration = simulate_pollution_spread(data_woj, num_steps, dt, box_size=(None, None), grid_density="sparse", urbanized=False, margin_boxes=5, debug=True)
+
+final_concentration = simulate_pollution_spread(data_tar, num_steps, dt, box_size=(None, None), grid_density="dense", urbanized=True, margin_boxes=5, debug=True)
  

@@ -119,55 +119,66 @@ def create_uniform_boxes(data, box_size=(None, None), grid_density=None, urbaniz
             
         boxes.append((lat_min_box, lat_max_box, lon_min_box, lon_max_box))
     
-    return boxes, temperature_values.flatten(), u_grid.flatten(), v_grid.flatten(), co_values.flatten()
+    grid_shape = (num_lat_boxes, num_lon_boxes)
+    
+    return boxes, temperature_values.flatten(), u_grid.flatten(), v_grid.flatten(), co_values.flatten(), grid_shape
 
-def interpolate_empty_boxes(boxes, box_values, max_distance=0.01):
+def interpolate_empty_boxes(boxes, box_values, grid_shape, max_distance=1):
     """
-    Interpoluje wartości w pustych pudełkach na podstawie sąsiednich pudełek.
+    Interpoluje wartości w pustych pudełkach na podstawie sąsiednich pudełek w odległości wyrażonej liczbą pudełek. Jako nerby_values znajduje wszystkie pudełka o odległości max_distance w pionie, poziomie oraz po skosie, które mają
+    wartości różne on None.
     
     Parametry:
     - boxes: lista granic geograficznych pudełek [(lat_min, lat_max, lon_min, lon_max), ...]
     - box_values: wartości przypisane do pudełek (None dla pustych pudełek)
-    - max_distance: maksymalna odległość do sąsiednich pudełek dla interpolacji
+    - grid_shape: kształt siatki (liczba pudełek na osi szerokości i długości geograficznej)
+    - max_distance: maksymalna odległość wyrażona liczbą pudełek
     
     Zwraca:
     - box_values: zaktualizowane wartości dla pudełek po interpolacji
     """
-    centers = [(0.5 * (box[0] + box[1]), 0.5 * (box[2] + box[3])) for box in boxes]  
-    tree = KDTree(centers)
+     
+    num_lat_boxes, num_lon_boxes = grid_shape
     
-    for i, value in enumerate(box_values):
-        if value is None:
-            # tree.query: centers[i] - środek aktualnie rozważanego pudełka
-            #             k=5, szukamy 5 najbliższych sasiadów
-            #             distance_upper_bound=max_distance, uwzględnia podczas szukania tylko sasiadów o określonej oganiczonej odłegłości 
-            dist, idx = tree.query(centers[i], k=5, distance_upper_bound=max_distance)
-            nearby_values = [box_values[j] for j in idx if j < len(box_values) and box_values[j] is not None]
-            
-            if nearby_values:
-                box_values[i] = np.mean(nearby_values)
+    for i in range(num_lat_boxes):
+        for j in range(num_lon_boxes):
+            if box_values[i * num_lon_boxes + j] is None: 
+                nearby_values = []
+                for di in range(-max_distance, max_distance + 1):
+                    for dj in range(-max_distance, max_distance + 1):
+                        ni = i + di
+                        nj = j + dj
+                        if 0 <= ni < num_lat_boxes and 0 <= nj < num_lon_boxes:
+                            neighbor_value = box_values[ni * num_lon_boxes + nj]
+                            if neighbor_value is not None:
+                                nearby_values.append(neighbor_value)
+                if nearby_values:
+                    box_values[i * num_lon_boxes + j] = np.mean(nearby_values)
+    
     
     return box_values
 
-def recursive_interpolation_until_filled(boxes, temp_values, u_values, v_values, co_values, initial_distance=0.01, max_increment=0.01):
+def recursive_interpolation_until_filled(boxes, temp_values, u_values, v_values, co_values, grid_shape, initial_distance=1, max_increment=1):
     """
     Rekursywna interpolacja dla temperatury i prędkości wiatru, która kontynuuje, dopóki wszystkie pudełka nie zostaną wypełnione wartościami.
     
     Parametry:
     - boxes: lista granic geograficznych pudełek
     - temp_values, u_values, v_values: wartości przypisane do pudełek (None dla pustych)
-    - initial_distance: początkowa maksymalna odległość do sąsiednich pudełek
-    - max_increment: krok zwiększający maksymalną odległość sąsiadów w każdej iteracji
+    - grid_shape: kształt siatki (liczba pudełek na osi szerokości i długości geograficznej)
+    - initial_distance: początkowa maksymalna odległość do sąsiednich pudełek (liczona w liczbie pudełek)
+    - max_increment: krok zwiększający maksymalną odległość sąsiadów w każdej iteracji (w liczbie pudełek)
     
     Zwraca:
-    - zaktualizowane temp_values, u_values, v_values
+    - zaktualizowane temp_values, u_values, v_values, co_values
     """
+    
     distance = initial_distance
     while any(value is None for value in temp_values) or any(value is None for value in u_values) or any(value is None for value in v_values) or any(value is None for value in co_values):
-        temp_values = interpolate_empty_boxes(boxes, temp_values, max_distance=distance)
-        u_values = interpolate_empty_boxes(boxes, u_values, max_distance=distance)
-        v_values = interpolate_empty_boxes(boxes, v_values, max_distance=distance)
-        co_values = interpolate_empty_boxes(boxes, co_values, max_distance=distance)
+        temp_values = interpolate_empty_boxes(boxes, temp_values, grid_shape, max_distance=distance)
+        u_values = interpolate_empty_boxes(boxes, u_values, grid_shape, max_distance=distance)
+        v_values = interpolate_empty_boxes(boxes, v_values, grid_shape, max_distance=distance)
+        co_values = interpolate_empty_boxes(boxes, co_values, grid_shape, max_distance=distance)
         distance += max_increment
     
     return temp_values, u_values, v_values, co_values
@@ -203,13 +214,15 @@ def plot_temperature_grid(boxes, temp_values, measurements, save_image=False, im
             color = 'lightgrey'
         
         rect = plt.Rectangle((lon_min, lat_min), lon_max - lon_min, lat_max - lat_min, 
-                             linewidth=1, edgecolor='blue', facecolor=color)
+                             linewidth=0.5, edgecolor='black', facecolor=color)
         ax.add_patch(rect)
 
         center_lat = 0.5 * (lat_min + lat_max)
         center_lon = 0.5 * (lon_min + lon_max)
-        if color_value is not None:
-            plt.text(center_lon, center_lat, f'{color_value:.1f}', ha='center', va='center', fontsize=8, color='black', fontweight='bold')
+        
+        # EDIT: wypisywanie temperatury wewnątrz boxa
+        # if color_value is not None:
+        #     plt.text(center_lon, center_lat, f'{color_value:.1f}', ha='center', va='center', fontsize=8, color='black', fontweight='bold')
 
     latitudes = np.array([point["latitude"] for point in measurements])
     longitudes = np.array([point["longitude"] for point in measurements])
@@ -225,7 +238,7 @@ def plot_temperature_grid(boxes, temp_values, measurements, save_image=False, im
     if save_image and image_path:
         plt.savefig(image_path)
 
-def plot_wind_grid(boxes, u_values, v_values, measurements, save_image=False, image_path=None):
+def plot_wind_grid(boxes, u_values, v_values, measurements, grid_shape, save_image=False, image_path=None):
     """
     Rysuje siatkę pudełek z prędkością i kierunkiem wiatru (u, v) oraz opcjonalnie zapisuje obraz.
     
@@ -236,6 +249,9 @@ def plot_wind_grid(boxes, u_values, v_values, measurements, save_image=False, im
     - save_image: boolean, jeśli True, zapisuje obraz do pliku
     - image_path: ścieżka do pliku, w którym zapisany zostanie obraz (jeśli save_image=True)
     """
+    
+    num_boxes = len(boxes) 
+    num_lat_boxes, num_lon_boxes = grid_shape
     
     fig, ax = plt.subplots(figsize=(10, 8))
 
@@ -253,6 +269,17 @@ def plot_wind_grid(boxes, u_values, v_values, measurements, save_image=False, im
         min_speed, max_speed = min(valid_wind_speeds), max(valid_wind_speeds)
     else:
         min_speed, max_speed = 0, 1
+        
+        
+    if num_boxes >= 1000: 
+        arrow_scale_factor = 1
+        step = 5 
+    elif 100 < num_boxes < 1000: 
+        arrow_scale_factor = 0.2
+        step = 1  
+    else: 
+        arrow_scale_factor = 0.4
+        step = 1
 
     
     for i, (lat_min, lat_max, lon_min, lon_max) in enumerate(boxes):
@@ -261,16 +288,12 @@ def plot_wind_grid(boxes, u_values, v_values, measurements, save_image=False, im
         wind_speed = np.sqrt(u_value**2 + v_value**2) if u_value is not None and v_value is not None else None
         
         if wind_speed is not None:
-            if min_speed == max_speed:
-                normalized_speed = 0
-            else:
-                normalized_speed = (wind_speed - min_speed) / (max_speed - min_speed)
-            color = plt.cm.viridis(normalized_speed)  # Używamy palety kolorów 'viridis'
+            color = plt.cm.viridis(wind_speed / max_speed)
         else:
             color = 'lightgrey'
         
         rect = plt.Rectangle((lon_min, lat_min), lon_max - lon_min, lat_max - lat_min, 
-                             linewidth=1, edgecolor='blue', facecolor=color)
+                             linewidth=0.5, edgecolor='black', facecolor=color)
         ax.add_patch(rect)
 
         center_lat = 0.5 * (lat_min + lat_max)
@@ -278,10 +301,10 @@ def plot_wind_grid(boxes, u_values, v_values, measurements, save_image=False, im
         
         lat_min, lat_max, lon_min, lon_max = boxes[0]
         box_size = np.sqrt((lon_max - lon_min)**2 + (lat_max - lat_min)**2)
-        arrow_scale = box_size * 300
+        arrow_scale = box_size * arrow_scale_factor * wind_speed / max_speed if wind_speed is not None else 1
 
-        if u_value is not None and v_value is not None:
-            ax.quiver(center_lon, center_lat, u_value, v_value, scale=arrow_scale, scale_units='inches', color='black', zorder=5)
+        if u_value is not None and v_value is not None and (i % step == 0):
+            ax.quiver(center_lon, center_lat, u_value, v_value, angles='xy', scale_units='xy', scale=1/arrow_scale, color='black', zorder=5)
 
     latitudes = np.array([point["latitude"] for point in measurements])
     longitudes = np.array([point["longitude"] for point in measurements])
@@ -303,6 +326,8 @@ def create_multibox_grid_with_interpolated_measurements(measurements,
                                                         grid_density="medium", 
                                                         urbanized=False, 
                                                         margin_boxes=1, 
+                                                        initial_distance=1,
+                                                        max_increment=1,
                                                         save_grid_images=False,
                                                         save_path=None):
     """
@@ -322,19 +347,19 @@ def create_multibox_grid_with_interpolated_measurements(measurements,
     - box_values: wartości pomiarów przypisane do pudełek (po interpolacji wartości pomiędzy pudełkami)
     """
     
-    boxes, temp_values, u_values, v_values, co_values = create_uniform_boxes(measurements, 
-                                                                  box_size=box_size, 
-                                                                  grid_density=grid_density, 
-                                                                  urbanized=urbanized, 
-                                                                  margin_boxes=margin_boxes)
+    boxes, temp_values, u_values, v_values, co_values, grid_shape = create_uniform_boxes(measurements, 
+                                                                    box_size=box_size, 
+                                                                    grid_density=grid_density, 
+                                                                    urbanized=urbanized, 
+                                                                    margin_boxes=margin_boxes)
     
-    temp_values, u_values, v_values, co_values = recursive_interpolation_until_filled(boxes, temp_values, u_values, v_values, co_values)
+    temp_values, u_values, v_values, co_values = recursive_interpolation_until_filled(boxes, temp_values, u_values, v_values, co_values, grid_shape, initial_distance, max_increment)
     
     if save_grid_images:
         image_path_wind_plot = f'{save_path}/multibox_grid_with_interpolated_wind_values.png'
         image_path_temp_plot = f'{save_path}/multibox_grid_with_interpolated_temp_values.png'
         plot_temperature_grid(boxes, temp_values, measurements, save_image=save_grid_images, image_path=image_path_temp_plot)
-        plot_wind_grid(boxes, u_values, v_values, measurements, save_image=save_grid_images, image_path=image_path_wind_plot)
+        plot_wind_grid(boxes, u_values, v_values, measurements, grid_shape=grid_shape, save_image=save_grid_images, image_path=image_path_wind_plot)
 
     return boxes, temp_values, u_values, v_values, co_values
 
