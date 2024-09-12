@@ -12,7 +12,10 @@ data_2 = [
         "longitude": 23.1,
         "wind_speed": 2.1,   
         "wind_direction": 45,
-        "CO_concentration": 8900,
+        "CO": 8900,
+        "O3": 100,
+        "SO2": 150,
+        "NO2": 115, 
         "temperature": 32.21
     },
     {
@@ -22,7 +25,10 @@ data_2 = [
         "longitude": 24,
         "wind_speed": 2.2,   
         "wind_direction": 56,
-        "CO_concentration": 9800,
+        "CO": 9800,
+        "O3": 100,
+        "SO2": 150,
+        "NO2": 115, 
         "temperature": 32.2
     },
     {
@@ -32,7 +38,10 @@ data_2 = [
         "longitude": 23.8,
         "wind_speed": 1.8,   
         "wind_direction": 33,
-        "CO_concentration": 7899,
+        "CO": 7899,
+        "O3": 100,
+        "SO2": 150,
+        "NO2": 115, 
         "temperature": 32.19
     },
     {
@@ -42,7 +51,10 @@ data_2 = [
         "longitude": 23.5,
         "wind_speed": 2.3,   
         "wind_direction": 48,
-        "CO_concentration": 7980,
+        "CO": 7980,
+        "O3": 100,
+        "SO2": 150,
+        "NO2": 115, 
         "temperature": 32.18
     },
     {
@@ -52,7 +64,10 @@ data_2 = [
         "longitude": 23.8,
         "wind_speed": 2.0,   
         "wind_direction": 102,
-        "CO_concentration": 6790,
+        "CO": 6790,
+        "O3": 100,
+        "SO2": 150,
+        "NO2": 115, 
         "temperature": 32.21
     },
     {
@@ -62,11 +77,13 @@ data_2 = [
         "longitude": 23.6,
         "wind_speed": 2.2,   
         "wind_direction": 79,
-        "CO_concentration": 5600,
+        "CO": 5600,
+        "O3": 100,
+        "SO2": 150,
+        "NO2": 115, 
         "temperature": 32.3
     }
 ]
-
 
 data = [
   {
@@ -77,7 +94,10 @@ data = [
     "temperature": 22.5,
     "wind_speed": 2.5,   
     "wind_direction": 45,
-    "CO_concentration": 5234,
+    "CO": 5234,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 6
   },
   {
@@ -88,7 +108,10 @@ data = [
     "temperature": 23.1,
     "wind_speed": 3.0,   
     "wind_direction": 90,
-    "CO_concentration": 7894,
+    "CO": 7894,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 6
   },
   {
@@ -99,7 +122,10 @@ data = [
     "temperature": 22.8,
     "wind_speed": 2.0,   
     "wind_direction": 135,
-    "CO_concentration": 8900,
+    "CO": 8900,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 6
   },
   {
@@ -110,7 +136,10 @@ data = [
     "temperature": 22.3,
     "wind_speed": 1.8,   
     "wind_direction": 60,
-    "CO_concentration": 4560,
+    "CO": 4560,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 6
   },
   {
@@ -121,7 +150,10 @@ data = [
     "temperature": 23.4,
     "wind_speed": 2.6,   
     "wind_direction": 120,
-    "CO_concentration": 7800,
+    "CO": 7800,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 6
   },
   {
@@ -132,7 +164,10 @@ data = [
     "temperature": 23.0,
     "wind_speed": 2.8,   
     "wind_direction": 100,
-    "CO_concentration": 7900,
+    "CO": 7900,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 6
   },
   {
@@ -143,7 +178,10 @@ data = [
     "temperature": 22.7,
     "wind_speed": 1.8,   
     "wind_direction": 78,
-    "CO_concentration": 8900,
+    "CO": 8900,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 6
   },
   {
@@ -154,7 +192,10 @@ data = [
     "temperature": 22.9,
     "wind_speed": 2.1,   
     "wind_direction": 108,
-    "CO_concentration": 11230,
+    "CO": 11230,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115,
     "flightId": 6
   },
   {
@@ -165,7 +206,10 @@ data = [
     "temperature": 23.2,
     "wind_speed": 2.8,   
     "wind_direction": 132,
-    "CO_concentration": 10900,
+    "CO": 10900,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115,
     "flightId": 6
   },
   {
@@ -176,7 +220,10 @@ data = [
     "temperature": 23.3,
     "wind_speed": 2.3,   
     "wind_direction": 34,
-    "CO_concentration": 9300,
+    "CO": 9300,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 6
   },
   {
@@ -187,7 +234,10 @@ data = [
     "temperature": 23.0,
     "wind_speed": 2.2,   
     "wind_direction": 22,
-    "CO_concentration": 14600,
+    "CO": 14600,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115,
     "flightId": 6
   },
   {
@@ -198,11 +248,13 @@ data = [
     "temperature": 22.6,
     "wind_speed": 2.2,   
     "wind_direction": 78,
-    "CO_concentration": 6770,
+    "CO": 6770,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 6
   }
 ]
-
 
 data_woj = [
   {
@@ -213,7 +265,10 @@ data_woj = [
     "temperature": 17.8,
     "wind_speed": 1.2,
     "wind_direction": 120,
-    "CO_concentration": 3500,
+    "CO": 3500,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -224,7 +279,10 @@ data_woj = [
     "temperature": 19.4,
     "wind_speed": 3.0,
     "wind_direction": 75,
-    "CO_concentration": 4100,
+    "CO": 4100,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -235,7 +293,10 @@ data_woj = [
     "temperature": 20.5,
     "wind_speed": 2.6,
     "wind_direction": 90,
-    "CO_concentration": 5000,
+    "CO": 5000,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -246,7 +307,10 @@ data_woj = [
     "temperature": 21.2,
     "wind_speed": 1.8,
     "wind_direction": 45,
-    "CO_concentration": 4700,
+    "CO": 4700,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -257,7 +321,10 @@ data_woj = [
     "temperature": 22.6,
     "wind_speed": 2.2,
     "wind_direction": 78,
-    "CO_concentration": 6770,
+    "CO": 6770,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -268,7 +335,10 @@ data_woj = [
     "temperature": 23.1,
     "wind_speed": 3.0,
     "wind_direction": 90,
-    "CO_concentration": 7894,
+    "CO": 7894,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -279,7 +349,10 @@ data_woj = [
     "temperature": 22.8,
     "wind_speed": 2.0,
     "wind_direction": 135,
-    "CO_concentration": 8900,
+    "CO": 8900,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -290,7 +363,10 @@ data_woj = [
     "temperature": 18.7,
     "wind_speed": 2.5,
     "wind_direction": 100,
-    "CO_concentration": 3200,
+    "CO": 3200,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -301,7 +377,10 @@ data_woj = [
     "temperature": 20.0,
     "wind_speed": 1.5,
     "wind_direction": 60,
-    "CO_concentration": 3400,
+    "CO": 3400,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -312,7 +391,10 @@ data_woj = [
     "temperature": 19.6,
     "wind_speed": 2.2,
     "wind_direction": 80,
-    "CO_concentration": 3300,
+    "CO": 3300,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -323,7 +405,10 @@ data_woj = [
     "temperature": 21.4,
     "wind_speed": 2.1,
     "wind_direction": 40,
-    "CO_concentration": 4100,
+    "CO": 4100,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -334,7 +419,10 @@ data_woj = [
     "temperature": 21.0,
     "wind_speed": 1.9,
     "wind_direction": 55,
-    "CO_concentration": 4300,
+    "CO": 4300,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -345,7 +433,10 @@ data_woj = [
     "temperature": 19.5,
     "wind_speed": 2.3,
     "wind_direction": 90,
-    "CO_concentration": 3200,
+    "CO": 3200,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -356,7 +447,10 @@ data_woj = [
     "temperature": 18.9,
     "wind_speed": 1.8,
     "wind_direction": 100,
-    "CO_concentration": 2900,
+    "CO": 2900,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -367,7 +461,10 @@ data_woj = [
     "temperature": 22.0,
     "wind_speed": 2.4,
     "wind_direction": 110,
-    "CO_concentration": 4800,
+    "CO": 4800,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -378,7 +475,10 @@ data_woj = [
     "temperature": 17.4,
     "wind_speed": 1.7,
     "wind_direction": 80,
-    "CO_concentration": 3100,
+    "CO": 3100,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -389,7 +489,10 @@ data_woj = [
     "temperature": 20.2,
     "wind_speed": 1.9,
     "wind_direction": 130,
-    "CO_concentration": 3400,
+    "CO": 3400,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -400,7 +503,10 @@ data_woj = [
     "temperature": 21.7,
     "wind_speed": 2.0,
     "wind_direction": 95,
-    "CO_concentration": 3700,
+    "CO": 3700,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -411,7 +517,10 @@ data_woj = [
     "temperature": 20.9,
     "wind_speed": 2.3,
     "wind_direction": 70,
-    "CO_concentration": 3500,
+    "CO": 3500,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -422,7 +531,10 @@ data_woj = [
     "temperature": 18.8,
     "wind_speed": 1.8,
     "wind_direction": 85,
-    "CO_concentration": 3200,
+    "CO": 3200,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -433,7 +545,10 @@ data_woj = [
     "temperature": 19.4,
     "wind_speed": 1.6,
     "wind_direction": 110,
-    "CO_concentration": 3300,
+    "CO": 3300,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   },
   {
@@ -444,7 +559,10 @@ data_woj = [
     "temperature": 22.1,
     "wind_speed": 2.2,
     "wind_direction": 60,
-    "CO_concentration": 4000,
+    "CO": 4000,
+    "O3": 100,
+    "SO2": 150,
+    "NO2": 115, 
     "flightId": 1
   }
 ]
@@ -603,7 +721,7 @@ def update_concentration(C, u, v, K_x, K_y, dx, dy, dt, S_c, nx, ny):
     return C_new
 
 
-def calculate_diffusion_coefficient(pollutant, temperature, pressure=101325, additional_params=None):
+def calculate_diffusion_coefficient(pollutant, temperature, pressure=101325):
     """
     Oblicza współczynnik dyfuzji w powietrzu dla zanieczyszczenia w zależności od temperatury, ciśnienia i innych parametrów.
     
@@ -611,21 +729,60 @@ def calculate_diffusion_coefficient(pollutant, temperature, pressure=101325, add
     - pollutant: str, nazwa zanieczyszczenia (np. 'CO')
     - temperature: temperatura w stopniach Celsjusza
     - pressure: ciśnienie w Pa (domyślnie 101325 Pa)
-    - additional_params: dodatkowe parametry, jeśli są potrzebne do obliczeń (opcjonalnie)
     
     Zwraca:
     - Współczynnik dyfuzji (K) w [m^2/s]
     """
-    if pollutant == 'CO':
-        T_kelvin = temperature + 273.15  # zamiana temperatury na Kelwiny
-        D_0 = 0.16  # Współczynnik dyfuzji CO w powietrzu w standardowych warunkach [cm^2/s]
-        D_0 /= 10000  # Zamiana z cm^2/s na m^2/s
 
-        # Empiryczna zależność od temperatury, na podstawie prawa Arrheniusa
-        K = D_0 * (T_kelvin / 293.15) ** 1.75
-        return K
-    else:
+    coefficients = {
+      "CO": {
+        "D_0": 0.16,
+        "exponent": 1.75
+      },
+      "NO2": {
+          "D_0": 0.14,
+          "exponent": 1.76
+      },
+      "SO2": {
+          "D_0": 0.15,
+          "exponent": 1.78
+      },
+      "O3": {
+          "D_0": 0.11,
+          "exponent": 1.82
+      },
+      "CH4": {
+          "D_0": 0.22,
+          "exponent": 1.70
+      },
+      "NH3": {
+          "D_0": 0.19,
+          "exponent": 1.74
+      },
+      "C2H6": {
+          "D_0": 0.19,
+          "exponent": 1.73
+      },
+      "H2S": {
+          "D_0": 0.13,
+          "exponent": 1.80
+      }
+    }
+
+    if pollutant not in coefficients:
         raise ValueError(f"Nieznane zanieczyszczenie: {pollutant}")
+
+    coeffs = coefficients[pollutant]
+    D_0 = coeffs['D_0'] / 10000  # Zamiana z cm^2/s na m^2/s
+    exponent = coeffs['exponent']
+
+    T_kelvin = temperature + 273.15  
+
+    # Empiryczna zależność od temperatury, na podstawie prawa Arrheniusa
+    K = D_0 * (T_kelvin / 293.15) ** exponent
+
+    return K
+
 
 
 def plot_concentration_grid(boxes, concentration_values, measurements, pollutant=None, save_image=False, image_path=None):
@@ -639,21 +796,30 @@ def plot_concentration_grid(boxes, concentration_values, measurements, pollutant
     - save_image: boolean, jeśli True, zapisuje obraz do pliku
     - image_path: ścieżka do pliku, w którym zapisany zostanie obraz (jeśli save_image=True)
     """
+    pollutants_ranges = {
+        "SO2": [0, 350],
+        "NO2": [0, 200],
+        "PM10": [0, 200],
+        "PM2.5": [0, 75],
+        "O3": [0, 180],
+        "CO": [0, 15400]
+    }
+    
+    range_min, range_max = pollutants_ranges.get(pollutant, [0, 1])
+        
+    color_map = plt.cm.plasma(np.linspace(0, 1, 256))
     
     fig, ax = plt.subplots(figsize=(10, 8))
-
-    valid_values = [value for value in concentration_values if value is not None]
-    if valid_values:
-        min_value, max_value = min(valid_values), max(valid_values)
-    else:
-        min_value, max_value = 0, 1
 
     for i, (lat_min, lat_max, lon_min, lon_max) in enumerate(boxes):
         color_value = concentration_values[i]
         if color_value is not None:
-            color = plt.cm.plasma((color_value - min_value) / (max_value - min_value))  
+          if color_value > range_max:
+              color_value = range_max  
+          color_idx = int(np.clip((color_value / range_max) * 255, 0, 255))
+          color = color_map[color_idx]
         else:
-            color = 'lightgrey'
+          color = 'lightgrey'
         
         rect = plt.Rectangle((lon_min, lat_min), lon_max - lon_min, lat_max - lat_min, 
                              linewidth=0.5, edgecolor='black', facecolor=color)
@@ -667,14 +833,14 @@ def plot_concentration_grid(boxes, concentration_values, measurements, pollutant
 
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Latitude')
-    plt.colorbar(scatter, label='Pollutant Concentration')
+    plt.colorbar(scatter, label=f'{pollutant} Concentration')
     plt.grid(True)
 
     if save_image and image_path:
         plt.savefig(image_path)
 
 
-def simulate_pollution_spread(data, num_steps, dt, box_size=None, grid_density="medium", urbanized=False, margin_boxes=1, initial_distance=1, max_increment=1, debug=False):
+def simulate_pollution_spread(data, num_steps, dt, pollutants, box_size=None, grid_density="medium", urbanized=False, margin_boxes=1, initial_distance=1, max_increment=1, debug=False):
     """
     Symuluje rozprzestrzenianie się zanieczyszczeń w powietrzu w modelu eulerowskim.
 
@@ -682,6 +848,7 @@ def simulate_pollution_spread(data, num_steps, dt, box_size=None, grid_density="
     - data: dane o punktach pomiarowych
     - num_steps: liczba kroków czasowych do symulacji
     - dt: krok czasowy
+    - pollutants: lista zanieczyszczeń (np. ["CO", "O3", "NO2"])
     - min_box_size, max_box_size: minimalny i maksymalny rozmiar pudełek
     - margin: margines w obszarze siatki
     - debug: jeśli True, zapisuje obrazy debugowania
@@ -691,8 +858,8 @@ def simulate_pollution_spread(data, num_steps, dt, box_size=None, grid_density="
     """
 
     if debug is False:
-      boxes, temp_values, u_values, v_values, co_values = create_multibox_grid_with_interpolated_measurements(
-        data, box_size=box_size, grid_density=grid_density, urbanized=urbanized, margin_boxes=margin_boxes, initial_distance=initial_distance, max_increment=max_increment)
+      boxes, temp_values, u_values, v_values, pollutant_values  = create_multibox_grid_with_interpolated_measurements(
+        data, pollutants, box_size=box_size, grid_density=grid_density, urbanized=urbanized, margin_boxes=margin_boxes, initial_distance=initial_distance, max_increment=max_increment)
     else:
       timestamp = datetime.now().strftime("%Y_%m_%d_%H%M%S")
       directory = f'models/euler_modified_multiboxes_model/Procedural/debug/{timestamp}/plots/'
@@ -700,51 +867,56 @@ def simulate_pollution_spread(data, num_steps, dt, box_size=None, grid_density="
       if not os.path.exists(directory):
         os.makedirs(directory)
 
-      boxes, temp_values, u_values, v_values, co_values = create_multibox_grid_with_interpolated_measurements(
-        data, box_size=box_size, grid_density=grid_density, urbanized=urbanized, margin_boxes=margin_boxes, initial_distance=initial_distance, max_increment=max_increment, save_grid_images=True, save_path=directory) 
-
+      boxes, temp_values, u_values, v_values, pollutant_values  = create_multibox_grid_with_interpolated_measurements(
+        data, pollutants, box_size=box_size, grid_density=grid_density, urbanized=urbanized, margin_boxes=margin_boxes, initial_distance=initial_distance, max_increment=max_increment, save_grid_images=True, save_path=directory) 
+      
+    # stałe dla wszystkich siatek
     x_coords = sorted(set([box[0] for box in boxes]))
     y_coords = sorted(set([box[2] for box in boxes]))
 
     nx = len(x_coords)
     ny = len(y_coords)
+    
+    final_concentrations = {}
+    
+    for pollutant in pollutants:
+      C = np.array(pollutant_values[pollutant]).reshape((nx, ny))
 
-    # uogólnij dla różnych zanieczyszczeń nie tylko CO 
-    C = np.array(co_values).reshape((nx, ny))
+      K_x = np.zeros_like(C)
+      K_y = np.zeros_like(C)
 
-    K_x = np.zeros_like(C)
-    K_y = np.zeros_like(C)
+      for i in range(nx):
+          for j in range(ny):
+              K = calculate_diffusion_coefficient(pollutant, temp_values[i * ny + j])  
+              K_x[i, j] = K
+              K_y[i, j] = K
 
-    for i in range(nx):
-        for j in range(ny):
-            K = calculate_diffusion_coefficient('CO', temp_values[i * ny + j])  
-            K_x[i, j] = K
-            K_y[i, j] = K
-
-    u = np.array(u_values).reshape((nx, ny))  
-    v = np.array(v_values).reshape((nx, ny)) 
+      u = np.array(u_values).reshape((nx, ny))  
+      v = np.array(v_values).reshape((nx, ny)) 
  
-    dx = (x_coords[1] - x_coords[0])  
-    dy = (y_coords[1] - y_coords[0]) 
+      dx = (x_coords[1] - x_coords[0])  
+      dy = (y_coords[1] - y_coords[0]) 
 
-    # założenie - brak dodatkowych źródeł emisji 
-    S_c = np.zeros_like(C) 
+      # założenie - brak dodatkowych źródeł emisji 
+      S_c = np.zeros_like(C) 
 
-    if debug is True:
-      image_path = f'models/euler_modified_multiboxes_model/Procedural/debug/{timestamp}/plots/start_pollutant_concentration_grid.png'
-      plot_concentration_grid(boxes, C.flatten(), data, "CO_concentration" , True, image_path)
+      if debug is True:
+        image_path = f'{directory}start_{pollutant}_concentration_grid.png'
+        plot_concentration_grid(boxes, C.flatten(), data, pollutant , True, image_path)
 
-    for step in range(num_steps):
-        C = update_concentration(C, u, v, K_x, K_y, dx, dy, dt, S_c, nx, ny)
-        if debug is True:
-           # create and save debug files from each step
-           pass
+      for step in range(num_steps):
+          C = update_concentration(C, u, v, K_x, K_y, dx, dy, dt, S_c, nx, ny)
+          if debug is True:
+            # create and save debug files from each step
+            pass
         
-    if debug is True and step == num_steps-1:
-      image_path = f'models/euler_modified_multiboxes_model/Procedural/debug/{timestamp}/plots/final_pollutant_concentration_grid.png'
-      plot_concentration_grid(boxes, C.flatten(), data, "CO_concentration", True, image_path)
+      if debug is True and step == num_steps-1:
+        image_path = f'{directory}end_{pollutant}_concentration_grid.png'
+        plot_concentration_grid(boxes, C.flatten(), data, pollutant, True, image_path)
+        
+      final_concentrations[pollutant] = C
        
-    return C
+    return final_concentrations
 
 
 num_steps = 100  
@@ -752,9 +924,9 @@ dt = 0.01
 
 # final_concentration = simulate_pollution_spread(data_2, num_steps, dt, box_size=(None, None), grid_density="medium", urbanized=False, margin_boxes=5, debug=True)
 
-# final_concentration = simulate_pollution_spread(data, num_steps, dt, box_size=(None, None), grid_density="medium", urbanized=False, margin_boxes=5, debug=True)
+final_concentration = simulate_pollution_spread(data, num_steps, dt, pollutants=["CO", "NO2", "SO2", "O3"], box_size=(None, None), grid_density="medium", urbanized=False, margin_boxes=5, initial_distance=5, debug=True)
 
 # final_concentration = simulate_pollution_spread(data_woj, num_steps, dt, box_size=(None, None), grid_density="sparse", urbanized=False, margin_boxes=5, debug=True)
 
-final_concentration = simulate_pollution_spread(data_tar, num_steps, dt, box_size=(None, None), grid_density="dense", urbanized=True, margin_boxes=5, debug=True)
+# final_concentration = simulate_pollution_spread(data_tar, num_steps, dt, pollutants=["CO", "NO2", "SO2", "O3"], box_size=(None, None), grid_density="dense", urbanized=True, margin_boxes=5, debug=True)
  

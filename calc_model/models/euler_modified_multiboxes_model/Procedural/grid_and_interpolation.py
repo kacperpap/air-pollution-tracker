@@ -3,13 +3,14 @@ from scipy.spatial import KDTree
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-def create_uniform_boxes(data, box_size=(None, None), grid_density=None, urbanized=False, margin_boxes=1):
+def create_uniform_boxes(data, pollutants, box_size=(None, None), grid_density=None, urbanized=False, margin_boxes=1):
     """
     Tworzy siatkę pudełek o rozmiarze opartym na średniej odległości między punktami pomiarowymi,
     uwzględniając dodatkowe parametry takie jak gęstość siatki oraz urbanizacja.
 
     Parametry:
     - data: lista punktów pomiarowych (zawiera latitude, longitude, temperature, wind_speed, wind_direction)
+    - pollutants: lista zanieczyszczeń do uwzględnienia (np. ["CO", "O3", "NO2"])
     - box_size: rozmiar pudełka w stopniach (jeśli podany, ignoruje inne parametry dotyczące gęstości)
     - grid_density: gęstość siatki ('gęsta', 'średnia', 'rzadka')
     - urbanized: czy obszar jest zurbanizowany (bool)
@@ -20,6 +21,7 @@ def create_uniform_boxes(data, box_size=(None, None), grid_density=None, urbaniz
     - temperature_values: wartości temperatur przypisane do pudełek
     - u_grid: wartości składowej wiatru w kierunku x przypisane do pudełek
     - v_grid: wartości składowej wiatru w kierunku y przypisane do pudełek
+    - pollutant_values: słownik z wartościami stężeń dla każdego z zanieczyszczeń
     - co_values: wartości stężenia CO przypisane do pudełek
     """
 
@@ -28,7 +30,8 @@ def create_uniform_boxes(data, box_size=(None, None), grid_density=None, urbaniz
     temperatures = np.array([point["temperature"] for point in data])
     wind_speeds = np.array([point["wind_speed"] for point in data])
     wind_directions = np.array([point["wind_direction"] for point in data])
-    co_concentrations = np.array([point["CO_concentration"] for point in data])
+
+    pollutants_initial_values = {pollutant: np.array([point[f'{pollutant}'] for point in data]) for pollutant in pollutants}
     
 
     """
@@ -48,14 +51,7 @@ def create_uniform_boxes(data, box_size=(None, None), grid_density=None, urbaniz
     if box_size[0] is None and box_size[1] is None:
         total_area = (lat_max - lat_min) * (lon_max - lon_min)
         
-        if grid_density == 'dense':
-            target_boxes = 1000
-        elif grid_density == 'medium':
-            target_boxes = 100
-        elif grid_density == 'sparse':
-            target_boxes = 10
-        else:
-            target_boxes = 100 
+        target_boxes = {"dense": 1000, "medium": 100, "sparse": 10}.get(grid_density, 100)
         
         if urbanized:
             target_boxes *= 2
@@ -71,8 +67,8 @@ def create_uniform_boxes(data, box_size=(None, None), grid_density=None, urbaniz
             box_size_lat = box_size[0]
             box_size_lon = box_size[0]
         else:
-            box_size_lat = box_size[0]
-            box_size_lon = box_size[1]
+            box_size_lat, box_size_lon = box_size
+
 
     lat_min -= margin_boxes * box_size_lat
     lat_max += margin_boxes * box_size_lat
@@ -83,15 +79,15 @@ def create_uniform_boxes(data, box_size=(None, None), grid_density=None, urbaniz
     num_lon_boxes = int(np.ceil((lon_max - lon_min) / box_size_lon))
     
     boxes = []
+    pollutant_values = {pollutant: np.full((num_lat_boxes, num_lon_boxes), None) for pollutant in pollutants}
     temperature_values = np.full((num_lat_boxes, num_lon_boxes), None)
-    co_values = np.full((num_lat_boxes, num_lon_boxes), None)
     u_grid = np.full((num_lat_boxes, num_lon_boxes), None)
     v_grid = np.full((num_lat_boxes, num_lon_boxes), None)
     
     # obliczanie indeksów pudełek do których przypisujemy dane pomiarowe
     # lat - lat_min określa położenie na szerokości geograficzniej danego punktu pomiarowego jako odległość o poczatku siatki,
     # po czym podzielenie przez szerokość pudełka i zaokraglenie w górę daje nam index pudełka do którego przypisujemy zmierzone wartości 
-    for lat, lon, temp, u, v, co in zip(latitudes, longitudes, temperatures, u_values, v_values, co_concentrations):
+    for lat, lon, temp, u, v, *pollutant_concentrations in zip(latitudes, longitudes, temperatures, u_values, v_values,  *pollutants_initial_values.values()):
         lat_idx = int((lat - lat_min) / box_size_lat)
         lon_idx = int((lon - lon_min) / box_size_lon)
         
@@ -100,14 +96,20 @@ def create_uniform_boxes(data, box_size=(None, None), grid_density=None, urbaniz
                 temperature_values[lat_idx, lon_idx] = temp
                 u_grid[lat_idx, lon_idx] = u
                 v_grid[lat_idx, lon_idx] = v
-                co_values[lat_idx, lon_idx] = co
+                                
+                for pollutant, concentration in zip(pollutant_values.keys(), pollutant_concentrations):
+                    pollutant_values[pollutant][lat_idx, lon_idx] = concentration
+                    
             else:
                 temperature_values[lat_idx, lon_idx] = (temperature_values[lat_idx, lon_idx] + temp) / 2
                 u_grid[lat_idx, lon_idx] = (u_grid[lat_idx, lon_idx] + u) / 2
                 v_grid[lat_idx, lon_idx] = (v_grid[lat_idx, lon_idx] + v) / 2
-                co_values[lat_idx, lon_idx] = (co_values[lat_idx, lon_idx] + co) / 2
-
-
+                
+                for pollutant, concentration in zip(pollutant_values.keys(), pollutant_concentrations):
+                    if pollutant_values[pollutant][lat_idx, lon_idx] is None:
+                        pollutant_values[pollutant][lat_idx, lon_idx] = concentration
+                    else:
+                        pollutant_values[pollutant][lat_idx, lon_idx] = (pollutant_values[pollutant][lat_idx, lon_idx] + concentration) / 2
 
 
     for i in range(num_lat_boxes):
@@ -121,7 +123,9 @@ def create_uniform_boxes(data, box_size=(None, None), grid_density=None, urbaniz
     
     grid_shape = (num_lat_boxes, num_lon_boxes)
     
-    return boxes, temperature_values.flatten(), u_grid.flatten(), v_grid.flatten(), co_values.flatten(), grid_shape
+    flattened_pollutant_values = {pollutant: values.flatten() for pollutant, values in pollutant_values.items()}
+    
+    return boxes, temperature_values.flatten(), u_grid.flatten(), v_grid.flatten(), flattened_pollutant_values, grid_shape
 
 def interpolate_empty_boxes(boxes, box_values, grid_shape, max_distance=1):
     """
@@ -158,30 +162,40 @@ def interpolate_empty_boxes(boxes, box_values, grid_shape, max_distance=1):
     
     return box_values
 
-def recursive_interpolation_until_filled(boxes, temp_values, u_values, v_values, co_values, grid_shape, initial_distance=1, max_increment=1):
+def recursive_interpolation_until_filled(boxes, temp_values, u_values, v_values, pollutant_values, grid_shape, initial_distance=1, max_increment=1):
     """
     Rekursywna interpolacja dla temperatury i prędkości wiatru, która kontynuuje, dopóki wszystkie pudełka nie zostaną wypełnione wartościami.
     
     Parametry:
     - boxes: lista granic geograficznych pudełek
     - temp_values, u_values, v_values: wartości przypisane do pudełek (None dla pustych)
+    - pollutant_values: słownik zawierający wartości dla każdego zanieczyszczenia
     - grid_shape: kształt siatki (liczba pudełek na osi szerokości i długości geograficznej)
     - initial_distance: początkowa maksymalna odległość do sąsiednich pudełek (liczona w liczbie pudełek)
     - max_increment: krok zwiększający maksymalną odległość sąsiadów w każdej iteracji (w liczbie pudełek)
     
     Zwraca:
-    - zaktualizowane temp_values, u_values, v_values, co_values
+    - zaktualizowane temp_values, u_values, v_values, pollutant_values
     """
     
     distance = initial_distance
-    while any(value is None for value in temp_values) or any(value is None for value in u_values) or any(value is None for value in v_values) or any(value is None for value in co_values):
+    
+    while (
+        any(value is None for value in temp_values) or 
+        any(value is None for value in u_values) or 
+        any(value is None for value in v_values) or 
+        any(any(value is None for value in pollutant_values[pollutant]) for pollutant in pollutant_values)
+    ):
         temp_values = interpolate_empty_boxes(boxes, temp_values, grid_shape, max_distance=distance)
         u_values = interpolate_empty_boxes(boxes, u_values, grid_shape, max_distance=distance)
         v_values = interpolate_empty_boxes(boxes, v_values, grid_shape, max_distance=distance)
-        co_values = interpolate_empty_boxes(boxes, co_values, grid_shape, max_distance=distance)
+
+        for pollutant in pollutant_values:
+            pollutant_values[pollutant] = interpolate_empty_boxes(boxes, pollutant_values[pollutant], grid_shape, max_distance=distance)
+        
         distance += max_increment
     
-    return temp_values, u_values, v_values, co_values
+    return temp_values, u_values, v_values, pollutant_values
 
 
 def plot_temperature_grid(boxes, temp_values, measurements, save_image=False, image_path=None):
@@ -198,7 +212,6 @@ def plot_temperature_grid(boxes, temp_values, measurements, save_image=False, im
     
     fig, ax = plt.subplots(figsize=(10, 8))
 
-    # normalizacja 
     valid_values = [value for value in temp_values if value is not None]
     if valid_values:
         min_value, max_value = min(valid_values), max(valid_values)
@@ -320,8 +333,10 @@ def plot_wind_grid(boxes, u_values, v_values, measurements, grid_shape, save_ima
 
     if save_image and image_path:
         plt.savefig(image_path)
+        
     
-def create_multibox_grid_with_interpolated_measurements(measurements, 
+def create_multibox_grid_with_interpolated_measurements(measurements,
+                                                        pollutants, 
                                                         box_size=None, 
                                                         grid_density="medium", 
                                                         urbanized=False, 
@@ -335,6 +350,7 @@ def create_multibox_grid_with_interpolated_measurements(measurements,
     
     Parametry:
     - measurements: lista punktów pomiarowych (zawiera latitude, longitude, temperature, wind speed oraz wind direction)
+    - pollutants: lista zanieczyszczeń (np. ["CO", "O3", "NO2"])
     - box_size: początkowy rozmiar pudełka (w stopniach)
     - min_box_size: minimalny rozmiar pudełka (w stopniach)
     - max_box_size: maksymalny rozmiar pudełka (w stopniach)
@@ -346,14 +362,23 @@ def create_multibox_grid_with_interpolated_measurements(measurements,
     - boxes: lista granic geograficznych pudełek w formacie [(lat_min, lat_max, lon_min, lon_max), ...]
     - box_values: wartości pomiarów przypisane do pudełek (po interpolacji wartości pomiędzy pudełkami)
     """
+        
+    boxes, temp_values, u_values, v_values, pollutant_values, grid_shape = create_uniform_boxes(measurements, 
+                                                                                                pollutants,
+                                                                                                box_size=box_size, 
+                                                                                                grid_density=grid_density, 
+                                                                                                urbanized=urbanized, 
+                                                                                                margin_boxes=margin_boxes)
     
-    boxes, temp_values, u_values, v_values, co_values, grid_shape = create_uniform_boxes(measurements, 
-                                                                    box_size=box_size, 
-                                                                    grid_density=grid_density, 
-                                                                    urbanized=urbanized, 
-                                                                    margin_boxes=margin_boxes)
     
-    temp_values, u_values, v_values, co_values = recursive_interpolation_until_filled(boxes, temp_values, u_values, v_values, co_values, grid_shape, initial_distance, max_increment)
+    temp_values, u_values, v_values, pollutant_values = recursive_interpolation_until_filled(boxes, 
+                                                                                             temp_values, 
+                                                                                             u_values, 
+                                                                                             v_values, 
+                                                                                             pollutant_values, 
+                                                                                             grid_shape, 
+                                                                                             initial_distance, 
+                                                                                             max_increment)
     
     if save_grid_images:
         image_path_wind_plot = f'{save_path}/multibox_grid_with_interpolated_wind_values.png'
@@ -361,6 +386,6 @@ def create_multibox_grid_with_interpolated_measurements(measurements,
         plot_temperature_grid(boxes, temp_values, measurements, save_image=save_grid_images, image_path=image_path_temp_plot)
         plot_wind_grid(boxes, u_values, v_values, measurements, grid_shape=grid_shape, save_image=save_grid_images, image_path=image_path_wind_plot)
 
-    return boxes, temp_values, u_values, v_values, co_values
+    return boxes, temp_values, u_values, v_values, pollutant_values
 
 
