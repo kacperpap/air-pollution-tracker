@@ -104,7 +104,7 @@ data = [
     "O3": 100,
     "SO2": 150,
     "NO2": 115, 
-    "pressure": 101325,
+    "pressure": 101825,
     "flightId": 6
   },
   {
@@ -115,7 +115,7 @@ data = [
     "temperature": 23.1,
     "wind_speed": 3.0,   
     "wind_direction": 90,
-    "pressure": 101325,
+    "pressure": 101125,
     "CO": 7894,
     "O3": 100,
     "SO2": 150,
@@ -908,7 +908,7 @@ def simulate_pollution_spread(data, num_steps, dt, pollutants, box_size=None, gr
     """
 
     if debug is False:
-      boxes, temp_values, u_values, v_values, pollutant_values  = create_multibox_grid_with_interpolated_measurements(
+      boxes, temp_values, press_values, u_values, v_values, pollutant_values  = create_multibox_grid_with_interpolated_measurements(
         data, pollutants, box_size=box_size, grid_density=grid_density, urbanized=urbanized, margin_boxes=margin_boxes, initial_distance=initial_distance, max_increment=max_increment)
     else:
       timestamp = datetime.now().strftime("%Y_%m_%d_%H%M%S")
@@ -917,7 +917,7 @@ def simulate_pollution_spread(data, num_steps, dt, pollutants, box_size=None, gr
       if not os.path.exists(directory):
         os.makedirs(directory)
 
-      boxes, temp_values, u_values, v_values, pollutant_values  = create_multibox_grid_with_interpolated_measurements(
+      boxes, temp_values, press_values, u_values, v_values, pollutant_values  = create_multibox_grid_with_interpolated_measurements(
         data, pollutants, box_size=box_size, grid_density=grid_density, urbanized=urbanized, margin_boxes=margin_boxes, initial_distance=initial_distance, max_increment=max_increment, save_grid_images=True, save_path=directory) 
       
     # stałe dla wszystkich siatek
@@ -937,7 +937,7 @@ def simulate_pollution_spread(data, num_steps, dt, pollutants, box_size=None, gr
 
       for i in range(nx):
           for j in range(ny):
-              K = calculate_diffusion_coefficient(pollutant, temp_values[i * ny + j])  
+              K = calculate_diffusion_coefficient(pollutant, temp_values[i * ny + j], press_values[i * ny + j])  
               K_x[i, j] = K
               K_y[i, j] = K
 

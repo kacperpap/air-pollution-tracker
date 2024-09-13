@@ -28,6 +28,7 @@ def create_uniform_boxes(data, pollutants, box_size=(None, None), grid_density=N
     latitudes = np.array([point["latitude"] for point in data])
     longitudes = np.array([point["longitude"] for point in data])
     temperatures = np.array([point["temperature"] for point in data])
+    pressures = np.array([point["pressure"] for point in data])
     wind_speeds = np.array([point["wind_speed"] for point in data])
     wind_directions = np.array([point["wind_direction"] for point in data])
 
@@ -81,19 +82,21 @@ def create_uniform_boxes(data, pollutants, box_size=(None, None), grid_density=N
     boxes = []
     pollutant_values = {pollutant: np.full((num_lat_boxes, num_lon_boxes), None) for pollutant in pollutants}
     temperature_values = np.full((num_lat_boxes, num_lon_boxes), None)
+    pressure_values = np.full((num_lat_boxes, num_lon_boxes), None)
     u_grid = np.full((num_lat_boxes, num_lon_boxes), None)
     v_grid = np.full((num_lat_boxes, num_lon_boxes), None)
     
     # obliczanie indeksów pudełek do których przypisujemy dane pomiarowe
     # lat - lat_min określa położenie na szerokości geograficzniej danego punktu pomiarowego jako odległość o poczatku siatki,
     # po czym podzielenie przez szerokość pudełka i zaokraglenie w górę daje nam index pudełka do którego przypisujemy zmierzone wartości 
-    for lat, lon, temp, u, v, *pollutant_concentrations in zip(latitudes, longitudes, temperatures, u_values, v_values,  *pollutants_initial_values.values()):
+    for lat, lon, temp, press, u, v, *pollutant_concentrations in zip(latitudes, longitudes, temperatures, pressures, u_values, v_values,  *pollutants_initial_values.values()):
         lat_idx = int((lat - lat_min) / box_size_lat)
         lon_idx = int((lon - lon_min) / box_size_lon)
         
         if 0 <= lat_idx < num_lat_boxes and 0 <= lon_idx < num_lon_boxes:
             if temperature_values[lat_idx, lon_idx] is None:
                 temperature_values[lat_idx, lon_idx] = temp
+                pressure_values[lat_idx, lon_idx] = press
                 u_grid[lat_idx, lon_idx] = u
                 v_grid[lat_idx, lon_idx] = v
                                 
@@ -102,6 +105,7 @@ def create_uniform_boxes(data, pollutants, box_size=(None, None), grid_density=N
                     
             else:
                 temperature_values[lat_idx, lon_idx] = (temperature_values[lat_idx, lon_idx] + temp) / 2
+                pressure_values[lat_idx, lon_idx] = (pressure_values[lat_idx, lon_idx] + press) / 2
                 u_grid[lat_idx, lon_idx] = (u_grid[lat_idx, lon_idx] + u) / 2
                 v_grid[lat_idx, lon_idx] = (v_grid[lat_idx, lon_idx] + v) / 2
                 
@@ -125,7 +129,7 @@ def create_uniform_boxes(data, pollutants, box_size=(None, None), grid_density=N
     
     flattened_pollutant_values = {pollutant: values.flatten() for pollutant, values in pollutant_values.items()}
     
-    return boxes, temperature_values.flatten(), u_grid.flatten(), v_grid.flatten(), flattened_pollutant_values, grid_shape
+    return boxes, temperature_values.flatten(), pressure_values.flatten(), u_grid.flatten(), v_grid.flatten(), flattened_pollutant_values, grid_shape
 
 def interpolate_empty_boxes(boxes, box_values, grid_shape, max_distance=1):
     """
@@ -162,7 +166,7 @@ def interpolate_empty_boxes(boxes, box_values, grid_shape, max_distance=1):
     
     return box_values
 
-def recursive_interpolation_until_filled(boxes, temp_values, u_values, v_values, pollutant_values, grid_shape, initial_distance=1, max_increment=1):
+def recursive_interpolation_until_filled(boxes, temp_values, press_values, u_values, v_values, pollutant_values, grid_shape, initial_distance=1, max_increment=1):
     """
     Rekursywna interpolacja dla temperatury i prędkości wiatru, która kontynuuje, dopóki wszystkie pudełka nie zostaną wypełnione wartościami.
     
@@ -182,11 +186,13 @@ def recursive_interpolation_until_filled(boxes, temp_values, u_values, v_values,
     
     while (
         any(value is None for value in temp_values) or 
+        any(value is None for value in press_values) or 
         any(value is None for value in u_values) or 
         any(value is None for value in v_values) or 
         any(any(value is None for value in pollutant_values[pollutant]) for pollutant in pollutant_values)
     ):
         temp_values = interpolate_empty_boxes(boxes, temp_values, grid_shape, max_distance=distance)
+        press_values = interpolate_empty_boxes(boxes, press_values, grid_shape, max_distance=distance)
         u_values = interpolate_empty_boxes(boxes, u_values, grid_shape, max_distance=distance)
         v_values = interpolate_empty_boxes(boxes, v_values, grid_shape, max_distance=distance)
 
@@ -195,16 +201,16 @@ def recursive_interpolation_until_filled(boxes, temp_values, u_values, v_values,
         
         distance += max_increment
     
-    return temp_values, u_values, v_values, pollutant_values
+    return temp_values, press_values, u_values, v_values, pollutant_values
 
 
-def plot_temperature_grid(boxes, temp_values, measurements, save_image=False, image_path=None):
+def plot_values_grid(boxes, values, measurements, values_type=None, save_image=False, image_path=None):
     """
     Rysuje siatkę pudełek z interpolowanymi wartościami oraz opcjonalnie zapisuje obraz.
     
     Parametry:
     - boxes: lista granic geograficznych pudełek [(lat_min, lat_max, lon_min, lon_max), ...]
-    - temp_values: wartości temperatury przypisane do pudełek (None dla pustych pudełek)
+    - values: wartości przypisane do pudełek (None dla pustych pudełek)
     - measurements: lista punktów pomiarowych
     - save_image: boolean, jeśli True, zapisuje obraz do pliku
     - image_path: ścieżka do pliku, w którym zapisany zostanie obraz (jeśli save_image=True)
@@ -212,16 +218,19 @@ def plot_temperature_grid(boxes, temp_values, measurements, save_image=False, im
     
     fig, ax = plt.subplots(figsize=(10, 8))
 
-    valid_values = [value for value in temp_values if value is not None]
+    valid_values = [value for value in values if value is not None]
     if valid_values:
         min_value, max_value = min(valid_values), max(valid_values)
     else:
         min_value, max_value = 0, 1
 
     for i, (lat_min, lat_max, lon_min, lon_max) in enumerate(boxes):
-        color_value = temp_values[i]
-        if color_value is not None:
-            normalized_value = (color_value - min_value) / (max_value - min_value)
+        color_value = values[i]
+        if color_value is not None and not np.isnan(color_value) and np.isfinite(color_value):
+            if max_value != min_value:
+                normalized_value = (color_value - min_value) / (max_value - min_value)
+            else:
+                normalized_value = 0
             color = plt.cm.coolwarm(normalized_value)  
         else:
             color = 'lightgrey'
@@ -230,22 +239,23 @@ def plot_temperature_grid(boxes, temp_values, measurements, save_image=False, im
                              linewidth=0.5, edgecolor='black', facecolor=color)
         ax.add_patch(rect)
 
-        center_lat = 0.5 * (lat_min + lat_max)
-        center_lon = 0.5 * (lon_min + lon_max)
-        
         # EDIT: wypisywanie temperatury wewnątrz boxa
+
+        # center_lat = 0.5 * (lat_min + lat_max)
+        # center_lon = 0.5 * (lon_min + lon_max)
+        
         # if color_value is not None:
         #     plt.text(center_lon, center_lat, f'{color_value:.1f}', ha='center', va='center', fontsize=8, color='black', fontweight='bold')
 
     latitudes = np.array([point["latitude"] for point in measurements])
     longitudes = np.array([point["longitude"] for point in measurements])
-    temperatures = np.array([point["temperature"] for point in measurements])
-    plt.scatter(longitudes, latitudes, c=temperatures, cmap='coolwarm', edgecolor='k', s=100, zorder=5)
+    measured_values = np.array([point[f"{values_type}"] for point in measurements])
+    plt.scatter(longitudes, latitudes, c=measured_values, cmap='coolwarm', edgecolor='k', s=100, zorder=5)
 
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Latitude')
     ax.set_title('Uniform Grid Boxes with Interpolated Values')
-    plt.colorbar(label='Temperature')
+    plt.colorbar(label=f'{values_type}')
     plt.grid(True)
 
     if save_image and image_path:
@@ -363,7 +373,7 @@ def create_multibox_grid_with_interpolated_measurements(measurements,
     - box_values: wartości pomiarów przypisane do pudełek (po interpolacji wartości pomiędzy pudełkami)
     """
         
-    boxes, temp_values, u_values, v_values, pollutant_values, grid_shape = create_uniform_boxes(measurements, 
+    boxes, temp_values, press_values, u_values, v_values, pollutant_values, grid_shape = create_uniform_boxes(measurements, 
                                                                                                 pollutants,
                                                                                                 box_size=box_size, 
                                                                                                 grid_density=grid_density, 
@@ -371,8 +381,9 @@ def create_multibox_grid_with_interpolated_measurements(measurements,
                                                                                                 margin_boxes=margin_boxes)
     
     
-    temp_values, u_values, v_values, pollutant_values = recursive_interpolation_until_filled(boxes, 
-                                                                                             temp_values, 
+    temp_values, press_values, u_values, v_values, pollutant_values = recursive_interpolation_until_filled(boxes, 
+                                                                                             temp_values,
+                                                                                             press_values, 
                                                                                              u_values, 
                                                                                              v_values, 
                                                                                              pollutant_values, 
@@ -383,9 +394,12 @@ def create_multibox_grid_with_interpolated_measurements(measurements,
     if save_grid_images:
         image_path_wind_plot = f'{save_path}/multibox_grid_with_interpolated_wind_values.png'
         image_path_temp_plot = f'{save_path}/multibox_grid_with_interpolated_temp_values.png'
-        plot_temperature_grid(boxes, temp_values, measurements, save_image=save_grid_images, image_path=image_path_temp_plot)
+        image_path_press_plot = f'{save_path}/multibox_grid_with_interpolated_press_values.png'
+        
+        plot_values_grid(boxes, temp_values, measurements, values_type="temperature", save_image=save_grid_images, image_path=image_path_temp_plot)
+        plot_values_grid(boxes, press_values, measurements, values_type="pressure", save_image=save_grid_images, image_path=image_path_press_plot)
         plot_wind_grid(boxes, u_values, v_values, measurements, grid_shape=grid_shape, save_image=save_grid_images, image_path=image_path_wind_plot)
 
-    return boxes, temp_values, u_values, v_values, pollutant_values
+    return boxes, temp_values, press_values, u_values, v_values, pollutant_values
 
 
