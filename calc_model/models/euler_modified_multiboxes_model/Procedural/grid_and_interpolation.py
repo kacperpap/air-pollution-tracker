@@ -1,7 +1,5 @@
 import numpy as np
-from scipy.spatial import KDTree
 import matplotlib.pyplot as plt
-from datetime import datetime
 
 def create_uniform_boxes(data, pollutants, box_size=(None, None), grid_density=None, urbanized=False, margin_boxes=1):
     """

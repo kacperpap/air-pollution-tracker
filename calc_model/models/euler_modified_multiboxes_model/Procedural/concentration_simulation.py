@@ -764,11 +764,27 @@ def update_concentration_crank_nicolson(C, u, v, K_x, K_y, dx, dy, dt, S_c, nx, 
         for i in range(1, nx - 1):
             for j in range(1, ny - 1):
                 # Konwekcja (transport przez wiatr) dla Cranka-Nicolsona (średnie wartości między krokami n a n+1)
-                conv_x_n = -u[i, j] * (C[i, j] - C[i-1, j]) / dx
-                conv_y_n = -v[i, j] * (C[i, j] - C[i, j-1]) / dy
+                # --- Advection: Upwind Differencing ---
+                if u[i, j] > 0:
+                    conv_x_n = -u[i, j] * (C[i, j] - C[i-1, j]) / dx
+                else:
+                    conv_x_n = -u[i, j] * (C[i+1, j] - C[i, j]) / dx
 
-                conv_x_np1 = -u[i, j] * (C_prev[i+1, j] - C_prev[i, j]) / dx
-                conv_y_np1 = -v[i, j] * (C_prev[i, j+1] - C_prev[i, j]) / dy
+                if v[i, j] > 0:
+                    conv_y_n = -v[i, j] * (C[i, j] - C[i, j-1]) / dy
+                else:
+                    conv_y_n = -v[i, j] * (C[i, j+1] - C[i, j]) / dy
+
+                if u[i, j] > 0:
+                    conv_x_np1 = -u[i, j] * (C_prev[i, j] - C_prev[i-1, j]) / dx
+                else:
+                    conv_x_np1 = -u[i, j] * (C_prev[i+1, j] - C_prev[i, j]) / dx
+
+                if v[i, j] > 0:
+                    conv_y_np1 = -v[i, j] * (C_prev[i, j] - C_prev[i, j-1]) / dy
+                else:
+                    conv_y_np1 = -v[i, j] * (C_prev[i, j+1] - C_prev[i, j]) / dy
+
 
                 # Dyfuzja dla Cranka-Nicolsona
                 diff_x_n = K_x[i, j] * ((C[i+1, j] - C[i, j]) - (C[i, j] - C[i-1, j])) / (dx**2)
@@ -1047,19 +1063,21 @@ def simulate_pollution_spread(data, num_steps, dt, pollutants, box_size=None, gr
         image_path = f'{directory}end_{pollutant}_concentration_grid.png'
         plot_concentration_grid(boxes, C.flatten(), data, pollutant, True, image_path)
         
-      final_concentrations[pollutant] = C
+      final_concentrations[pollutant] = C.flatten()
        
     return final_concentrations
 
 
-num_steps = 100  
+num_steps = 1000  
 dt = 0.01  
 
 # final_concentration = simulate_pollution_spread(data_2, num_steps, dt, box_size=(None, None), grid_density="medium", urbanized=False, margin_boxes=5, debug=True)
 
 final_concentration = simulate_pollution_spread(data, num_steps, dt, pollutants=["CO"], box_size=(None, None), grid_density="medium", urbanized=False, margin_boxes=1, initial_distance=1, debug=True)
 
-# final_concentration = simulate_pollution_spread(data_woj, num_steps, dt, box_size=(None, None), grid_density="sparse", urbanized=False, margin_boxes=5, debug=True)
+# with open("debug.txt", "w") as file:
+#     file.write(str(final_concentration))
+
+# final_concentration = simulate_pollution_spread(data_woj, num_steps, dt,pollutants=["CO"], box_size=(None, None), grid_density="sparse", urbanized=False, margin_boxes=5, initial_distance=1, debug=True``)
 
 # final_concentration = simulate_pollution_spread(data_tar, num_steps, dt, pollutants=["CO", "NO2", "SO2", "O3"], box_size=(None, None), grid_density="dense", urbanized=True, margin_boxes=5, debug=True)
- 
