@@ -8,6 +8,8 @@ import { TokenModule } from './modules/token/token.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DroneService } from './modules/drone/drone.service';
 import { DroneModule } from './modules/drone/drone.module';
+import { SimulationModule } from './modules/simulation/simulation.module';
+import { RabbitMQModule } from './modules/rabbitmq/rabbitmq.module';
 
 @Module({
   imports: [
@@ -16,7 +18,9 @@ import { DroneModule } from './modules/drone/drone.module';
     UserModule,
     TokenModule,
     AuthModule,
-    DroneModule
+    DroneModule,
+    SimulationModule,
+    RabbitMQModule
   ],
   controllers: [AppController],
   providers: [AppService, DroneService],
