@@ -1,4 +1,13 @@
-import { IsNotEmpty, IsNumber, IsString } from "class-validator"
+import { Type } from "class-transformer";
+import { IsNotEmpty, IsNumber, IsString, ValidateNested } from "class-validator"
+
+class PollutantMeasurement {
+    @IsString()
+    type: string;
+
+    @IsNumber()
+    value: number;
+}
 
 export class CreateDroneMeasurementType {
 
@@ -16,23 +25,15 @@ export class CreateDroneMeasurementType {
     temperature: string | number
 
     @IsNumber()
-    wind_speed?: string | number  
+    windSpeed: string | number  
   
     @IsNumber()
-    wind_direction?: string | number  
+    windDirection: string | number  
   
     @IsNumber()
-    pressure?: string | number  
-  
-    @IsNumber()
-    CO?: string | number  
-  
-    @IsNumber()
-    O3?: string | number  
-  
-    @IsNumber()
-    SO2?: string | number  
-  
-    @IsNumber()
-    NO2?: string | number  
+    pressure: string | number  
+
+    @ValidateNested({ each: true })
+    @Type(() => PollutantMeasurement)
+    pollutionMeasurements?: PollutantMeasurement[];
 }

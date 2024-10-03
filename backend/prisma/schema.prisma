@@ -27,11 +27,30 @@ model DroneFlight {
 }
 
 model DroneMeasurement {
-  id          Int         @id @default(autoincrement())
-  name        String      @db.VarChar(255)
-  latitude    Float
-  longitude   Float
-  temperature Float
-  flightId    Int
-  flight      DroneFlight @relation("FlightMeasurements", fields: [flightId], references: [id])
+  id                    Int                    @id @default(autoincrement())
+  name                  String                 @db.VarChar(255)
+  latitude              Float
+  longitude             Float
+  temperature           Float
+  windSpeed             Float
+  windDirection         Float
+  pressure              Float
+  flightId              Int
+  flight                DroneFlight            @relation("FlightMeasurements", fields: [flightId], references: [id])
+  pollutionMeasurements PollutionMeasurement[] @relation("MeasurementPollutions")
+}
+
+enum PollutionType {
+  CO
+  O3
+  SO2
+  NO2
+}
+
+model PollutionMeasurement {
+  id            Int              @id @default(autoincrement())
+  type          PollutionType
+  value         Float
+  measurementId Int
+  measurement   DroneMeasurement @relation("MeasurementPollutions", fields: [measurementId], references: [id])
 }

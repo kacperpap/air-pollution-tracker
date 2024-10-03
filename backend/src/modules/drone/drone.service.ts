@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateDroneFlightType } from './dto/create-drone-flight';
 import { EditDroneFlightType } from './dto/edit-drone-flight';
 import { PrismaService } from '../prisma/prisma.service';
-import { DroneFlightType } from './dto/drone-flight';
+import { pollutantTypes } from '../pollutants';
 
 @Injectable()
 export class DroneService {
@@ -31,7 +31,11 @@ export class DroneService {
                 userId: userId
             }, 
             include: {
-                measurements: true
+                measurements: {
+                    include: {
+                        pollutionMeasurements: true
+                    }
+                }
             }
         })
     }
@@ -43,7 +47,11 @@ export class DroneService {
                 userId: userId
             }, 
             include: {
-                measurements: true
+                measurements: {
+                    include: {
+                        pollutionMeasurements: true
+                    }
+                }
             }
         })
     }
@@ -57,12 +65,29 @@ export class DroneService {
             const latitude = typeof measurement.latitude === 'string' ? parseFloat(measurement.latitude) : measurement.latitude;
             const longitude = typeof measurement.longitude === 'string' ? parseFloat(measurement.longitude) : measurement.longitude;
             const temperature = typeof measurement.temperature === 'string' ? parseFloat(measurement.temperature) : measurement.temperature;
+            const windSpeed = typeof measurement.windSpeed === 'string' ? parseFloat(measurement.windSpeed) : measurement.windSpeed;
+            const windDirection = typeof measurement.windDirection === 'string' ? parseFloat(measurement.windDirection) : measurement.windDirection;
+            const pressure = typeof measurement.pressure === 'string' ? parseFloat(measurement.pressure) : measurement.pressure;
+
+            const measurements = pollutantTypes
+            .map(type => {
+                const value = measurement.pollutionMeasurements?.find(p => p.type === type)?.value;
+                return value !== undefined && value !== null ? { type, value } : null;
+            })
+            .filter(p => p !== null);
+            
     
             return {
                 name: measurement.name,
                 latitude,
                 longitude,
                 temperature,
+                windSpeed,
+                windDirection,
+                pressure,
+                pollutionMeasurements: {
+                    create: measurements,
+                }
             };
         });
     
@@ -85,6 +110,14 @@ export class DroneService {
         /**
          * Need to delete ON CASCADE drone measurements when deleting drone flight
          */
+        await this.prisma.pollutionMeasurement.deleteMany({
+            where: {
+                measurement: {
+                    flightId: id
+                }
+            }
+        });
+
         await this.prisma.droneMeasurement.deleteMany({
             where: {
                 flightId: id
@@ -115,13 +148,37 @@ export class DroneService {
             const latitude = typeof measurement.latitude === 'string' ? parseFloat(measurement.latitude) : measurement.latitude;
             const longitude = typeof measurement.longitude === 'string' ? parseFloat(measurement.longitude) : measurement.longitude;
             const temperature = typeof measurement.temperature === 'string' ? parseFloat(measurement.temperature) : measurement.temperature;
+            const windSpeed = typeof measurement.windSpeed === 'string' ? parseFloat(measurement.windSpeed) : measurement.windSpeed;
+            const windDirection = typeof measurement.windDirection === 'string' ? parseFloat(measurement.windDirection) : measurement.windDirection;
+            const pressure = typeof measurement.pressure === 'string' ? parseFloat(measurement.pressure) : measurement.pressure;
+
+            const measurements = pollutantTypes
+            .map(type => {
+                const value = measurement.pollutionMeasurements?.find(p => p.type === type)?.value;
+                return value !== undefined && value !== null ? { type, value } : null;
+            })
+            .filter(p => p !== null);
     
             return {
                 name: measurement.name,
                 latitude,
                 longitude,
                 temperature,
+                windSpeed,
+                windDirection,
+                pressure,
+                pollutionMeasurements: {
+                    create: measurements,
+                }
             };
+        });
+
+        await this.prisma.pollutionMeasurement.deleteMany({
+            where: {
+                measurement: {
+                    flightId: id
+                }
+            }
         });
     
         await this.prisma.droneMeasurement.deleteMany({

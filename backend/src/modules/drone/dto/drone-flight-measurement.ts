@@ -1,5 +1,15 @@
-import { Exclude } from "class-transformer"
-import { IsNotEmpty, IsNumber, IsString } from "class-validator"
+import { Exclude, Type } from "class-transformer"
+import { IsNotEmpty, IsNumber, IsString, ValidateNested } from "class-validator"
+
+export class PollutionMeasurementType {
+    @IsString()
+    @IsNotEmpty()
+    type: string;
+
+    @IsNumber()
+    @IsNotEmpty()
+    value: number;
+}
 
 export class DroneMeasurementType {
     @IsNumber()
@@ -22,25 +32,17 @@ export class DroneMeasurementType {
     temperature: number
 
     @IsNumber()
-    wind_speed?: number;  
+    windSpeed: number;  
   
     @IsNumber()
-    wind_direction?: number;  
+    windDirection: number;  
   
     @IsNumber()
     pressure?: number;  
   
-    @IsNumber()
-    CO?: number;  
-  
-    @IsNumber()
-    O3?: number;  
-  
-    @IsNumber()
-    SO2?: number;  
-  
-    @IsNumber()
-    NO2?: number;  
+    @ValidateNested({ each: true })
+    @Type(() => PollutionMeasurementType)
+    pollutionMeasurements: PollutionMeasurementType[];
 
     @Exclude()
     userId?: number
