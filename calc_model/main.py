@@ -1,13 +1,80 @@
 import asyncio
+from dataclasses import dataclass
 import os
+from typing import Dict, List
 import pika
 import json
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore
+
+from models.euler_modified_multiboxes_model.Procedural.concentration_simulation import simulate_pollution_spread
 
 load_dotenv()
 
-def simulate_drone_flight(flight_data):
-    return {"status": "Simulation complete"}
+@dataclass
+class PollutionData:
+    id: int
+    name: str
+    latitude: float
+    longitude: float
+    temperature: float
+    wind_speed: float
+    wind_direction: int
+    pressure: int
+    CO: float
+    O3: float
+    SO2: float
+    NO2: float
+    flightId: int
+    
+def convert_backend_flight_data(backend_data: Dict[str, List[Dict]]) -> List[PollutionData]:
+    converted_data = []
+    for measurement in backend_data['measurements']:
+        pollution_data = {
+            'id': measurement['id'],
+            'name': measurement['name'],
+            'latitude': measurement['latitude'],
+            'longitude': measurement['longitude'],
+            'temperature': measurement['temperature'],
+            'windSpeed': measurement['windSpeed'],
+            'windDirection': measurement['windDirection'],
+            'pressure': measurement['pressure'],
+            'flightId': measurement['flightId']
+        }
+        
+        for pollutant in measurement['pollutionMeasurements']:
+            pollution_data[pollutant['type']] = pollutant['value']
+        
+        for pollutant in ['CO', 'O3', 'SO2', 'NO2']:
+            if pollutant not in pollution_data:
+                pollution_data[pollutant] = 0.0
+        
+        converted_data.append(PollutionData(**pollution_data))
+    
+    return converted_data
+
+async def simulate(data, num_steps=1000, dt=1, pollutatns=['CO'], box_size=(None,None), grid_denstiy="medium", urbanized=False, margin_boxes=1, initial_distance=1):
+    """_summary_
+
+    Args:
+        data (_type_): _description_
+        num_steps (int, optional): _description_. Defaults to 1000.
+        dt (int, optional): _description_. Defaults to 1.
+        pollutatns (list, optional): _description_. Defaults to [].
+        box_size (tuple, optional): _description_. Defaults to (None,None).
+        grid_denstiy (str, optional): _description_. Defaults to "medium".
+        urbanized (bool, optional): _description_. Defaults to False.
+        margin_boxes (int, optional): _description_. Defaults to 1.
+        initial_distance (int, optional): _description_. Defaults to 1.
+
+    Returns:
+        _type_: _description_
+    """
+    
+    converted_data = convert_backend_flight_data(data)
+    
+    final_concentration = simulate_pollution_spread(converted_data, num_steps, dt, pollutants=pollutatns, box_size=box_size, grid_density=grid_denstiy, urbanized=urbanized, margin_boxes=margin_boxes, initial_distance=initial_distance, debug=True)
+    
+    return final_concentration
 
 async def rabbitmq_listener():
     
@@ -28,10 +95,9 @@ async def rabbitmq_listener():
 
         def callback(ch, method, properties, body):
             print(f'calc_model -> rabbitmq_listener: Received message from queue "{request_queue}".')
-            flight_data = json.loads(body)
-            print(f'calc_model -> rabbitmq_listener: Simulating pollution spread for drone flight measurements for flight ID: {flight_data["measurements"][0]['flightId']}')
-            result = simulate_drone_flight(flight_data)
-            print(f'calc_model -> rabbitmq_listener: Simulation complete for flight ID: {flight_data["measurements"][0]['flightId']}. Sending response to "{response_queue}".')
+        
+            data = json.loads(body)
+            result = simulate(data)
 
             channel.basic_publish(
                 exchange='',
