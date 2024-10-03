@@ -10,6 +10,7 @@ import { DroneService } from './modules/drone/drone.service';
 import { DroneModule } from './modules/drone/drone.module';
 import { SimulationModule } from './modules/simulation/simulation.module';
 import { RabbitMQModule } from './modules/rabbitmq/rabbitmq.module';
+import { StationModule } from './modules/station/station.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { RabbitMQModule } from './modules/rabbitmq/rabbitmq.module';
     AuthModule,
     DroneModule,
     SimulationModule,
-    RabbitMQModule
+    RabbitMQModule,
+    StationModule
   ],
   controllers: [AppController],
   providers: [AppService, DroneService],

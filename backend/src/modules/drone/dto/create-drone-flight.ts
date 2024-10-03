@@ -1,4 +1,4 @@
-import { IsDate, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsNotEmpty, IsOptional, IsString } from "class-validator";
 import { CreateDroneMeasurementType } from "./create-drone-flight-measurement";
 
 export class CreateDroneFlightType {
