@@ -35,6 +35,13 @@ export function DroneInput() {
         latitude: null,
         longitude: null,
         temperature: null,
+        pressure: null,
+        windSpeed: null,
+        windDirection: null,
+        CO: null,
+        O3: null,
+        SO2: null,
+        NO2: null,
     });
 
     useEffect(() => {
@@ -79,33 +86,126 @@ export function DroneInput() {
 
     const addMeasurement = () => {
 
-        if(
-            currentMeasurement.name.trim() !== '' &&
-            currentMeasurement.latitude !== null &&
-            !isNaN(currentMeasurement.latitude) &&
-            currentMeasurement.longitude !== null &&
-            !isNaN(currentMeasurement.longitude) &&
-            currentMeasurement.temperature !== null &&
-            !isNaN(currentMeasurement.temperature)
+        const { name, latitude, longitude, temperature, windDirection, windSpeed, pressure, CO, O3, SO2, NO2 } = currentMeasurement;
+
+        if (
+            name.trim() === '' ||
+            latitude === null || isNaN(latitude) ||
+            longitude === null || isNaN(longitude) ||
+            temperature === null || isNaN(temperature) ||
+            windDirection === null || isNaN(windDirection) ||
+            windSpeed === null || isNaN(windSpeed) ||
+            pressure === null || isNaN(pressure)
         ){
-            setFormData((prevForm) => ({
-                ...prevForm,
-                measurements: [...prevForm.measurements, currentMeasurement]
-            }))
-            setCurrentMeasurement({
-                name: '',
-                latitude: null,
-                longitude: null,
-                temperature: null,
-            })
-        } else {
             setNotification({
                 message: 'Incomplete Measurement',
-                description: 'Please fill out all fields: name, latitude, longitude, and temperature must be provided and have correct types.',
+                description: 'Please fill out all required fields: name, latitude, longitude, temperature, windDirection, windSpeed, pressure. Be sure to provide them logical types (name must be string while others numbers)',
                 type: 'error',
             });
+            return;
         }
 
+        if (latitude < -90 || latitude > 90) {
+            setNotification({
+                message: 'Invalid Latitude',
+                description: 'Latitude must be between -90 and 90 degrees.',
+                type: 'error',
+            });
+            return;
+        }
+    
+        if (longitude < -180 || longitude > 180) {
+            setNotification({
+                message: 'Invalid Longitude',
+                description: 'Longitude must be between -180 and 180 degrees.',
+                type: 'error',
+            });
+            return;
+        }
+
+        if (windDirection < 0 || windDirection > 360) {
+            setNotification({
+                message: 'Invalid Wind Direction',
+                description: 'Wind direction must be between 0 and 360 degrees.',
+                type: 'error',
+            });
+            return;
+        }
+
+        if (temperature < 0) {
+            setNotification({
+                message: 'Invalid Temperature',
+                description: 'Temperature must be non-negative value.',
+                type: 'error',
+            });
+            return;
+        }
+
+        if (pressure < 0) {
+            setNotification({
+                message: 'Invalid Pressure',
+                description: 'Pressure must be non-negative value.',
+                type: 'error',
+            });
+            return;
+        }
+
+        if (CO !== null && CO < 0) {
+            setNotification({
+                message: 'Invalid CO Level',
+                description: 'CO level cannot be negative.',
+                type: 'error',
+            });
+            return;
+        }
+    
+        if (O3 !== null && O3 < 0) {
+            setNotification({
+                message: 'Invalid O3 Level',
+                description: 'O3 level cannot be negative.',
+                type: 'error',
+            });
+            return;
+        }
+    
+        if (SO2 !== null && SO2 < 0) {
+            setNotification({
+                message: 'Invalid SO2 Level',
+                description: 'SO2 level cannot be negative.',
+                type: 'error',
+            });
+            return;
+        }
+    
+        if (NO2 !== null && NO2 < 0) {
+            setNotification({
+                message: 'Invalid NO2 Level',
+                description: 'NO2 level cannot be negative.',
+                type: 'error',
+            });
+            return;
+        }
+
+        
+        setFormData((prevForm) => ({
+            ...prevForm,
+            measurements: [...prevForm.measurements, currentMeasurement]
+        }))
+        
+        setCurrentMeasurement({
+            name: '',
+            latitude: null,
+            longitude: null,
+            temperature: null,
+            pressure: null,
+            windSpeed: null,
+            windDirection: null,
+            CO: null,
+            O3: null,
+            SO2: null,
+            NO2: null
+        })
+    
     }
 
     const removeMeasurement = (index: number) => {
@@ -136,6 +236,23 @@ export function DroneInput() {
             return;
         }
 
+        let pollutionFieldsFilled = false;
+        const allPollutionFieldsPresent = formData.measurements.every(measurement => {
+            const { CO, O3, SO2, NO2 } = measurement;
+            
+            if (CO !== null || O3 !== null || SO2 !== null || NO2 !== null) {
+                pollutionFieldsFilled = true;
+            }
+
+            return (CO !== null && O3 !== null && SO2 !== null && NO2 !== null) || (!CO && !O3 && !SO2 && !NO2);
+        });
+
+        if (pollutionFieldsFilled && !allPollutionFieldsPresent) {
+            setNotification({ message: 'Validation Error', description: 'If pollution data is provided for one point, it must be provided for all measurement points.', type: 'error',
+            });
+            return;
+        }
+
         
         /**
          * If we edit data, there is userId and id for flight existing in the formulae,
@@ -151,6 +268,13 @@ export function DroneInput() {
                 latitude: measurement.latitude,
                 longitude: measurement.longitude,
                 temperature: measurement.temperature,
+                pressure: measurement.pressure,
+                windSpeed: measurement.windSpeed,
+                windDirection: measurement.windDirection,
+                CO: measurement.CO,
+                O3: measurement.O3,
+                SO2: measurement.SO2,
+                NO2: measurement.NO2
             })),
         };
         
@@ -255,20 +379,28 @@ export function DroneInput() {
     
             <div className="col-span-full">
                 <h3 className="text-lg font-semibold text-gray-800">Measurement Points</h3>
-                <div className="mt-2 max-h-56 overflow-y-auto">
-                    <div className="grid grid-cols-4 p-2 bg-gray-100 rounded-md shadow-sm">
-                        <div className="text-sm font-semibold text-center mr-4 text-gray-700">Name</div>
-                        <div className="text-sm font-semibold text-center mr-6 text-gray-700">Latitude</div>
-                        <div className="text-sm font-semibold text-center mr-8 text-gray-700">Longitude</div>
-                        <div className="text-sm font-semibold text-center mr-10 text-gray-700">Temperature</div>
+                <div className="mt-2 max-h-56 overflow-y-auto overflow-x-auto bg-gray-100 p-2 rounded-md shadow-sm">
+                    <div className="grid grid-cols-[repeat(12,minmax(150px,1fr))] gap-4 p-2">
+                        <div className="flex items-center justify-center text-sm font-semibold text-center text-gray-700 mr-10">Name</div>
+                        <div className="flex items-center justify-center text-sm font-semibold text-center text-gray-700">Latitude (°)</div>
+                        <div className="flex items-center justify-center text-sm font-semibold text-center text-gray-700">Longitude (°)</div>
+                        <div className="flex items-center justify-center text-sm font-semibold text-center text-gray-700">Temperature (°C)</div>
+                        <div className="flex items-center justify-center text-sm font-semibold text-center text-gray-700">Pressure (Pa)</div>
+                        <div className="flex items-center justify-center text-sm font-semibold text-center text-gray-700">Wind Speed (m/s)</div>
+                        <div className="flex items-center justify-center text-sm font-semibold text-center text-gray-700">Wind Direction (°)</div>
+                        <div className="flex items-center justify-center text-sm font-semibold text-center text-gray-700">CO (μg/m3)</div>
+                        <div className="flex items-center justify-center text-sm font-semibold text-center text-gray-700">O3 (μg/m3)</div>
+                        <div className="flex items-center justify-center text-sm font-semibold text-center text-gray-700">SO2 (μg/m3)</div>
+                        <div className="flex items-center justify-center text-sm font-semibold text-center text-gray-700">NO2 (μg/m3)</div>
+                        <div className="flex items-center justify-center text-sm font-semibold text-center text-red-500">Delete</div>
                     </div>
 
                     {formData.measurements.map((measurement, index) => (
                     <div
                         key={index}
-                        className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-4 p-2 bg-white border-gray-300 shadow-sm relative"
+                        className="grid grid-cols-[repeat(12,minmax(150px,1fr))] gap-4 p-2 border-gray-300 shadow-sm relative"
                     >
-                        <div>
+                        <div className="flex items-center justify-center">
                         <input
                             type="text"
                             value={measurement.name}
@@ -276,7 +408,7 @@ export function DroneInput() {
                             className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
                         />
                         </div>
-                        <div>
+                        <div className="flex items-center justify-center">
                         <input
                             type="text"
                             value={measurement.latitude ?? ''}
@@ -284,7 +416,7 @@ export function DroneInput() {
                             className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
                         />
                         </div>
-                        <div>
+                        <div className="flex items-center justify-center">
                         <input
                             type="text"
                             value={measurement.longitude ?? ''}
@@ -292,12 +424,68 @@ export function DroneInput() {
                             className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
                         />
                         </div>
-                        <div>
+                        <div className="flex items-center justify-center">
                         <input
                             type="text"
                             value={measurement.temperature ?? ''}
                             readOnly
                             className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                        />
+                        </div>
+                        <div className="flex items-center justify-center">
+                        <input
+                            type="text"
+                            value={measurement.pressure ?? ''}
+                            readOnly
+                            className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                        />
+                        </div>
+                        <div className="flex items-center justify-center">
+                        <input
+                            type="text"
+                            value={measurement.windSpeed ?? ''}
+                            readOnly
+                            className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                        />
+                        </div>
+                        <div className="flex items-center justify-center">
+                        <input
+                            type="text"
+                            value={measurement.windDirection ?? ''}
+                            readOnly
+                            className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                        />
+                        </div>
+                        <div className="flex items-center justify-center">
+                        <input
+                            type="text"
+                            value={measurement.CO ?? ''}
+                            readOnly
+                            className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${!measurement.CO ? 'bg-gray-200' : ''}`}
+                        />
+                        </div>
+                        <div className="flex items-center justify-center">
+                        <input
+                            type="text"
+                            value={measurement.O3 ?? ''}
+                            readOnly
+                            className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${!measurement.O3 ? 'bg-gray-200' : ''}`}
+                        />
+                        </div>
+                        <div className="flex items-center justify-center">
+                        <input
+                            type="text"
+                            value={measurement.SO2 ?? ''}
+                            readOnly
+                            className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${!measurement.SO2 ? 'bg-gray-200' : ''}`}
+                        />
+                        </div>
+                        <div className="flex items-center justify-center">
+                        <input
+                            type="text"
+                            value={measurement.NO2 ?? ''}
+                            readOnly
+                            className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${!measurement.NO2 ? 'bg-gray-200' : ''}`}
                         />
                         </div>
                         <div className="flex justify-center items-center">
@@ -314,73 +502,99 @@ export function DroneInput() {
                 </div>
             </div>
 
-    
-            <div className="col-span-full grid grid-cols-4 gap-4">
-                <div className="sm:col-span-1">
-                    <label className="block text-sm font-medium leading-6 text-gray-900">Name</label>
-                    <div className="mt-2">
-                    <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
-                        <input
-                        type="text"
-                        name="name"
-                        value={currentMeasurement.name}
-                        onChange={handleCurrentMeasurementChange}
-                        placeholder="Point name"
-                        className="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-                        />
+            <div className="col-span-full grid grid-cols-1 gap-6 mt-6">
+
+                {/* Basic Data Section */}
+                <div>
+                    <h4 className="text-md font-semibold text-gray-800">Basic Data</h4>
+                    <p className="text-sm text-gray-600">Please enter the basic information for the point.</p>
+                    <div className="grid grid-cols-3 gap-4 mt-2">
+                    <div>
+                        <label className="block text-sm font-medium leading-6 text-gray-900">Name</label>
+                        <input type="text" name="name" value={currentMeasurement.name} onChange={handleCurrentMeasurementChange} placeholder="Point name" className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" />
                     </div>
+                    <div>
+                        <label className="block text-sm font-medium leading-6 text-gray-900">Latitude (°)</label>
+                        <input type="text" name="latitude" value={currentMeasurement.latitude ?? ''} onChange={handleCurrentMeasurementChange} placeholder="Latitude" className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" />
                     </div>
-                </div>
-                
-                <div className="sm:col-span-1">
-                    <label className="block text-sm font-medium leading-6 text-gray-900">Latitude</label>
-                    <div className="mt-2">
-                    <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
-                        <input
-                        type="text"
-                        name="latitude"
-                        value={currentMeasurement.latitude ?? ''}
-                        onChange={handleCurrentMeasurementChange}
-                        placeholder="Latitude"
-                        className="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-                        />
+                    <div>
+                        <label className="block text-sm font-medium leading-6 text-gray-900">Longitude (°)</label>
+                        <input type="text" name="longitude" value={currentMeasurement.longitude ?? ''} onChange={handleCurrentMeasurementChange} placeholder="Longitude" className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" />
                     </div>
                     </div>
                 </div>
 
-                <div className="sm:col-span-1">
-                    <label className="block text-sm font-medium leading-6 text-gray-900">Longitude</label>
-                    <div className="mt-2">
-                    <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
-                        <input
-                        type="text"
-                        name="longitude"
-                        value={currentMeasurement.longitude ?? ''}
-                        onChange={handleCurrentMeasurementChange}
-                        placeholder="Longitude"
-                        className="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-                        />
+                {/* Weather Data Section */}
+                <div>
+                    <h4 className="text-md font-semibold text-gray-800">Weather Data</h4>
+                    <p className="text-sm text-gray-600">Please enter weather-related data. Wind speed is measured in m/s, and wind direction in degrees.</p>
+                    <div className="grid grid-cols-4 gap-4 mt-2">
+                    <div>
+                        <label className="block text-sm font-medium leading-6 text-gray-900">Pressure (Pa)</label>
+                        <input type="text" name="pressure" value={currentMeasurement.pressure ?? ''} onChange={handleCurrentMeasurementChange} placeholder="Pressure" className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium leading-6 text-gray-900">Temperature (°C)</label>
+                        <input type="text" name="temperature" value={currentMeasurement.temperature ?? ''} onChange={handleCurrentMeasurementChange} placeholder="Temperature" className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium leading-6 text-gray-900">Wind Speed (m/s)</label>
+                        <input type="text" name="windSpeed" value={currentMeasurement.windSpeed ?? ''} onChange={handleCurrentMeasurementChange} placeholder="Wind Speed" className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium leading-6 text-gray-900">Wind Direction (°)</label>
+                        <input type="text" name="windDirection" value={currentMeasurement.windDirection ?? ''} onChange={handleCurrentMeasurementChange} placeholder="Wind Direction" className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" />
                     </div>
                     </div>
                 </div>
 
-                <div className="sm:col-span-1">
-                    <label className="block text-sm font-medium leading-6 text-gray-900">Temperature</label>
-                    <div className="mt-2">
-                    <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
+                {/* Pollutants Data Section */}
+                <div>
+                    <h4 className="text-md font-semibold text-gray-800">Pollutants</h4>
+                    <p className="text-sm text-gray-600">Enter pollutant data in μg/m3. Fields marked with an asterisk (*) are optional, but providing one type of pollutant for one data, makes obligatory providing same type of pollutant for rest of measurements points (provide for all or for none)</p>
+                    <div className="grid grid-cols-4 gap-4 mt-2">
+                    <div>
+                        <label className="block text-sm font-medium leading-6 text-gray-900">CO (μg/m3)*</label>
+                        <input type="text" name="CO" value={currentMeasurement.CO ?? ''} onChange={handleCurrentMeasurementChange} placeholder="CO" className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium leading-6 text-gray-900">O3 (μg/m3)*</label>
                         <input
                         type="text"
-                        name="temperature"
-                        value={currentMeasurement.temperature ?? ''}
+                        name="O3"
+                        value={currentMeasurement.O3 ?? ''}
                         onChange={handleCurrentMeasurementChange}
-                        placeholder="Temperature"
-                        className="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
+                        placeholder="O3"
+                        className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
                         />
                     </div>
+                    <div>
+                        <label className="block text-sm font-medium leading-6 text-gray-900">SO2 (μg/m3)*</label>
+                        <input
+                        type="text"
+                        name="SO2"
+                        value={currentMeasurement.SO2 ?? ''}
+                        onChange={handleCurrentMeasurementChange}
+                        placeholder="SO2"
+                        className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium leading-6 text-gray-900">NO2 (μg/m3)*</label>
+                        <input
+                        type="text"
+                        name="NO2"
+                        value={currentMeasurement.NO2 ?? ''}
+                        onChange={handleCurrentMeasurementChange}
+                        placeholder="NO2"
+                        className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                        />
                     </div>
                 </div>
             </div>
+        </div>
 
+    
             <div className="col-span-full justify-self-end">
                 <button 
                         type="button"
