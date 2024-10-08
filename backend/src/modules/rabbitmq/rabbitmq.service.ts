@@ -7,12 +7,11 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private connection: amqp.Connection;
   private channel: amqp.Channel;
   public requestQueue: string;
-  public responseQueue: string;
   
 
   constructor(private configService: ConfigService) {
     this.requestQueue = this.configService.get<string>('RABBITMQ_REQUEST_QUEUE');
-    this.responseQueue = this.configService.get<string>('RABBITMQ_RESPONSE_QUEUE');
+    // this.responseQueue = this.configService.get<string>('RABBITMQ_RESPONSE_QUEUE');
   }
 
   async onModuleInit() {
@@ -28,7 +27,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       this.connection = await amqp.connect('amqp://localhost');
       this.channel = await this.connection.createChannel();
       await this.channel.assertQueue(this.requestQueue, { durable: false });
-      await this.channel.assertQueue(this.responseQueue, { durable: false });
+      // await this.channel.assertQueue(this.responseQueue, { durable: false, exclusive: true });
 
     } catch (error) {
       console.error('Error connecting to RabbitMQ:', error);
@@ -53,6 +52,14 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     const correlationId = Math.random().toString();
     const serializedMessage = Buffer.from(JSON.stringify(message));
 
+    /**
+     * In small systems, where request are being serviced long time (like with simulation), 
+     * there is a simple way to create an exclusive request queue for each request
+     * It enables quick and easy horizontal scaling, and thanks to optimization in rabbitmq, 
+     * does not take much resources
+     */
+    const { queue: replyTo } = await this.channel.assertQueue('', { exclusive: true });
+
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         reject(
@@ -63,14 +70,14 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
         );
       }, timeoutMs); 
 
-      this.channel.sendToQueue(queue, serializedMessage, { 
+      this.channel.sendToQueue(this.requestQueue, serializedMessage, { 
         persistent: true,
         correlationId: correlationId,
-        replyTo: this.responseQueue, 
+        replyTo: replyTo, 
       });
 
       this.channel.consume(
-        this.responseQueue,
+        replyTo,
         (msg) => {
           if (msg && msg.properties.correlationId === correlationId) {
             clearTimeout(timer);

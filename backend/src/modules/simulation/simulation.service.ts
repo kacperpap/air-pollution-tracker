@@ -15,7 +15,7 @@ export class SimulationService {
      * from and to simulation module 
      */
 
-    async runSimulationOfPollutionSpreadForDroneFlight(droneFlightData: DroneFlightType): Promise<SimulationResponseType> {
+    async runSimulationOfPollutionSpreadForDroneFlight(droneFlightData: DroneFlightType): Promise<SimulationResponseType[]> {
       const simulationRequest = new SimulationRequestType({
         measurements: droneFlightData.measurements.map(measurement => ({
           id: measurement.id,
@@ -40,14 +40,30 @@ export class SimulationService {
     }
 
 
-    async run(data: SimulationRequestType): Promise<SimulationResponseType> {
+    async run(data: SimulationRequestType): Promise<SimulationResponseType[]> {
 
         const simulationResult = await this.rabbitMQService.sendMessage(
             this.rabbitMQService.requestQueue,
             data
         );
 
-        return simulationResult
+        return this.processSimulationResult(simulationResult);
+    }
+
+    private processSimulationResult(result: any): SimulationResponseType[] {
+      const processedResult: SimulationResponseType[] = [];
+  
+      for (let i = 0; i < result.CO.length; i++) {
+        processedResult.push(new SimulationResponseType({
+          id: i,
+          CO: result.CO[i],
+          O3: result.O3 ? result.O3[i] : undefined,
+          SO2: result.SO2 ? result.SO2[i] : undefined,
+          NO2: result.NO2 ? result.NO2[i] : undefined,
+        }));
+      }
+  
+      return processedResult;
     }
 }
 
