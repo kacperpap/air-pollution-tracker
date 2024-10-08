@@ -236,21 +236,41 @@ export function DroneInput() {
             return;
         }
 
-        let pollutionFieldsFilled = false;
-        const allPollutionFieldsPresent = formData.measurements.every(measurement => {
-            const { CO, O3, SO2, NO2 } = measurement;
-            
-            if (CO !== null || O3 !== null || SO2 !== null || NO2 !== null) {
-                pollutionFieldsFilled = true;
-            }
+        const pollutionTypesSet = new Set<string>();
 
-            return (CO !== null && O3 !== null && SO2 !== null && NO2 !== null) || (!CO && !O3 && !SO2 && !NO2);
+        formData.measurements.forEach(measurement => {
+            const { CO, O3, SO2, NO2 } = measurement;
+
+            if (CO !== null) pollutionTypesSet.add('CO');
+            if (O3 !== null) pollutionTypesSet.add('O3');
+            if (SO2 !== null) pollutionTypesSet.add('SO2');
+            if (NO2 !== null) pollutionTypesSet.add('NO2');
         });
 
-        if (pollutionFieldsFilled && !allPollutionFieldsPresent) {
-            setNotification({ message: 'Validation Error', description: 'If pollution data is provided for one point, it must be provided for all measurement points.', type: 'error',
+        if (pollutionTypesSet.size > 0) {
+            const pollutionTypesArray = Array.from(pollutionTypesSet); // Konwersja Set na Array
+
+            const isValidPollutionData = formData.measurements.every(measurement => {
+                const { CO, O3, SO2, NO2 } = measurement;
+
+                for (let type of pollutionTypesArray) {
+                    if (type === 'CO' && CO === null) return false;
+                    if (type === 'O3' && O3 === null) return false;
+                    if (type === 'SO2' && SO2 === null) return false;
+                    if (type === 'NO2' && NO2 === null) return false;
+                }
+
+                return true;
             });
-            return;
+
+            if (!isValidPollutionData) {
+                setNotification({
+                    message: 'Validation Error',
+                    description: 'If pollution data is provided for one point, the same types of pollution data must be provided for all points.',
+                    type: 'error'
+                });
+                return;
+            }
         }
 
         
