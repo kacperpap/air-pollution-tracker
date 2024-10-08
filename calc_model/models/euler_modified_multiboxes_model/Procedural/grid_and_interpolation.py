@@ -27,8 +27,8 @@ def create_uniform_boxes(data, pollutants, box_size=(None, None), grid_density=N
     longitudes = np.array([point["longitude"] for point in data])
     temperatures = np.array([point["temperature"] for point in data])
     pressures = np.array([point["pressure"] for point in data])
-    wind_speeds = np.array([point["wind_speed"] for point in data])
-    wind_directions = np.array([point["wind_direction"] for point in data])
+    wind_speeds = np.array([point["windSpeed"] for point in data])
+    wind_directions = np.array([point["windDirection"] for point in data])
 
     pollutants_initial_values = {pollutant: np.array([point[f'{pollutant}'] for point in data]) for pollutant in pollutants}
     
@@ -329,7 +329,7 @@ def plot_wind_grid(boxes, u_values, v_values, measurements, grid_shape, save_ima
 
     latitudes = np.array([point["latitude"] for point in measurements])
     longitudes = np.array([point["longitude"] for point in measurements])
-    wind_speeds = np.array([point["wind_speed"] for point in measurements])
+    wind_speeds = np.array([point["windSpeed"] for point in measurements])
     
     plt.scatter(longitudes, latitudes, c=wind_speeds, cmap='viridis', edgecolor='k', s=100, zorder=5)
 

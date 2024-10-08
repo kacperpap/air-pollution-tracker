@@ -3,6 +3,7 @@ pandas
 matplotlib
 scipy
 fastapi
-pika
+aio_pika
 python-dotenv
 asyncio
+aiormq
