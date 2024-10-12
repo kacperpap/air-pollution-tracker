@@ -38,10 +38,12 @@ export function DroneInput() {
         pressure: null,
         windSpeed: null,
         windDirection: null,
-        CO: null,
-        O3: null,
-        SO2: null,
-        NO2: null,
+        pollutionMeasurements: [
+            { type: 'CO', value: null },
+            { type: 'O3', value: null },
+            { type: 'SO2', value: null },
+            { type: 'NO2', value: null }
+        ]
     });
 
     useEffect(() => {
@@ -69,12 +71,24 @@ export function DroneInput() {
 
 
     const handleCurrentMeasurementChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = event.target
-        setCurrentMeasurement((prevMeasurement) => ({
-            ...prevMeasurement,
-            [name]: value
-        }))
-    }
+        const { name, value } = event.target;
+    
+        const pollutionTypes = ['CO', 'O3', 'SO2', 'NO2'];
+        if (pollutionTypes.includes(name)) {
+            setCurrentMeasurement((prevMeasurement) => ({
+                ...prevMeasurement,
+                pollutionMeasurements: prevMeasurement.pollutionMeasurements.map((pollutant) =>
+                    pollutant.type === name ? { ...pollutant, value: parseFloat(value) || null } : pollutant
+                )
+            }));
+        } else {
+            setCurrentMeasurement((prevMeasurement) => ({
+                ...prevMeasurement,
+                [name]: value
+            }));
+        }
+    };
+    
 
     const handleFormChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = event.target
@@ -86,7 +100,7 @@ export function DroneInput() {
 
     const addMeasurement = () => {
 
-        const { name, latitude, longitude, temperature, windDirection, windSpeed, pressure, CO, O3, SO2, NO2 } = currentMeasurement;
+        const { name, latitude, longitude, temperature, windDirection, windSpeed, pressure, pollutionMeasurements } = currentMeasurement;
 
         if (
             name.trim() === '' ||
@@ -150,40 +164,15 @@ export function DroneInput() {
             return;
         }
 
-        if (CO !== null && CO < 0) {
-            setNotification({
-                message: 'Invalid CO Level',
-                description: 'CO level cannot be negative.',
-                type: 'error',
-            });
-            return;
-        }
-    
-        if (O3 !== null && O3 < 0) {
-            setNotification({
-                message: 'Invalid O3 Level',
-                description: 'O3 level cannot be negative.',
-                type: 'error',
-            });
-            return;
-        }
-    
-        if (SO2 !== null && SO2 < 0) {
-            setNotification({
-                message: 'Invalid SO2 Level',
-                description: 'SO2 level cannot be negative.',
-                type: 'error',
-            });
-            return;
-        }
-    
-        if (NO2 !== null && NO2 < 0) {
-            setNotification({
-                message: 'Invalid NO2 Level',
-                description: 'NO2 level cannot be negative.',
-                type: 'error',
-            });
-            return;
+        for (const pollution of pollutionMeasurements) {
+            if (pollution.value !== null && pollution.value < 0) {
+                setNotification({
+                    message: `Invalid ${pollution.type} Level`,
+                    description: `${pollution.type} level cannot be negative.`,
+                    type: 'error',
+                });
+                return;
+            }
         }
 
         
@@ -200,10 +189,12 @@ export function DroneInput() {
             pressure: null,
             windSpeed: null,
             windDirection: null,
-            CO: null,
-            O3: null,
-            SO2: null,
-            NO2: null
+            pollutionMeasurements: [
+                { type: 'CO', value: null },
+                { type: 'O3', value: null },
+                { type: 'SO2', value: null },
+                { type: 'NO2', value: null }
+            ]
         })
     
     }
@@ -239,27 +230,23 @@ export function DroneInput() {
         const pollutionTypesSet = new Set<string>();
 
         formData.measurements.forEach(measurement => {
-            const { CO, O3, SO2, NO2 } = measurement;
-
-            if (CO !== null) pollutionTypesSet.add('CO');
-            if (O3 !== null) pollutionTypesSet.add('O3');
-            if (SO2 !== null) pollutionTypesSet.add('SO2');
-            if (NO2 !== null) pollutionTypesSet.add('NO2');
+            measurement.pollutionMeasurements.forEach(pollution => {
+                pollutionTypesSet.add(pollution.type);
+            });
         });
 
         if (pollutionTypesSet.size > 0) {
-            const pollutionTypesArray = Array.from(pollutionTypesSet); // Konwersja Set na Array
+            const pollutionTypesArray = Array.from(pollutionTypesSet); 
 
             const isValidPollutionData = formData.measurements.every(measurement => {
-                const { CO, O3, SO2, NO2 } = measurement;
-
+                const pollutionTypesInMeasurement = new Set(measurement.pollutionMeasurements.map(p => p.type));
+    
                 for (let type of pollutionTypesArray) {
-                    if (type === 'CO' && CO === null) return false;
-                    if (type === 'O3' && O3 === null) return false;
-                    if (type === 'SO2' && SO2 === null) return false;
-                    if (type === 'NO2' && NO2 === null) return false;
+                    if (!pollutionTypesInMeasurement.has(type)) {
+                        return false;
+                    }
                 }
-
+    
                 return true;
             });
 
@@ -291,10 +278,10 @@ export function DroneInput() {
                 pressure: measurement.pressure,
                 windSpeed: measurement.windSpeed,
                 windDirection: measurement.windDirection,
-                CO: measurement.CO,
-                O3: measurement.O3,
-                SO2: measurement.SO2,
-                NO2: measurement.NO2
+                pollutionMeasurements: measurement.pollutionMeasurements.map(pollution => ({
+                    type: pollution.type,
+                    value: pollution.value,
+                })),
             })),
         };
         
@@ -476,38 +463,23 @@ export function DroneInput() {
                             className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
                         />
                         </div>
-                        <div className="flex items-center justify-center">
-                        <input
-                            type="text"
-                            value={measurement.CO ?? ''}
-                            readOnly
-                            className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${!measurement.CO ? 'bg-gray-200' : ''}`}
-                        />
-                        </div>
-                        <div className="flex items-center justify-center">
-                        <input
-                            type="text"
-                            value={measurement.O3 ?? ''}
-                            readOnly
-                            className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${!measurement.O3 ? 'bg-gray-200' : ''}`}
-                        />
-                        </div>
-                        <div className="flex items-center justify-center">
-                        <input
-                            type="text"
-                            value={measurement.SO2 ?? ''}
-                            readOnly
-                            className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${!measurement.SO2 ? 'bg-gray-200' : ''}`}
-                        />
-                        </div>
-                        <div className="flex items-center justify-center">
-                        <input
-                            type="text"
-                            value={measurement.NO2 ?? ''}
-                            readOnly
-                            className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${!measurement.NO2 ? 'bg-gray-200' : ''}`}
-                        />
-                        </div>
+                        {['CO', 'O3', 'SO2', 'NO2'].map((pollutionType) => {
+                            const pollution = measurement.pollutionMeasurements.find(
+                                (p) => p.type === pollutionType
+                            );
+                            return (
+                                <div key={pollutionType} className="flex items-center justify-center">
+                                    <input
+                                        type="text"
+                                        value={pollution ? pollution.value ?? '' : ''}
+                                        readOnly
+                                        className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${
+                                            pollution ? '' : 'bg-gray-200'
+                                        }`}
+                                    />
+                                </div>
+                            );
+                        })}
                         <div className="flex justify-center items-center">
                             <button
                                 type="button"
@@ -524,7 +496,6 @@ export function DroneInput() {
 
             <div className="col-span-full grid grid-cols-1 gap-6 mt-6">
 
-                {/* Basic Data Section */}
                 <div>
                     <h4 className="text-md font-semibold text-gray-800">Basic Data</h4>
                     <p className="text-sm text-gray-600">Please enter the basic information for the point.</p>
@@ -544,7 +515,6 @@ export function DroneInput() {
                     </div>
                 </div>
 
-                {/* Weather Data Section */}
                 <div>
                     <h4 className="text-md font-semibold text-gray-800">Weather Data</h4>
                     <p className="text-sm text-gray-600">Please enter weather-related data. Wind speed is measured in m/s, and wind direction in degrees.</p>
@@ -568,21 +538,26 @@ export function DroneInput() {
                     </div>
                 </div>
 
-                {/* Pollutants Data Section */}
                 <div>
                     <h4 className="text-md font-semibold text-gray-800">Pollutants</h4>
                     <p className="text-sm text-gray-600">Enter pollutant data in μg/m3. Fields marked with an asterisk (*) are optional, but providing one type of pollutant for one data, makes obligatory providing same type of pollutant for rest of measurements points (provide for all or for none)</p>
                     <div className="grid grid-cols-4 gap-4 mt-2">
                     <div>
                         <label className="block text-sm font-medium leading-6 text-gray-900">CO (μg/m3)*</label>
-                        <input type="text" name="CO" value={currentMeasurement.CO ?? ''} onChange={handleCurrentMeasurementChange} placeholder="CO" className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" />
+                        <input 
+                        type="text" 
+                        name="CO" 
+                        value={currentMeasurement.pollutionMeasurements.find(p => p.type === 'CO')?.value ?? ''} 
+                        onChange={handleCurrentMeasurementChange} 
+                        placeholder="CO" 
+                        className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" />
                     </div>
                     <div>
                         <label className="block text-sm font-medium leading-6 text-gray-900">O3 (μg/m3)*</label>
                         <input
                         type="text"
                         name="O3"
-                        value={currentMeasurement.O3 ?? ''}
+                        value={currentMeasurement.pollutionMeasurements.find(p => p.type === 'O3')?.value ?? ''} 
                         onChange={handleCurrentMeasurementChange}
                         placeholder="O3"
                         className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
@@ -593,7 +568,7 @@ export function DroneInput() {
                         <input
                         type="text"
                         name="SO2"
-                        value={currentMeasurement.SO2 ?? ''}
+                        value={currentMeasurement.pollutionMeasurements.find(p => p.type === 'SO2')?.value ?? ''} 
                         onChange={handleCurrentMeasurementChange}
                         placeholder="SO2"
                         className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
@@ -604,7 +579,7 @@ export function DroneInput() {
                         <input
                         type="text"
                         name="NO2"
-                        value={currentMeasurement.NO2 ?? ''}
+                        value={currentMeasurement.pollutionMeasurements.find(p => p.type === 'NO2')?.value ?? ''} 
                         onChange={handleCurrentMeasurementChange}
                         placeholder="NO2"
                         className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"

@@ -169,27 +169,124 @@ export function Overview() {
               {expandedFlight === droneFlight.id && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">Flight description</h3>
+                  
                   <p className="mt-3 text-sm leading-5 text-gray-800">{droneFlight.description}</p>
                   <div className="mt-4">
                     <h3 className="text-lg font-semibold text-gray-800">Measurement Points</h3>
                     <div className="mt-2 max-h-56 overflow-y-auto bg-gray-100 rounded-md shadow-sm p-4">
-                      <div className="grid grid-cols-4 gap-4 text-sm font-semibold text-center text-gray-700">
+                      <div className="grid grid-cols-[repeat(11,minmax(150px,1fr))] gap-4 text-sm font-semibold text-center text-gray-700">
                         <div>Name</div>
-                        <div>Latitude</div>
-                        <div>Longitude</div>
-                        <div>Temperature</div>
+                        <div>Latitude (°)</div>
+                        <div>Longitude (°)</div>
+                        <div>Temperature (°C)</div>
+                        <div>Pressure (Pa)</div>
+                        <div>Wind Speed (m/s)</div>
+                        <div>Wind Direction (°)</div>
+                        <div>CO (μg/m3)</div>
+                        <div>O3 (μg/m3)</div>
+                        <div>SO2 (μg/m3)</div>
+                        <div>NO2 (μg/m3)</div>
                       </div>
-                      {droneFlight.measurements.map((measurement, index) => (
-                        <div
-                          key={index}
-                          className="grid grid-cols-4 gap-4 p-2 bg-white border border-gray-300 shadow-sm rounded-md mt-2"
-                        >
-                          <div className="text-center">{measurement.name}</div>
-                          <div className="text-center">{measurement.latitude}</div>
-                          <div className="text-center">{measurement.longitude}</div>
-                          <div className="text-center">{measurement.temperature}</div>
-                        </div>
-                      ))}
+                      <div className="mt-2 max-h-56 bg-gray-100 p-2 rounded-md shadow-sm">
+                        {droneFlight.measurements.map((measurement, index) => (
+                          <div
+                            key={index}
+                            className="grid grid-cols-[repeat(11,minmax(150px,1fr))] gap-4 p-2 border-gray-300 shadow-sm relative"
+                          >
+                            <div className="flex items-center justify-center">
+                              <input
+                                  type="text"
+                                  value={measurement.name}
+                                  readOnly
+                                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                              />
+                            </div>
+                            <div className="flex items-center justify-center">
+                              <input
+                                  type="text"
+                                  value={measurement.latitude ?? ''}
+                                  readOnly
+                                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                              />
+                            </div>
+                            <div className="flex items-center justify-center">
+                              <input
+                                  type="text"
+                                  value={measurement.longitude ?? ''}
+                                  readOnly
+                                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                              />
+                            </div>
+                            <div className="flex items-center justify-center">
+                              <input
+                                  type="text"
+                                  value={measurement.temperature ?? ''}
+                                  readOnly
+                                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                              />
+                            </div>
+                            <div className="flex items-center justify-center">
+                              <input
+                                  type="text"
+                                  value={measurement.pressure ?? ''}
+                                  readOnly
+                                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                              />
+                            </div>
+                            <div className="flex items-center justify-center">
+                              <input
+                                  type="text"
+                                  value={measurement.windSpeed ?? ''}
+                                  readOnly
+                                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                              />
+                            </div>
+                            <div className="flex items-center justify-center">
+                              <input
+                                  type="text"
+                                  value={measurement.windDirection ?? ''}
+                                  readOnly
+                                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                              />
+                            </div>
+                            <div className="flex items-center justify-center">
+                              <input
+                                type="text"
+                                value={measurement.pollutionMeasurements.find(p => p.type === 'CO')?.value ?? ''}
+                                readOnly
+                                className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${measurement.pollutionMeasurements.find(p => p.type === 'CO') ? '' : 'bg-gray-200'}`}
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-center">
+                              <input
+                                type="text"
+                                value={measurement.pollutionMeasurements.find(p => p.type === 'O3')?.value ?? ''}
+                                readOnly
+                                className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${measurement.pollutionMeasurements.find(p => p.type === 'O3') ? '' : 'bg-gray-200'}`}
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-center">
+                              <input
+                                type="text"
+                                value={measurement.pollutionMeasurements.find(p => p.type === 'SO2')?.value ?? ''}
+                                readOnly
+                                className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${measurement.pollutionMeasurements.find(p => p.type === 'SO2') ? '' : 'bg-gray-200'}`}
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-center">
+                              <input
+                                type="text"
+                                value={measurement.pollutionMeasurements.find(p => p.type === 'NO2')?.value ?? ''}
+                                readOnly
+                                className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${measurement.pollutionMeasurements.find(p => p.type === 'NO2') ? '' : 'bg-gray-200'}`}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                     <div className="mt-4 flex justify-end gap-6">
                       <button
