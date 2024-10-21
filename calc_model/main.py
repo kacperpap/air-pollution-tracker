@@ -4,14 +4,17 @@ from datetime import datetime
 import time
 import os
 import traceback
-from typing import Dict, List
+from typing import Any, Dict, List
 import aio_pika
 import json
 import uuid
 import numpy as np
 from dotenv import load_dotenv # type: ignore
 
-from models.euler_modified_multiboxes_model.Procedural.concentration_simulation import simulate_pollution_spread
+from models.euler_modified_multibox_model.concentration_simulation import simulate_pollution_spread
+from models.euler_modified_multibox_model.input_type import *
+from models.euler_modified_multibox_model.output_type import *
+
 
 load_dotenv()
     
@@ -19,38 +22,67 @@ def log_with_time(message):
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
     print(f'[{now}] {message}')
     
-def convert_backend_flight_data(backend_data: Dict[str, List[Dict]]):
-    converted_data = []
-    for measurement in backend_data['measurements']:
-        pollution_data = {
-            'id': measurement['id'],
-            'name': measurement['name'],
-            'latitude': measurement['latitude'],
-            'longitude': measurement['longitude'],
-            'temperature': measurement['temperature'],
-            'windSpeed': measurement['windSpeed'],
-            'windDirection': measurement['windDirection'],
-            'pressure': measurement['pressure'],
-            'flightId': measurement['flightId']
-        }
-        
-        for pollutant in measurement['pollutionMeasurements']:
-            pollution_data[pollutant['type']] = pollutant['value']
-        
-        for pollutant in ['CO', 'O3', 'SO2', 'NO2']:
-            if pollutant not in pollution_data:
-                pollution_data[pollutant] = 0.0
-        
-        converted_data.append(pollution_data)
+# def numpy_to_python_types(obj: Any) -> Any:
+#     """
+#     Recursively converts NumPy objects (e.g., arrays, int64, float64) to Python native types.
     
-    return converted_data
+#     Args:
+#         obj: Any object to be converted.
+        
+#     Returns:
+#         Python native types (e.g., list, int, float, dict) with all NumPy types converted.
+#     """
+#     if isinstance(obj, np.ndarray):
+#         return obj.tolist()  # Convert arrays to lists
+    
+#     if isinstance(obj, (np.int_, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64,
+#                         np.uint8, np.uint16, np.uint32, np.uint64)):
+#         return int(obj)  # Convert NumPy integers to Python int
+    
+#     if isinstance(obj, (np.float16, np.float32, np.float64)):
+#         return float(obj)  # Convert NumPy floats to Python float
+    
+#     if isinstance(obj, np.bool_):
+#         return bool(obj)  # Convert NumPy booleans to Python bool
+    
+#     if isinstance(obj, dict):
+#         return {k: numpy_to_python_types(v) for k, v in obj.items()}  # Recursively convert dicts
+    
+#     if isinstance(obj, (list, tuple)):
+#         return [numpy_to_python_types(item) for item in obj]  # Recursively convert lists and tuples
+    
+#     return obj  # If it's not a NumPy object, return as is
 
-def numpy_to_list(obj):
-    if isinstance(obj, np.ndarray):
-        return obj.tolist()
-    if isinstance(obj, np.float64):
-        return float(obj)
-    return obj
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super(NpEncoder, self).default(obj)
+
+def serialize_output(output_data: OutputType) -> str:
+    """
+    Serializes the output data to JSON format after converting NumPy types.
+    
+    Args:
+        output_data: The output data in OutputType format.
+        
+    Returns:
+        str: Serialized JSON data as a string.
+    """
+    try:
+        serialized_result = json.dumps(output_data, cls=NpEncoder)
+        
+        log_with_time(f"Serialized data types: {str(type(output_data))}")
+        
+        return serialized_result
+    except Exception as e:
+        log_with_time(f"Error during serialization: {str(e)}")
+        raise
+
 
 def simulate(data, num_steps=1000, dt=1, pollutatns=['CO', 'O3'], box_size=(None,None), grid_denstiy="medium", urbanized=False, margin_boxes=1, initial_distance=1):
     """
@@ -72,8 +104,8 @@ def simulate(data, num_steps=1000, dt=1, pollutatns=['CO', 'O3'], box_size=(None
     """
     
     try:
-        converted_data = convert_backend_flight_data(data)
-        
+        converted_data: InputType = convert_to_input_type(data)
+                
         log_with_time(f"simulate -> starting function simulate_pollution_spread with parameters: "
                       f"num_steps={num_steps}, dt={dt}, pollutants={pollutatns}, "
                       f"box_size={box_size}, grid_density={grid_denstiy}, "
@@ -81,7 +113,7 @@ def simulate(data, num_steps=1000, dt=1, pollutatns=['CO', 'O3'], box_size=(None
         
         start_time = time.time()
 
-        final_concentration = simulate_pollution_spread(
+        concentrations, boxes, temp_values, press_values, u_values, v_values = simulate_pollution_spread(
             converted_data, num_steps, dt, 
             pollutants=pollutatns, 
             box_size=box_size, 
@@ -92,12 +124,22 @@ def simulate(data, num_steps=1000, dt=1, pollutatns=['CO', 'O3'], box_size=(None
             debug=False
         )
         
+        
         end_time = time.time()
         elapsed_time = end_time - start_time
 
         log_with_time(f"simulate -> simulate_pollution_spread completed in {elapsed_time:.3f} seconds.")
 
-        return final_concentration
+        final_data: OutputType = convert_to_output_type(
+            concentrations,
+            boxes,
+            temp_values,
+            press_values,
+            u_values,
+            v_values
+        )
+        
+        return final_data
 
     except Exception as e:
         log_with_time(f"simulate -> Error occurred during simulation: {str(e)}")
@@ -114,21 +156,20 @@ async def process_message(message: aio_pika.IncomingMessage, channel: aio_pika.C
 
         try:
             data = json.loads(message.body)
-            log_with_time(f'Message content: {data}')
             
             log_with_time('Starting simulation...')
             result = simulate(data)
-            log_with_time(f'Simulation completed. Result: {result}')
+            log_with_time(f'Simulation completed.')
 
             if message.reply_to:
                 log_with_time(f'Publishing result to reply queue: {message.reply_to} for message ID: {unique_id}')
                         
-                serializable_result = json.loads(json.dumps(result, default=numpy_to_list))
+                serialized_result = serialize_output(result)
         
             
                 await channel.default_exchange.publish(
                     aio_pika.Message(
-                        body=json.dumps(serializable_result).encode(),
+                        body=serialized_result.encode(),
                         correlation_id=correlation_id
                     ),
                     routing_key=message.reply_to  
@@ -172,85 +213,3 @@ if __name__ == "__main__":
     log_with_time("Starting the listener...")
     asyncio.run(rabbitmq_listener())
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-# # NOT ASYNCHRONOUS 
-# async def process_message(channel, method, properties, body):
-    
-#     correlation_id = properties.correlation_id
-#     unique_id = str(uuid.uuid4())
-       
-#     log_with_time(f'Processing message with ID: {unique_id} (Correlation ID: {correlation_id})')
-
-#     try:
-#         data = json.loads(body)
-#         log_with_time(f'Message content: {data}')
-        
-#         log_with_time('Starting simulation...')
-#         result = simulate(data)
-#         log_with_time(f'Simulation completed. Result: {result}')
-
-#         log_with_time(f'Publishing result for message ID: {unique_id}')
-#         channel.basic_publish(
-#             exchange='',
-#             routing_key=properties.reply_to,
-#             body=json.dumps(result), 
-#             properties=pika.BasicProperties(correlation_id=properties.correlation_id)
-#         )
-#         log_with_time(f'Result published for message ID: {unique_id}')
-
-#         channel.basic_ack(delivery_tag=method.delivery_tag)
-#         log_with_time(f'Message acknowledged: {unique_id}')
-
-#     except Exception as e:
-#         log_with_time(f'Error processing message {unique_id}: {str(e)}')
-#         log_with_time(f'Traceback: {traceback.format_exc()}')
-#         channel.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
-
-# async def rabbitmq_listener():
-    
-#     request_queue = os.getenv('RABBITMQ_REQUEST_QUEUE')
-     
-#     while True:   
-#         try:
-#             connection = await asyncio.get_event_loop().run_in_executor(
-#                 None, lambda: pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-#             )
-#             log_with_time(f'calc_model -> rabbitmq_listener: Successfully connected to RabbitMQ.')
-
-#             channel = await asyncio.get_event_loop().run_in_executor(
-#                 None, connection.channel
-#             )
-            
-#             await asyncio.get_event_loop().run_in_executor(
-#                 None, lambda: channel.queue_declare(queue=request_queue, durable=False)
-#             )
-#             log_with_time(f'calc_model -> rabbitmq_listener: Queue "{request_queue}" declared successfully.')
-            
-#             await asyncio.get_event_loop().run_in_executor(
-#                 None, lambda: channel.basic_qos(prefetch_count=1)
-#             )
-
-#             def callback(ch, method, properties, body):
-#                 asyncio.create_task(process_message(ch, method, properties, body))
-            
-#             await asyncio.get_event_loop().run_in_executor(
-#                 None, lambda: channel.basic_consume(queue=request_queue, on_message_callback=callback)
-#             )
-#             log_with_time(f'calc_model -> rabbitmq_listener: Waiting for messages in "{request_queue}".')
-
-#             # Use run_in_executor to run start_consuming in a separate thread
-#             await asyncio.get_event_loop().run_in_executor(None, channel.start_consuming)
-
-#         except Exception as e:
-#             log_with_time(f'calc_model -> rabbitmq_listener: Error connecting to RabbitMQ: {e}')
-#             await asyncio.sleep(5)  # Wait before trying to reconnect
