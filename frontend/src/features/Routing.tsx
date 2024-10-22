@@ -1,9 +1,10 @@
-import { Navigate, RouteObject, useRoutes } from "react-router-dom"
+import { RouteObject, useRoutes } from "react-router-dom"
 import { useIsLogged } from "../hooks/useIsLogged"
 import { Layout } from "../components/Layout"
 import Map from "./map/Map"
 import { Login } from "./login/Login"
 import { DroneInput } from "./drone/DroneInput"
+import { SimulationInput } from "./simulation/SimulationInput"
 import { Overview } from "./overview/Overview"
 import { ErrorPage } from "./error/ErrorPage"
 
@@ -45,6 +46,10 @@ const privateRoutes: RouteObject[] = [
             {
                 path: '/drone-input/:flightId',
                 element: <DroneInput />
+            },
+            {
+                path: '/simulation-input',
+                element: <SimulationInput />
             },
             {
                 path: '/data-overview',

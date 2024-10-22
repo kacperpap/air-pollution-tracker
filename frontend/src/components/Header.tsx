@@ -34,8 +34,7 @@ const features = [
   { name: 'Data overview', description: 'See your drone flight measurements saved in database', href: '/data-overview', icon: DocumentChartBarIcon}
 ]
 const callsToAction = [
-  { name: 'Watch demo', href: '#', icon: PlayCircleIcon },
-  { name: 'Contact sales', href: '#', icon: PhoneIcon },
+  { name: 'Simulate data pollution spread', href: '/simulation-input', icon: PlayCircleIcon }
 ]
 
 
@@ -121,7 +120,7 @@ export default function Header() {
                       </div>
                     ))}
                   </div>
-                  <div className="grid grid-cols-2 divide-x divide-gray-900/5 bg-gray-50">
+                  <div className="grid grid-cols-1 divide-x divide-gray-900/5 bg-gray-50">
                     {callsToAction.map((item) => (
                       <a
                         key={item.name}

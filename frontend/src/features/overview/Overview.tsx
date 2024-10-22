@@ -39,7 +39,7 @@ export function Overview() {
         setExpandedFlight(expandedFlight === flightId ? null : flightId);
     };
 
-    const openDeleteDialog = (flightId: number) => {
+    const openDeleteDialog = (flightId: number | null) => {
         setOpenDialog(flightId);
     };
 
@@ -47,34 +47,40 @@ export function Overview() {
         setOpenDialog(null);
     };
 
-    const editDroneInput = (flightId: number) => {
+    const editDroneInput = (flightId: number | null) => {
+      if(flightId !== null){
         navigate(`/drone-input/${flightId}`)
-    }
-
-    const showOnMap = (flightId: number) => {
-      navigate(`/map/${flightId}`)
-    }
-
-    const handleDeleteFlight = async (flightId: number) => {
-      try {
-        await deleteDroneFlight(flightId)
-        
-        setDroneFlights((prevFlights) => prevFlights.filter(flight => flight.id !== flightId));
-
-        setNotification({
-          message: 'Drone flight deleted!',
-          description: 'Your drone flight has been deleted.',
-          type: 'success'
-        })
-        navigate('/data-overview')
-      } catch (error) {
-        setNotification({
-          message: 'Error',
-          description: 'Failed to delete data: ' + error,
-          type: 'error'
-        })
       }
-      closeDeleteDialog();
+    }
+
+    const showOnMap = (flightId: number | null) => {
+      if (flightId !== null) {
+        navigate(`/map/${flightId}`)
+      }
+    }
+
+    const handleDeleteFlight = async (flightId: number | null) => {
+      if (flightId !== null) {
+        try {
+          await deleteDroneFlight(flightId)
+          
+          setDroneFlights((prevFlights) => prevFlights.filter(flight => flight.id !== flightId));
+
+          setNotification({
+            message: 'Drone flight deleted!',
+            description: 'Your drone flight has been deleted.',
+            type: 'success'
+          })
+          navigate('/data-overview')
+        } catch (error) {
+          setNotification({
+            message: 'Error',
+            description: 'Failed to delete data: ' + error,
+            type: 'error'
+          })
+        }
+        closeDeleteDialog();
+      }
     };
 
     const handleCloseNotification = () => {
@@ -132,7 +138,9 @@ export function Overview() {
             />
           )}
         <ul role="list" className="divide-y divide-gray-100">
-          {droneFlights.map((droneFlight) => (
+          {droneFlights
+            .filter(droneFlight => droneFlight.id !== null)
+            .map((droneFlight) => (
             <li key={droneFlight.id} className="flex flex-col gap-y-4 py-5">
               <div className="flex justify-between items-center gap-x-6">
                 <div className="flex items-center gap-x-4">
