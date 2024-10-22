@@ -1,7 +1,7 @@
 import { DroneMeasurementType } from "./DroneMeasurementType"
 
 export type DroneFlightType = {
-    id: number,
+    id: number | null,
     title: string,
     description?: string,
     date?: Date,
