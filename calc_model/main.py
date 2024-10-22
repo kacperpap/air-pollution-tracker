@@ -1,90 +1,23 @@
 import asyncio
-from dataclasses import dataclass
-from datetime import datetime
 import time
 import os
 import traceback
-from typing import Any, Dict, List
-import aio_pika
+import aio_pika # type: ignore
 import json
 import uuid
-import numpy as np
 from dotenv import load_dotenv # type: ignore
 
+
+from utils import log_with_time, serialize_output
 from models.euler_modified_multibox_model.concentration_simulation import simulate_pollution_spread
-from models.euler_modified_multibox_model.input_type import *
-from models.euler_modified_multibox_model.output_type import *
+from models.euler_modified_multibox_model.simulation_types.input_type import *
+from models.euler_modified_multibox_model.simulation_types.output_type import *
 
 
 load_dotenv()
     
-def log_with_time(message):
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-    print(f'[{now}] {message}')
-    
-# def numpy_to_python_types(obj: Any) -> Any:
-#     """
-#     Recursively converts NumPy objects (e.g., arrays, int64, float64) to Python native types.
-    
-#     Args:
-#         obj: Any object to be converted.
-        
-#     Returns:
-#         Python native types (e.g., list, int, float, dict) with all NumPy types converted.
-#     """
-#     if isinstance(obj, np.ndarray):
-#         return obj.tolist()  # Convert arrays to lists
-    
-#     if isinstance(obj, (np.int_, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64,
-#                         np.uint8, np.uint16, np.uint32, np.uint64)):
-#         return int(obj)  # Convert NumPy integers to Python int
-    
-#     if isinstance(obj, (np.float16, np.float32, np.float64)):
-#         return float(obj)  # Convert NumPy floats to Python float
-    
-#     if isinstance(obj, np.bool_):
-#         return bool(obj)  # Convert NumPy booleans to Python bool
-    
-#     if isinstance(obj, dict):
-#         return {k: numpy_to_python_types(v) for k, v in obj.items()}  # Recursively convert dicts
-    
-#     if isinstance(obj, (list, tuple)):
-#         return [numpy_to_python_types(item) for item in obj]  # Recursively convert lists and tuples
-    
-#     return obj  # If it's not a NumPy object, return as is
 
-class NpEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.integer):
-            return int(obj)
-        if isinstance(obj, np.floating):
-            return float(obj)
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return super(NpEncoder, self).default(obj)
-
-def serialize_output(output_data: OutputType) -> str:
-    """
-    Serializes the output data to JSON format after converting NumPy types.
-    
-    Args:
-        output_data: The output data in OutputType format.
-        
-    Returns:
-        str: Serialized JSON data as a string.
-    """
-    try:
-        serialized_result = json.dumps(output_data, cls=NpEncoder)
-        
-        log_with_time(f"Serialized data types: {str(type(output_data))}")
-        
-        return serialized_result
-    except Exception as e:
-        log_with_time(f"Error during serialization: {str(e)}")
-        raise
-
-
-def simulate(data, num_steps=1000, dt=1, pollutatns=['CO', 'O3'], box_size=(None,None), grid_denstiy="medium", urbanized=False, margin_boxes=1, initial_distance=1):
+def simulate(data):
     """
     Simulates pollution spread using given data and parameters.
     
@@ -98,26 +31,32 @@ def simulate(data, num_steps=1000, dt=1, pollutatns=['CO', 'O3'], box_size=(None
         urbanized (bool, optional): Whether to simulate urbanized area. Defaults to False.
         margin_boxes (int, optional): Number of margin boxes. Defaults to 1.
         initial_distance (int, optional): Initial distance between simulation boxes. Defaults to 1.
-
-    Returns:
-        dict: Final concentration of pollutants after simulation.
     """
     
     try:
         converted_data: InputType = convert_to_input_type(data)
                 
+        num_steps = data['numSteps']
+        dt = data['dt']
+        pollutants = data.get('pollutants', [])
+        box_size = data.get('boxSize', (None, None))
+        grid_density = data['gridDensity']
+        urbanized = data['urbanized']
+        margin_boxes = data['marginBoxes']
+        initial_distance = data['initialDistance']
+                
         log_with_time(f"simulate -> starting function simulate_pollution_spread with parameters: "
-                      f"num_steps={num_steps}, dt={dt}, pollutants={pollutatns}, "
-                      f"box_size={box_size}, grid_density={grid_denstiy}, "
+                      f"num_steps={num_steps}, dt={dt}, pollutants={pollutants}, "
+                      f"box_size={box_size}, grid_density={grid_density}, "
                       f"urbanized={urbanized}, margin_boxes={margin_boxes}, initial_distance={initial_distance}")
         
         start_time = time.time()
 
         concentrations, boxes, temp_values, press_values, u_values, v_values = simulate_pollution_spread(
             converted_data, num_steps, dt, 
-            pollutants=pollutatns, 
+            pollutants=pollutants, 
             box_size=box_size, 
-            grid_density=grid_denstiy, 
+            grid_density=grid_density, 
             urbanized=urbanized, 
             margin_boxes=margin_boxes, 
             initial_distance=initial_distance, 

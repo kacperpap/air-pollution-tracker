@@ -1,8 +1,8 @@
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 from datetime import datetime
 
+from models.euler_modified_multibox_model.debug_utils.plotting import plot_concentration_grid
 from models.euler_modified_multibox_model.grid_and_interpolation import create_multibox_grid_with_interpolated_measurements
 
 
@@ -201,62 +201,6 @@ def calculate_diffusion_coefficient(pollutant, temperature, pressure=101325):
     K = D_0 * (T_kelvin / 293.15) ** exponent
 
     return K
-
-
-
-def plot_concentration_grid(boxes, concentration_values, measurements, pollutant=None, save_image=False, image_path=None):
-    """
-    Rysuje siatkę pudełek z interpolowanymi/obliczonymi w kolejnych krokach symulacji wartościami stężeń oraz opcjonalnie zapisuje obraz.
-    
-    Parametry:
-    - boxes: lista granic geograficznych pudełek [(lat_min, lat_max, lon_min, lon_max), ...]
-    - concentration_values: wartości stężeń przypisane do pudełek (None dla pustych pudełek)
-    - measurements: lista punktów pomiarowych
-    - save_image: boolean, jeśli True, zapisuje obraz do pliku
-    - image_path: ścieżka do pliku, w którym zapisany zostanie obraz (jeśli save_image=True)
-    """
-    pollutants_ranges = {
-        "SO2": [0, 350],
-        "NO2": [0, 200],
-        "PM10": [0, 200],
-        "PM2.5": [0, 75],
-        "O3": [0, 180],
-        "CO": [0, 15400]
-    }
-    
-    range_min, range_max = pollutants_ranges.get(pollutant, [0, 1])
-        
-    color_map = plt.cm.plasma(np.linspace(0, 1, 256))
-    
-    fig, ax = plt.subplots(figsize=(10, 8))
-
-    for i, (lat_min, lat_max, lon_min, lon_max) in enumerate(boxes):
-        color_value = concentration_values[i]
-        if color_value is not None:
-          if color_value > range_max:
-              color_value = range_max  
-          color_idx = int(np.clip((color_value / range_max) * 255, 0, 255))
-          color = color_map[color_idx]
-        else:
-          color = 'lightgrey'
-        
-        rect = plt.Rectangle((lon_min, lat_min), lon_max - lon_min, lat_max - lat_min, 
-                             linewidth=0.5, edgecolor='black', facecolor=color)
-        ax.add_patch(rect)
-
-    latitudes = np.array([point["latitude"] for point in measurements])
-    longitudes = np.array([point["longitude"] for point in measurements])
-    concentration_values_measurements = np.array([point[f'{pollutant}'] for point in measurements])
-
-    scatter = plt.scatter(longitudes, latitudes, c=concentration_values_measurements, cmap='plasma', edgecolor='k', s=100, zorder=5)
-
-    ax.set_xlabel('Longitude')
-    ax.set_ylabel('Latitude')
-    plt.colorbar(scatter, label=f'{pollutant} Concentration')
-    plt.grid(True)
-
-    if save_image and image_path:
-        plt.savefig(image_path)
 
 
 def simulate_pollution_spread(data, num_steps, dt, pollutants, box_size=None, grid_density="medium", urbanized=False, margin_boxes=1, initial_distance=1, max_increment=1, debug=False):
