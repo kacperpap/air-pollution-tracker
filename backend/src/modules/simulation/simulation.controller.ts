@@ -1,9 +1,9 @@
-import { Body, Controller, Get, NotFoundException, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { DroneService } from '../drone/drone.service';
 import { SimulationService } from './simulation.service';
 import { TokenGuard } from '../auth/token.guard';
 import { UserID } from 'src/decorators/user.decorator';
-import { DroneFlightType } from '../drone/dto/drone-flight';
+import { SimulationRequestType } from './dto/simulation-request-data';
 
 @Controller('simulation-pollution-spread')
 export class SimulationController {
@@ -13,20 +13,13 @@ export class SimulationController {
       ) {}
     
       @UseGuards(TokenGuard)
-      @Post('droneFlight/:id')
+      @Post('droneFlight/')
       async simulatePollutionSpreadForDroneFlight(
-        @Param('id', ParseIntPipe) id: number,
-        @UserID() userId: number
+        @UserID() userId: number,
+        @Body() simulationData: SimulationRequestType
       ) {
+        const result = await this.simulationService.runSimulationOfPollutionSpreadForDroneFlight(simulationData);
 
-        const droneFlight : DroneFlightType = await this.droneService.getDroneFlightById(userId, id);
-    
-        if (!droneFlight) {
-          throw new NotFoundException();
-        }
-    
-        const result = await this.simulationService.runSimulationOfPollutionSpreadForDroneFlight(droneFlight);
-    
         return result;
       }
 }

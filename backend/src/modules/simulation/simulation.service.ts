@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { RabbitMQService } from '../rabbitmq/rabbitmq.service'; 
-import { DroneFlightType } from '../drone/dto/drone-flight';
 import { SimulationRequestType } from './dto/simulation-request-data';
 import { SimulationResponseType } from './dto/simulation-response-data';
 
@@ -15,27 +14,20 @@ export class SimulationService {
      * from and to simulation module 
      */
 
-    async runSimulationOfPollutionSpreadForDroneFlight(droneFlightData: DroneFlightType): Promise<SimulationResponseType> {
+    async runSimulationOfPollutionSpreadForDroneFlight(simulationData: SimulationRequestType): Promise<SimulationResponseType> {
       const simulationRequest = new SimulationRequestType({
-        measurements: droneFlightData.measurements.map(measurement => ({
-          id: measurement.id,
-          name: measurement.name,
-          latitude: measurement.latitude,
-          longitude: measurement.longitude,
-          temperature: measurement.temperature,
-          windSpeed: measurement.windSpeed,
-          windDirection: measurement.windDirection,
-          pressure: measurement.pressure,
-          pollutionMeasurements: measurement.pollutionMeasurements.map(pollution => ({
-            type: pollution.type,
-            value: pollution.value,
-          })),
-          flightId: droneFlightData.id, 
-        })),
+        droneFlight: simulationData.droneFlight,
+        numSteps: simulationData.numSteps,
+        dt: simulationData.dt,
+        pollutants: simulationData.pollutants,
+        boxSize: simulationData.boxSize,
+        gridDensity: simulationData.gridDensity,
+        urbanized: simulationData.urbanized,
+        marginBoxes: simulationData.marginBoxes,
+        initialDistance: simulationData.initialDistance,
       });
-  
+    
       const result = await this.run(simulationRequest);
-  
       return result;
     }
 

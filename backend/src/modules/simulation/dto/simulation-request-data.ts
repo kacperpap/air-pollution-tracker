@@ -1,14 +1,39 @@
-import { IsNotEmpty, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
-import { DroneMeasurementType } from 'src/modules/drone/dto/drone-flight-measurement';
+import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, ValidateNested } from 'class-validator';
+import { DroneFlightType } from 'src/modules/drone/dto/drone-flight';
 
 
 export class SimulationRequestType {
 
   @IsNotEmpty()
-  @ValidateNested({ each: true })  
-  @Type(() => DroneMeasurementType)
-  measurements: DroneMeasurementType[];
+  droneFlight: DroneFlightType;
+
+  @IsNumber()
+  @IsPositive()
+  numSteps: number;
+
+  @IsNumber()
+  @IsPositive()
+  dt: number;
+
+  @IsArray()
+  @IsOptional()
+  pollutants: string[];
+
+  @IsArray()
+  @IsOptional()
+  boxSize: [number | null, number | null];
+
+  @IsString()
+  gridDensity: string;
+
+  @IsNumber()
+  marginBoxes: number;
+
+  @IsNumber()
+  initialDistance: number;
+
+  @IsBoolean()
+  urbanized: boolean;
 
 
   /**
@@ -20,5 +45,9 @@ export class SimulationRequestType {
     Object.assign(this, data);
   }
 }
+
+
+
+
 
   
