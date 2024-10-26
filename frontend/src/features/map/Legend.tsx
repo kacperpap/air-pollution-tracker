@@ -1,6 +1,6 @@
 import { PollutantParameter, Range } from "./MapTypes";
 import { POLLUTANT_RANGES } from "./POLLUTANT_RANGES";
-import { getColorScale } from "./utils";
+import { getColorScale, getUnit } from "./utils";
 
 interface LegendProps {
   parameter: string;
@@ -24,15 +24,7 @@ export const Legend: React.FC<LegendProps> = ({ parameter }) => {
     })`;
   };
 
-  const getUnit = (parameter: string) => {
-    switch (parameter) {
-      case 'temperature': return '°C';
-      case 'pressure': return 'hPa';
-      case 'wind': return 'm/s';
-      default: return 'μg/m³';
-    }
-  };
-
+  
   return (
     <div className="absolute top-10 right-10 bg-white p-4 rounded-lg shadow-md z-20">
       <h3 className="font-semibold mb-2 text-gray-800">Legend: {parameter} ({getUnit(parameter)})</h3>
