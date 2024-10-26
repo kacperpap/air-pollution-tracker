@@ -1,14 +1,37 @@
 import { DroneFlightType } from "./DroneFlightType";
 
-  
-  export type SimulationResponseType = {
-    selectedFlight: DroneFlightType;
-    numSteps: number;
-    dt: number;
-    pollutants: string[];
-    boxSize: [number | null, number | null];
-    gridDensity: string;
-    urbanized: boolean;
-    marginBoxes: number;
-    initialDistance: number;
-  };
+export type EnvironmentType = {
+  pressure: number[];
+  temperature: number[];
+  windSpeed: number[];
+  windDirection: number[];
+};
+
+export type GridBoxType = {
+  lat_max: number;
+  lat_min: number;
+  lon_max: number;
+  lon_min: number;
+};
+
+export type GridType = {
+  boxes: GridBoxType[];
+};
+
+export type PollutantDataType = {
+  CO: number[];
+  NO2: number[];
+  O3: number[];
+  SO2: number[];
+};
+
+export type PollutantsType = {
+  final_step: PollutantDataType;
+  steps: number[][][];
+};
+
+export type SimulationResponseType = {
+  environment: EnvironmentType;
+  grid: GridType;
+  pollutants: PollutantsType;
+};
