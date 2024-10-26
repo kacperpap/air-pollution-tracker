@@ -11,6 +11,7 @@ export const Layout = () => {
       <div className="grow relative relative z-10 h-screen">
         <Outlet />
       </div>
+      <div id="portal-root"></div>
     </div>
   )
 }
