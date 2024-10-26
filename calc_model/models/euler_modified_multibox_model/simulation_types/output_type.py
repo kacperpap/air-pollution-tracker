@@ -56,10 +56,10 @@ def convert_to_output_type(
 
     formatted_boxes = [
         {
-            "lat_min": box[2],
-            "lat_max": box[3],
-            "lon_min": box[0],
-            "lon_max": box[1]
+            "lat_min": box[0],
+            "lat_max": box[1],
+            "lon_min": box[2],
+            "lon_max": box[3]
         }
         for box in boxes
     ]
