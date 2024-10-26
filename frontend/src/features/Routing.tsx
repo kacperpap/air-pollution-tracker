@@ -60,7 +60,7 @@ const privateRoutes: RouteObject[] = [
                 element: <Map />
             },
             {
-                path: '/map/run-simulation',
+                path: '/map/run-simulation/:flightId',
                 element: <Map />
             }
         ]
