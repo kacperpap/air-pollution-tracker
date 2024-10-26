@@ -5,9 +5,14 @@ import { getAllDroneFlights } from './api/getAllDroneFlights';
 import { Notification } from "../../components/Notification";
 import { NotificationProps } from '../../types/NotificationPropsType';
 import { simulatePollutionSpread } from './api/simulate';
+import { useNavigate } from 'react-router-dom';
 
 
 export function SimulationInput() {
+
+    const navigate = useNavigate()
+
+    const [loading, setLoading] = useState(false);
 
     const [notification, setNotification] = useState<NotificationProps>({
         message: "",
@@ -150,13 +155,17 @@ export function SimulationInput() {
         }
 
         try {
-            await simulatePollutionSpread(formData);
+            setLoading(true)
+            
             setNotification({
-                message: 'Data sent to simulation successfully!',
-                description: 'Your drone measurements are being processed to simulate pollution spread.',
-                type: 'success',
+              message: 'Data sent to simulation successfully!',
+              description: 'Your drone measurements are being processed to simulate pollution spread.',
+              type: 'success',
+              duration: 5000
             });
-    
+
+            const simulationData = await simulatePollutionSpread(formData);
+            
             setFormData({
                 droneFlight: {
                     id: null,
@@ -174,18 +183,59 @@ export function SimulationInput() {
                 marginBoxes: 1,
                 initialDistance: 1,
             });
+
+            navigate('/map/run-simulation', {state: {simulationData}});
+
         } catch (error) {
             setNotification({
                 message: 'Error',
                 description: 'Failed to send data to simulation module: ' + error,
                 type: 'error',
             });
+        } finally {
+          setLoading(false)
         }
     };
 
     const handleCloseNotification = () => {
         setNotification({ message: '', description: '', type: ''});
       }
+
+    if (loading) {
+        return (
+          <div className="z-40 flex items-center justify-center h-full w-full bg-gray-100">
+              {notification.type && (
+                  <Notification
+                  message={notification.message}
+                  description={notification.description}
+                  type={notification.type}
+                  duration={4000}
+                  onClose={handleCloseNotification}
+                  />
+              )}
+              <div className="space-x-4">
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-solid border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_2s_linear_infinite]" role="status">
+                      <span className="sr-only">Loading...</span>
+                  </div>
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-green-500 border-solid border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_2s_linear_infinite]" role="status">
+                      <span className="sr-only">Loading...</span>
+                  </div>
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-red-500 border-solid border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_2s_linear_infinite]" role="status">
+                      <span className="sr-only">Loading...</span>
+                  </div>
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-yellow-500 border-solid border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_2s_linear_infinite]" role="status">
+                      <span className="sr-only">Loading...</span>
+                  </div>
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-solid border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_2s_linear_infinite]" role="status">
+                      <span className="sr-only">Loading...</span>
+                  </div>
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-solid border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_2s_linear_infinite]" role="status">
+                      <span className="sr-only">Loading...</span>
+                  </div>
+              </div>
+          </div>
+      );
+    }
 
     return (
         <div className="max-w-5xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6 mb-50 overflow-y-auto">
