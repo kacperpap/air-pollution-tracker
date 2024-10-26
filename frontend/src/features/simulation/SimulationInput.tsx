@@ -6,6 +6,7 @@ import { Notification } from "../../components/Notification";
 import { NotificationProps } from '../../types/NotificationPropsType';
 import { simulatePollutionSpread } from './api/simulate';
 import { useNavigate } from 'react-router-dom';
+import { SimulationResponseType } from '../../types/SimulationResponseType';
 
 
 export function SimulationInput() {
@@ -164,7 +165,8 @@ export function SimulationInput() {
               duration: 5000
             });
 
-            const simulationData = await simulatePollutionSpread(formData);
+            const simulationData: SimulationResponseType = await simulatePollutionSpread(formData);
+          
             
             setFormData({
                 droneFlight: {
@@ -184,7 +186,7 @@ export function SimulationInput() {
                 initialDistance: 1,
             });
 
-            navigate('/map/run-simulation', {state: {simulationData}});
+            navigate(`/map/run-simulation/${formData.droneFlight.id}`, {state: {simulationData}});
 
         } catch (error) {
             setNotification({
