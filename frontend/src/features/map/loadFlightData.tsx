@@ -1,4 +1,5 @@
 import L from 'leaflet';
+import * as d3 from 'd3';
 import { getDroneFlightById } from '../drone/api/getDroneFlightById';
 import { DroneMeasurementType } from '../../types/DroneMeasurementType';
 import { NotificationProps } from '../../types/NotificationPropsType';
@@ -19,6 +20,81 @@ export const loadFlightData = async (
         validPoints.map((point: DroneMeasurementType) => [point.latitude, point.longitude] as [number, number])
       );
       map.fitBounds(bounds);
+
+      //TRY TO ADD SPLINE LINE BETWEEN MEASUREMENT POINTS
+
+      // if (!map.getPanes().overlayPane.querySelector('svg')) {
+      //   L.svg().addTo(map);
+      // }
+
+      // const svg = d3.select(map.getPanes().overlayPane).select("svg");
+      
+      // svg.selectAll(".flight-path").remove();
+
+      // const g = svg.append("g")
+      //   .attr("class", "leaflet-zoom-hide flight-path");
+      
+      // const path = g.append("path")
+      //   .attr("class", "drone-path")
+      //   .attr("fill", "none")
+      //   .attr("stroke", "black")
+      //   .attr("stroke-width", 2);
+
+      // const points = g.selectAll("circle")
+      //   .data(validPoints)
+      //   .enter()
+      //   .append("circle")
+      //   .attr("r", 3)
+      //   .attr("fill", "blue")
+      //   .attr("class", "path-point");
+
+      // const updatePath = () => {
+      //   const lineGenerator = d3.line<[number, number]>()
+      //     .x(d => d[0])
+      //     .y(d => d[1])
+      //     .curve(d3.curveMonotoneX); 
+  
+      //   const coordinates = validPoints.map((point: { latitude: number; longitude: number; }) => {
+      //     const pos = map.latLngToLayerPoint([point.latitude!, point.longitude!]);
+      //     return [pos.x, pos.y] as [number, number];
+      //   });
+  
+      //   const pathData = lineGenerator(coordinates);
+      //   if (pathData) {
+      //     path.attr("d", pathData);
+      //   }
+  
+      //   points.attr("cx", (d, i) => coordinates[i][0])
+      //         .attr("cy", (d, i) => coordinates[i][1]);
+      // };
+  
+      // const reset = () => {
+      //   const bounds = map.getBounds();
+      //   const topLeft = map.latLngToLayerPoint(bounds.getNorthWest());
+      //   const bottomRight = map.latLngToLayerPoint(bounds.getSouthEast());
+  
+      //   svg
+      //     .attr("width", bottomRight.x - topLeft.x)
+      //     .attr("height", bottomRight.y - topLeft.y)
+      //     .style("left", `${topLeft.x}px`)
+      //     .style("top", `${topLeft.y}px`);
+  
+      //   g.attr("transform", `translate(${-topLeft.x},${-topLeft.y})`);
+          
+      //   updatePath();
+      // };
+  
+      // map.on('zoom', reset);
+      // map.on('moveend', reset);
+      // map.on('movestart', () => {
+      //   svg.style('display', 'none');
+      // });
+      // map.on('moveend', () => {
+      //   svg.style('display', 'block');
+      //   reset();
+      // });
+  
+      // reset();
 
       validPoints.forEach((point: DroneMeasurementType) => {
         const marker = L.marker([point.latitude!, point.longitude!], {

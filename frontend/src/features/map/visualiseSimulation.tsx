@@ -1,16 +1,20 @@
-import L from 'leaflet';
+import L, { Marker } from 'leaflet';
 import { Box, PollutantParameter } from './MapTypes';
-import { getColorForValue, getColorScale, updateRectangleColors } from './utils';
+import { generateTooltipContent, getColorForValue, getUnit, updateRectangleColors } from './utils';
 import { NotificationProps } from '../../types/NotificationPropsType';
-import { POLLUTANT_RANGES } from './POLLUTANT_RANGES';
+import { getDroneFlightById } from '../drone/api/getDroneFlightById';
+import { DroneMeasurementType, PollutionMeasurementType } from '../../types/DroneMeasurementType';
 
-export const visualiseSimulation = (
+export const visualiseSimulation = async (
   simulationData: any,
+  flightId: string | number | undefined,
   map: L.Map,
   selectedParameter: string,
   setAvailableParameters: (params: string[]) => void,
   setRectangles: (rectangles: L.Rectangle[]) => void,
   setWindArrows: (arrows: L.Polyline[]) => void,
+  setFlightData: (data: DroneMeasurementType[]) => void,
+  setMarkers: (markers: Marker[]) => void,
   setNotification: (notification: NotificationProps) => void
 ) => {
 
@@ -48,7 +52,6 @@ export const visualiseSimulation = (
         return;
     }
 
-
     const rectangles: L.Rectangle[] = grid.boxes.map((box: Box, index: number) => {
         const bounds: L.LatLngBoundsLiteral = [
         [box.lat_min, box.lon_min],
@@ -66,21 +69,77 @@ export const visualiseSimulation = (
             weight: 1,
         });
 
+        const tooltipContent = generateTooltipContent(selectedParameter, pollutantValues[index])
+
+        rectangle.bindTooltip(tooltipContent, {
+          permanent: false,
+          direction: 'center',
+          className: 'box-tooltip',
+        })
+
         rectangle.addTo(map);
         return rectangle;
+
     });
+
+    updateRectangleColors(simulationData, selectedParameter, rectangles);
+    setRectangles(rectangles);
 
     const windData = {
       direction: environment.windDirection,
       speed: environment.windSpeed,
     };
     
-    updateRectangleColors(simulationData, selectedParameter, rectangles);
-    setRectangles(rectangles);
-
     const arrows = drawWindArrows(grid, map, windData, selectedParameter === 'wind');
     setWindArrows(arrows);
 
+    if (flightId) {
+      try {
+        const flight = await getDroneFlightById(flightId as number);
+        const validPoints = flight.measurements.filter(
+          (point: DroneMeasurementType) => point.latitude !== null && point.longitude !== null
+        );
+
+        setFlightData(validPoints);
+
+        const markers: L.Marker[] = validPoints.map((point: DroneMeasurementType) => {
+          let tooltipContent = `<strong>Measurement:</strong> ${point.name}`;
+        
+          tooltipContent += generateTooltipContent(selectedParameter, point)
+
+          const marker = L.marker([point.latitude as number, point.longitude as number], {
+            icon: L.icon({
+              iconUrl: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png', 
+              iconSize: [32, 32],
+              iconAnchor: [16, 32],
+            }),
+          })
+
+          marker.bindTooltip(tooltipContent, {
+            permanent: false,
+            direction: 'top',
+            className: 'measurement-tooltip',
+          });
+
+          marker.addTo(map)
+
+          return marker
+        });
+
+        setMarkers(markers)
+
+        const bounds = L.latLngBounds(
+          validPoints.map((point: DroneMeasurementType) => [point.latitude, point.longitude] as [number, number])
+        );
+        map.fitBounds(bounds);
+      } catch (error) {
+        setNotification({
+          message: 'Error',
+          description: 'Failed to load flight data.',
+          type: 'error',
+        });
+      }
+    }
 };
 
 export const drawWindArrows = (

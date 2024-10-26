@@ -35,10 +35,10 @@ export const POLLUTANT_RANGES = {
       { min: 30, max: Infinity, label: 'Hot' }
     ],
     'pressure': [
-      { min: -Infinity, max: 990, label: 'Very Low' },
-      { min: 990, max: 1010, label: 'Low' },
-      { min: 1010, max: 1030, label: 'Normal' },
-      { min: 1030, max: Infinity, label: 'High' }
+      { min: -Infinity, max: 99000, label: 'Very Low' },
+      { min: 99000, max: 101000, label: 'Low' },
+      { min: 101000, max: 103000, label: 'Normal' },
+      { min: 103000, max: Infinity, label: 'High' }
     ],
     'wind': [
       { min: -Infinity, max: 2, label: 'Calm' },
