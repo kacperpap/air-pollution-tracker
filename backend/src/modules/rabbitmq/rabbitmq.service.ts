@@ -7,13 +7,12 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private connection: amqp.Connection;
   private channel: amqp.Channel;
   public requestQueue: string;
-  public rabbitmqContainer: string;
+  public rabbitmqUrl: string;
 
 
   constructor(private configService: ConfigService) {
     this.requestQueue = this.configService.get<string>('RABBITMQ_REQUEST_QUEUE');
-    this.rabbitmqContainer = this.configService.get<string>('RABBITMQ_CONTAINER_NAME');
-    // this.responseQueue = this.configService.get<string>('RABBITMQ_RESPONSE_QUEUE');
+    this.rabbitmqUrl = this.configService.get<string>('RABBITMQ_URL');
   }
 
   async onModuleInit() {
@@ -26,7 +25,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
 
   private async connectToRabbitMQ() {
     try {
-      this.connection = await amqp.connect(`amqp://${this.rabbitmqContainer}`);
+      this.connection = await amqp.connect(`${this.rabbitmqUrl}`);
       this.channel = await this.connection.createChannel();
       await this.channel.assertQueue(this.requestQueue, { durable: false });
       // await this.channel.assertQueue(this.responseQueue, { durable: false, exclusive: true });

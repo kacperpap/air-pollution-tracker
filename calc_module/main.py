@@ -124,10 +124,11 @@ async def process_message(message: aio_pika.IncomingMessage, channel: aio_pika.C
 
 async def rabbitmq_listener():
     request_queue = os.getenv('RABBITMQ_REQUEST_QUEUE')
+    rabbitmq_url = os.getenv('RABBITMQ_URL', 'amqp://localhost')
     
     while True:
         try:
-            connection = await aio_pika.connect_robust("amqp://localhost")
+            connection = await aio_pika.connect_robust(f"{rabbitmq_url}")
             log_with_time(f'calc_model -> rabbitmq_listener: Successfully connected to RabbitMQ.')
 
             async with connection:

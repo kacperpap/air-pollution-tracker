@@ -1,0 +1,99 @@
+#############################################################################################################
+#                                                                                                           #
+#   Budowanie wszystkich obrazów:                                                                           #
+#     docker compose -f dev.docker-compose.yml build --no-cache                                             #
+#                                                                                                           #
+#   Budowanie części obrazów:                                                                               #
+#     docker compose -f .\dev.docker-compose.yml build --no-cache backend frontend calc_module              #
+#                                                                                                           #
+#   Uruchamianie aplikacji:                                                                                 #
+#     docker compose -f .\dev.docker-compose.yml up                                                         #
+#                                                                                                           #
+#   Zatrzymywanie aplikacji i usuwanie kontenerów i sieci:                                                  #
+#     docker compose -f .\dev.docker-compose.yml down                                                       #
+#                                                                                                           #
+#                                                                                                           #
+#   Uwagi                                                                                                   #
+#     -> po poprawnym zdefiniowaniu pliku .env docker compose pobiera poprawnie wszystkie wartości          #
+#     -> wolumeny z mapowaniem części repozytorium do katalogu /app w kontenerze umożliwiają                #
+#        zapisywanie zmian kodu pomiędzy kontenerem a lokalnym środowiskiem dla trybu developerskiego       #
+#     -> wolumeny z mapowaniem /app/node_modules pozwalają aktualizować zmiany bibliotek pomiędzy           #
+#        repozytorium i kontenerem                                                                          #
+#                                                                                                           #
+#############################################################################################################
+
+networks:
+  apt-network:
+    driver: bridge
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: frontend.dev.Dockerfile
+    image: air-pollution-tracker/frontend:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - FAST_REFRESH=${FAST_REFRESH}
+      - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - apt-network
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: backend.dev.Dockerfile
+    image: air-pollution-tracker/backend:latest
+    ports:
+      - "9000:9000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_KEY=${JWT_KEY}
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - RABBITMQ_REQUEST_QUEUE=${RABBITMQ_REQUEST_QUEUE}
+      - RABBITMQ_RESPONSE_QUEUE=${RABBITMQ_RESPONSE_QUEUE}
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - apt-network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  calc_module:
+    build:
+      context: ./calc_module
+      dockerfile: calc_module.dev.Dockerfile
+    image: air-pollution-tracker/calc_module:latest
+    environment:
+      - RABBITMQ_REQUEST_QUEUE=${RABBITMQ_REQUEST_QUEUE}
+      - RABBITMQ_RESPONSE_QUEUE=${RABBITMQ_RESPONSE_QUEUE}
+      - RABBITMQ_URL=${RABBITMQ_URL}
+    volumes:
+      - ./calc_module:/app
+    networks:
+      - apt-network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  rabbitmq:
+    image: rabbitmq:management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - apt-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5

@@ -2,10 +2,10 @@ FROM node:20-alpine
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
-RUN mkdir -p /usr/src/app/node_modules /usr/src/app/dist && \
-    chown -R appuser:appgroup /usr/src/app
+RUN mkdir -p /app/node_modules /app/dist && \
+    chown -R appuser:appgroup /app
 
 USER appuser
 
