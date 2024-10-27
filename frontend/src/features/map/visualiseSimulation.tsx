@@ -1,9 +1,9 @@
 import L, { Marker } from 'leaflet';
 import { Box, PollutantParameter } from './MapTypes';
-import { generateTooltipContent, getColorForValue, getUnit, updateRectangleColors } from './utils';
+import { generateTooltipContent, getColorForValue, updateRectangleColors } from './utils';
 import { NotificationProps } from '../../types/NotificationPropsType';
 import { getDroneFlightById } from '../drone/api/getDroneFlightById';
-import { DroneMeasurementType, PollutionMeasurementType } from '../../types/DroneMeasurementType';
+import { DroneMeasurementType } from '../../types/DroneMeasurementType';
 
 export const visualiseSimulation = async (
   simulationData: any,

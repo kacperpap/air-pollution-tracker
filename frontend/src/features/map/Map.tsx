@@ -5,7 +5,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import { NotificationProps } from '../../types/NotificationPropsType';
 import { Notification } from "../../components/Notification";
 import { ParameterSelector } from './ParameterSelector'
-import { generateTooltipContent, getUnit, updateRectangleColors } from './utils'
+import { generateTooltipContent, updateRectangleColors } from './utils'
 import { loadFlightData } from './loadFlightData';
 import { drawWindArrows, visualiseSimulation } from './visualiseSimulation';
 import { Legend } from './Legend';
@@ -108,13 +108,13 @@ export default function Map() {
         let data;
 
         if (["CO", "NO2", "O3", "SO2"].includes(selected)) {
-          data = simulationData.pollutants[selected as keyof PollutantsType]; 
+          data = simulationData.pollutants[selected as keyof PollutantsType];
         } else {
-          data = simulationData.environment[selected as keyof EnvironmentType]; 
+          data = simulationData.environment[selected as keyof EnvironmentType];
         }
 
         if (data) {
-            updateRectangleColors(simulationData, selected, rectangles);
+          updateRectangleColors(simulationData, selected, rectangles);
         }
       }
     }
@@ -173,7 +173,7 @@ export default function Map() {
     } else if (flightId && map && location.pathname === `/map/${flightId}`) {
       loadFlightData(Number(flightId), map, setNotification);
     }
-  }, [flightId, location.pathname, location.state, map]);
+  }, [flightId, location.pathname, location.state, map, selectedParameter, simulationData]);
 
 
   const handleCloseNotification = () => {

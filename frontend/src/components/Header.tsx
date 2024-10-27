@@ -20,7 +20,7 @@ import {
   DocumentChartBarIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
-import { ChevronDownIcon, PhoneIcon, PlayCircleIcon } from '@heroicons/react/20/solid'
+import { ChevronDownIcon, PlayCircleIcon } from '@heroicons/react/20/solid'
 import { useIsLogged } from '../hooks/useIsLogged'
 import { useNavigate } from 'react-router-dom'
 import { NotificationProps } from '../types/NotificationPropsType'
@@ -175,7 +175,7 @@ export default function Header() {
                 </div>
                 <div className="grid bg-gray-50">
                   <a
-                    href="#"
+                    href="/logout"
                     onClick={handleLogout}
                     className="flex items-center justify-center gap-x-2.5 p-3 text-sm font-semibold leading-6 text-gray-900 hover:bg-gray-100"
                   >
@@ -258,7 +258,7 @@ export default function Header() {
                     </a>
                   ) : (
                     <a
-                      href="#"
+                      href="/logout"
                       onClick={handleLogout}
                       className="-mx-3 block rounded-lg py-2.5 px-3 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-400/10"
                     >

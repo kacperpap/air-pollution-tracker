@@ -5,5 +5,4 @@ scipy
 fastapi
 aio_pika
 python-dotenv
-asyncio
 aiormq
