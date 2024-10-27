@@ -79,7 +79,10 @@ export default function Header() {
           <div className="flex lg:flex-1">
             <a href="/" className="-m-1.5 p-1.5">
               <span className="sr-only">Your Company</span>
-              <img alt="" src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600" className="h-8 w-auto" />
+              <div className='flex justify-items '>
+                <img alt="" src="/paper_plane.png" className="h-8 w-auto" />
+                <span className="font-bold text-lg text-gray-900">Air Pollution Tracker</span>
+              </div>
             </a>
           </div>
           <div className="flex lg:hidden">
@@ -191,7 +194,7 @@ export default function Header() {
             <div className="flex items-center justify-between">
               <a href="/" className="-m-1.5 p-1.5">
                 <span className="sr-only">Your Company</span>
-                <img alt="" src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600" className="h-8 w-auto" />
+                <img alt="" src="/paper_plane.png" className="h-8 w-auto" />
               </a>
               <button
                 type="button"
@@ -218,6 +221,15 @@ export default function Header() {
                           </DisclosureButton>
                           <DisclosurePanel className="mt-2 space-y-2">
                             {features.map((item) => (
+                              <a
+                                key={item.name}
+                                href={item.href}
+                                className="block rounded-lg py-2 pl-6 pr-3 text-sm font-semibold leading-7 text-gray-900 hover:bg-gray-400/10"
+                              >
+                                {item.name}
+                              </a>
+                            ))}
+                            {callsToAction.map((item) => (
                               <a
                                 key={item.name}
                                 href={item.href}

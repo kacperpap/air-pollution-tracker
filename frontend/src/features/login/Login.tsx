@@ -21,7 +21,7 @@ export function Login() {
     const [formData, setFormData] = useState<LoginFormType | RegisterFormType>({
         email: '',
         password: '',
-        name: ''  // component during rendering must have controlled or uncontrolled input data, cannot change from undefined to passed value
+        name: ''  
     })
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,8 +70,8 @@ export function Login() {
             <div className="flex min-h-full flex-1 flex-col justify-center px-6 pt-32 pb-12 lg:px-8">
                 <div className="sm:mx-auto sm:w-full sm:max-w-lg">
                     <img
-                        alt="Your Company"
-                        src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
+                        alt="Air Pollution Tracker"
+                        src="/paper_plane.png"
                         className="mx-auto h-12 w-auto"
                     />
                     <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
