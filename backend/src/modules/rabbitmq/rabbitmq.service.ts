@@ -7,10 +7,12 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private connection: amqp.Connection;
   private channel: amqp.Channel;
   public requestQueue: string;
-  
+  public rabbitmqContainer: string;
+
 
   constructor(private configService: ConfigService) {
     this.requestQueue = this.configService.get<string>('RABBITMQ_REQUEST_QUEUE');
+    this.rabbitmqContainer = this.configService.get<string>('RABBITMQ_CONTAINER_NAME');
     // this.responseQueue = this.configService.get<string>('RABBITMQ_RESPONSE_QUEUE');
   }
 
@@ -24,7 +26,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
 
   private async connectToRabbitMQ() {
     try {
-      this.connection = await amqp.connect('amqp://localhost');
+      this.connection = await amqp.connect(`amqp://${this.rabbitmqContainer}`);
       this.channel = await this.connection.createChannel();
       await this.channel.assertQueue(this.requestQueue, { durable: false });
       // await this.channel.assertQueue(this.responseQueue, { durable: false, exclusive: true });
@@ -65,15 +67,15 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
         reject(
           new HttpException(
             'Timeout: No response from simulation module within the given time',
-            HttpStatus.REQUEST_TIMEOUT 
+            HttpStatus.REQUEST_TIMEOUT
           )
         );
-      }, timeoutMs); 
+      }, timeoutMs);
 
-      this.channel.sendToQueue(this.requestQueue, serializedMessage, { 
+      this.channel.sendToQueue(this.requestQueue, serializedMessage, {
         persistent: true,
         correlationId: correlationId,
-        replyTo: replyTo, 
+        replyTo: replyTo,
       });
 
       this.channel.consume(
@@ -82,11 +84,11 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
           if (msg && msg.properties.correlationId === correlationId) {
             clearTimeout(timer);
             const result = JSON.parse(msg.content.toString());
-            this.channel.ack(msg); 
+            this.channel.ack(msg);
             resolve(result);
           }
         },
-        { noAck: false } 
+        { noAck: false }
       );
     });
   }

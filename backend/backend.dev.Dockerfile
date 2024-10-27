@@ -1,18 +1,23 @@
-FROM node:22.5.1-bullseye-slim AS base
+FROM node:20-alpine
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /usr/src/app
 
-COPY package*.json .
+RUN mkdir -p /usr/src/app/node_modules /usr/src/app/dist && \
+    chown -R appuser:appgroup /usr/src/app
 
-FROM base AS development
+USER appuser
 
-RUN --mount=type=cache,target=/usr/src/app/.npm \
-    npm set cache /usr/src/app/.npm && \
-    npm install
+COPY --chown=appuser:appgroup package*.json ./
+COPY --chown=appuser:appgroup prisma ./prisma/
+COPY --chown=appuser:appgroup tsconfig*.json ./
 
-COPY . .
+RUN npm install
 
 RUN npx prisma generate
+
+COPY --chown=appuser:appgroup . .
 
 EXPOSE 9000
 
