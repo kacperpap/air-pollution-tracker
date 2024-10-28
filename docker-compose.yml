@@ -30,8 +30,8 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: frontend.dev.Dockerfile
-    image: air-pollution-tracker/frontend:latest
+      dockerfile: frontend.${ENVIRONMENT}.Dockerfile
+    image: air-pollution-tracker/${ENVIRONMENT}/frontend:latest
     ports:
       - "3000:3000"
     environment:
@@ -39,7 +39,7 @@ services:
       - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL}
     volumes:
       - ./frontend:/app
-      - /app/node_modules
+      - ./frontend/node_modules:/app/node_modules
     networks:
       - apt-network
     depends_on:
@@ -48,12 +48,12 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: backend.dev.Dockerfile
-    image: air-pollution-tracker/backend:latest
+      dockerfile: backend.${ENVIRONMENT}.Dockerfile
+    image: air-pollution-tracker/${ENVIRONMENT}/backend:latest
     ports:
       - "9000:9000"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV}
       - ORIGIN=${ORIGIN}
       - DATABASE_URL=${DATABASE_URL}
       - JWT_KEY=${JWT_KEY}
@@ -62,7 +62,7 @@ services:
       - RABBITMQ_RESPONSE_QUEUE=${RABBITMQ_RESPONSE_QUEUE}
     volumes:
       - ./backend:/app
-      - /app/node_modules
+      - ./backend/node_modules:/app/node_modules
     networks:
       - apt-network
     depends_on:
@@ -72,8 +72,8 @@ services:
   calc_module:
     build:
       context: ./calc_module
-      dockerfile: calc_module.dev.Dockerfile
-    image: air-pollution-tracker/calc_module:latest
+      dockerfile: calc_module.${ENVIRONMENT}.Dockerfile
+    image: air-pollution-tracker/${ENVIRONMENT}/calc_module:latest
     environment:
       - RABBITMQ_REQUEST_QUEUE=${RABBITMQ_REQUEST_QUEUE}
       - RABBITMQ_RESPONSE_QUEUE=${RABBITMQ_RESPONSE_QUEUE}

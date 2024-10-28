@@ -1,33 +1,39 @@
-FROM node:20-alpine AS builder
+FROM node:23-alpine AS builder
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
 
-COPY package*.json ./
-COPY tsconfig.json ./
-COPY tailwind.config.js ./
+RUN mkdir -p /app/node_modules && chown -R appuser:appgroup /app
 
-RUN npm install
+USER appuser
 
-COPY . .
+COPY --chown=appuser:appgroup package*.json ./
+COPY --chown=appuser:appgroup tsconfig.json ./
+COPY --chown=appuser:appgroup tailwind.config.js ./
+
+RUN npm ci
+
+COPY --chown=appuser:appgroup . .
 
 RUN npm run build
 
-FROM nginx:stable-alpine
+FROM node:23-alpine
 
-RUN adduser -S nginxuser -G nginx
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-COPY --from=builder /app/build /usr/share/nginx/html
+WORKDIR /app
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/build .
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
 
-RUN chown -R nginxuser:nginx /usr/share/nginx/html && \
-    chown -R nginxuser:nginx /var/cache/nginx && \
-    chown -R nginxuser:nginx /var/log/nginx && \
-    touch /var/run/nginx.pid && \
-    chown -R nginxuser:nginx /var/run/nginx.pid
+USER appuser
 
-USER nginxuser
+RUN npm ci --production
 
-EXPOSE 80
+RUN npm install -g serve
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["serve", "-s", ".", "-l", "3000"]
+
+EXPOSE 3000
