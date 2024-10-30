@@ -7,8 +7,7 @@ WORKDIR /app
 COPY --chown=appuser:appgroup requirements.txt .
 
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir wheel && \
-    pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt && \
+    pip install --no-cache-dir -r requirements.txt && \
     chown -R appuser:appgroup /app
 
 USER appuser

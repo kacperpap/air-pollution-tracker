@@ -1,24 +1,22 @@
 #############################################################################################################
 #                                                                                                           #
+# PRISMA_CLI_BINARY_TARGETS:                                                                                #
+#   This configuration includes both the Alpine Linux target (for your GitHub tests)                        #
+#   and the RHEL target (for AWS EKS). For local development, you typically don't need to set               #
+#   PRISMA_CLI_BINARY_TARGETS because the native target in your schema.prisma file should cover             #
+#   your local environment                                                                                  #
+#                                                                                                           #
 #   Budowanie wszystkich obrazów:                                                                           #
-#     docker compose -f dev.docker-compose.yml build --no-cache                                             #
+#     docker compose -f docker-compose.yml build --no-cache                                                 #
 #                                                                                                           #
 #   Budowanie części obrazów:                                                                               #
-#     docker compose -f .\dev.docker-compose.yml build --no-cache backend frontend calc_module              #
+#     docker compose -f .\docker-compose.yml build --no-cache backend frontend calc_module                  #
 #                                                                                                           #
 #   Uruchamianie aplikacji:                                                                                 #
-#     docker compose -f .\dev.docker-compose.yml up                                                         #
+#     docker compose -f .\docker-compose.yml up                                                             #
 #                                                                                                           #
 #   Zatrzymywanie aplikacji i usuwanie kontenerów i sieci:                                                  #
-#     docker compose -f .\dev.docker-compose.yml down                                                       #
-#                                                                                                           #
-#                                                                                                           #
-#   Uwagi                                                                                                   #
-#     -> po poprawnym zdefiniowaniu pliku .env docker compose pobiera poprawnie wszystkie wartości          #
-#     -> wolumeny z mapowaniem części repozytorium do katalogu /app w kontenerze umożliwiają                #
-#        zapisywanie zmian kodu pomiędzy kontenerem a lokalnym środowiskiem dla trybu developerskiego       #
-#     -> wolumeny z mapowaniem /app/node_modules pozwalają aktualizować zmiany bibliotek pomiędzy           #
-#        repozytorium i kontenerem                                                                          #
+#     docker compose -f .\docker-compose.yml down                                                           #
 #                                                                                                           #
 #############################################################################################################
 
@@ -35,11 +33,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - FAST_REFRESH=${FAST_REFRESH}
+      - FAST_REFRESH=${FAST_REFRESH:-false}
       - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL}
-    volumes:
-      - ./frontend:/app
-      - ./frontend/node_modules:/app/node_modules
     networks:
       - apt-network
     depends_on:
@@ -53,16 +48,12 @@ services:
     ports:
       - "9000:9000"
     environment:
-      - NODE_ENV=${NODE_ENV}
+      - PRISMA_CLI_BINARY_TARGETS=linux-musl-openssl-3.0.x,rhel-openssl-3.0.x
       - ORIGIN=${ORIGIN}
       - DATABASE_URL=${DATABASE_URL}
       - JWT_KEY=${JWT_KEY}
-      - RABBITMQ_URL=${RABBITMQ_URL}
-      - RABBITMQ_REQUEST_QUEUE=${RABBITMQ_REQUEST_QUEUE}
-      - RABBITMQ_RESPONSE_QUEUE=${RABBITMQ_RESPONSE_QUEUE}
-    volumes:
-      - ./backend:/app
-      - ./backend/node_modules:/app/node_modules
+      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://rabbitmq}
+      - RABBITMQ_REQUEST_QUEUE=${RABBITMQ_REQUEST_QUEUE:-simulation_request_queue}
     networks:
       - apt-network
     depends_on:
@@ -75,11 +66,8 @@ services:
       dockerfile: calc_module.${ENVIRONMENT}.Dockerfile
     image: air-pollution-tracker/${ENVIRONMENT}/calc_module:latest
     environment:
-      - RABBITMQ_REQUEST_QUEUE=${RABBITMQ_REQUEST_QUEUE}
-      - RABBITMQ_RESPONSE_QUEUE=${RABBITMQ_RESPONSE_QUEUE}
-      - RABBITMQ_URL=${RABBITMQ_URL}
-    volumes:
-      - ./calc_module:/app
+      - RABBITMQ_REQUEST_QUEUE=${RABBITMQ_REQUEST_QUEUE:-simulation_request_queue}
+      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://rabbitmq}
     networks:
       - apt-network
     depends_on:

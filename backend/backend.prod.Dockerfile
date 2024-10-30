@@ -1,4 +1,9 @@
-FROM node:23-alpine AS base
+FROM node:20-alpine AS base
+
+# https://www.prisma.io/docs/orm/prisma-client/deployment/serverless/deploy-to-aws-lambda#general-considerations-when-deploying-to-aws-lambda
+# https://www.prisma.io/docs/orm/reference/environment-variables-reference#cli-binary-targets
+
+RUN apk add --no-cache openssl postgresql-client
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
@@ -32,9 +37,7 @@ RUN npx prisma generate
 RUN npm run build
 
 
-FROM node:23-alpine AS production
-
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+FROM base AS production
 
 WORKDIR /app
 USER appuser
@@ -44,8 +47,12 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/prisma ./prisma
 
-RUN npx prisma generate
-
 EXPOSE 9000
 
 CMD ["npm", "run", "start:prod"]
+
+
+
+
+
+
