@@ -1,0 +1,88 @@
+#############################################################################################################
+#                                                                                                           #
+# PRISMA_CLI_BINARY_TARGETS:                                                                                #
+#   This configuration includes both the Alpine Linux target (for your GitHub tests)                        #
+#   and the RHEL target (for AWS EKS). For local development, you typically don't need to set               #
+#   PRISMA_CLI_BINARY_TARGETS because the native target in your schema.prisma file should cover             #
+#   your local environment                                                                                  #
+#                                                                                                           #
+#   Budowanie wszystkich obrazów:                                                                           #
+#     docker compose -f docker-compose.yml build --no-cache                                                 #
+#                                                                                                           #
+#   Budowanie części obrazów:                                                                               #
+#     docker compose -f .\docker-compose.yml build --no-cache backend frontend calc_module                  #
+#                                                                                                           #
+#   Uruchamianie aplikacji:                                                                                 #
+#     docker compose -f .\docker-compose.yml up                                                             #
+#                                                                                                           #
+#   Zatrzymywanie aplikacji i usuwanie kontenerów i sieci:                                                  #
+#     docker compose -f .\docker-compose.yml down                                                           #
+#                                                                                                           #
+#############################################################################################################
+
+networks:
+  apt-network:
+    driver: bridge
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: frontend.${ENVIRONMENT}.Dockerfile
+    image: air-pollution-tracker/${ENVIRONMENT}/frontend:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - FAST_REFRESH=${FAST_REFRESH:-false}
+      - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL}
+    networks:
+      - apt-network
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: backend.${ENVIRONMENT}.Dockerfile
+    image: air-pollution-tracker/${ENVIRONMENT}/backend:latest
+    ports:
+      - "9000:9000"
+    environment:
+      - PRISMA_CLI_BINARY_TARGETS=linux-musl-openssl-3.0.x,rhel-openssl-3.0.x
+      - ORIGIN=${ORIGIN}
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_KEY=${JWT_KEY}
+      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://rabbitmq}
+      - RABBITMQ_REQUEST_QUEUE=${RABBITMQ_REQUEST_QUEUE:-simulation_request_queue}
+    networks:
+      - apt-network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  calc_module:
+    build:
+      context: ./calc_module
+      dockerfile: calc_module.${ENVIRONMENT}.Dockerfile
+    image: air-pollution-tracker/${ENVIRONMENT}/calc_module:latest
+    environment:
+      - RABBITMQ_REQUEST_QUEUE=${RABBITMQ_REQUEST_QUEUE:-simulation_request_queue}
+      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://rabbitmq}
+    networks:
+      - apt-network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  rabbitmq:
+    image: rabbitmq:management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - apt-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5

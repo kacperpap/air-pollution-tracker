@@ -1,0 +1,8 @@
+numpy 
+pandas
+matplotlib
+scipy
+fastapi
+aio_pika
+python-dotenv
+aiormq
