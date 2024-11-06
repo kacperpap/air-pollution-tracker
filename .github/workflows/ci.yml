@@ -13,8 +13,8 @@ env:
   JWT_KEY: ${{ secrets.JWT_KEY }}
   RABBITMQ_REQUEST_QUEUE: simulation_request_queue
   RABBITMQ_URL: amqp://rabbitmq
-  AWS_REGION: MY_AWS_REGION                   
-  ECR_REPOSITORY: MY_ECR_REPOSITORY           
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}       
 
 
 jobs:
@@ -99,53 +99,56 @@ jobs:
   #     run: |
   #       # Uruchom testy integracyjne używając obrazów z ECR
 
-  # push:
-  #   name: Push images to AWS Elastic Container Registry
-  #   # needs: integration-test
-  #   needs: build
-  #   runs-on: ubuntu-latest
+  push:
+    name: Push images to AWS Elastic Container Registry
+    # needs: integration-test
+    needs: build
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  #     - name: Configure AWS credentials
-  #       uses: aws-actions/configure-aws-credentials@v1
-  #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #         aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-  #     - name: Login to Amazon ECR
-  #       id: login-ecr
-  #       uses: aws-actions/amazon-ecr-login@v1
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
-  #     - name: Push Frontend Image to ECR
-  #       env:
-  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-  #         IMAGE_TAG: ${{ github.sha }}
-  #       run: |
-  #         docker load < frontend.tar
-  #         docker tag frontend $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$IMAGE_TAG
-  #         docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$IMAGE_TAG
+      - name: Push Frontend Image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker load < frontend.tar
+          docker tag frontend $ECR_REGISTRY/$ECR_REPOSITORY/frontend:$IMAGE_TAG
+          docker tag frontend $ECR_REGISTRY/$ECR_REPOSITORY/frontend:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY/frontend:$IMAGE_TAG
   
-  #     - name: Push Backend Image to ECR
-  #       env:
-  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-  #         IMAGE_TAG: ${{ github.sha }}
-  #       run: |
-  #         docker load < backend.tar
-  #         docker tag backend $ECR_REGISTRY/$ECR_REPOSITORY:backend-$IMAGE_TAG
-  #         docker push $ECR_REGISTRY/$ECR_REPOSITORY:backend-$IMAGE_TAG
+      - name: Push Backend Image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker load < backend.tar
+          docker tag backend $ECR_REGISTRY/$ECR_REPOSITORY/backend:$IMAGE_TAG
+          docker tag backend $ECR_REGISTRY/$ECR_REPOSITORY/backend:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY/backend:$IMAGE_TAG
   
-  #     - name: Push Calc Module Image to ECR
-  #       env:
-  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-  #         IMAGE_TAG: ${{ github.sha }}
-  #       run: |
-  #         docker load < calc_module.tar
-  #         docker tag calc_module $ECR_REGISTRY/$ECR_REPOSITORY:calc-module-$IMAGE_TAG
-  #         docker push $ECR_REGISTRY/$ECR_REPOSITORY:calc-module-$IMAGE_TAG
+      - name: Push Calc Module Image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker load < calc_module.tar
+          docker tag calc_module $ECR_REGISTRY/$ECR_REPOSITORY/calc-module:$IMAGE_TAG
+          docker tag calc_module $ECR_REGISTRY/$ECR_REPOSITORY/calc-module:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY/calc-module:$IMAGE_TAG
       
 
 
