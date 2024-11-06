@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "apt.fullname" . }}-config
+data:
+  REACT_APP_API_BASE_URL: {{ .Values.frontend.environment.REACT_APP_API_BASE_URL | quote }}
+  ORIGIN: {{ .Values.backend.environment.ORIGIN | quote }}
+  RABBITMQ_REQUEST_QUEUE: {{ .Values.backend.environment.RABBITMQ_REQUEST_QUEUE | quote }}
+  RABBITMQ_URL: {{ .Values.backend.environment.RABBITMQ_URL | quote }}

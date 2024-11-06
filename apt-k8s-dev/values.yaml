@@ -1,0 +1,74 @@
+environment: dev
+
+frontend:
+  name: frontend
+  replicaCount: 2
+  image:
+    repository: air-pollution-tracker/dev
+    tag: latest
+    pullPolicy: Never
+  container:
+    targetPort: 3000
+  service:
+    type: ClusterIP
+    port: 3000
+  environment:
+    REACT_APP_API_BASE_URL: http://backend:9000/api
+
+backend:
+  name: backend
+  replicaCount: 1
+  image:
+    repository: air-pollution-tracker/dev
+    tag: latest
+    pullPolicy: Never
+  container:
+    targetPort: 9000
+  service:
+    type: ClusterIP
+    port: 9000
+  environment:
+    ORIGIN: http://frontend:3000
+    RABBITMQ_URL: amqp://rabbitmq
+    RABBITMQ_REQUEST_QUEUE: simulation_request_queue
+
+calc_module:
+  name: calc-module
+  replicaCount: 1
+  image:
+    name: calc_module
+    repository: air-pollution-tracker/dev
+    tag: latest
+    pullPolicy: Never
+  container:
+    targetPort: 5672
+  service:
+    type: ClusterIP
+    port: 5672
+  environment:
+    RABBITMQ_REQUEST_QUEUE: simulation_request_queue
+    RABBITMQ_URL: amqp://rabbitmq
+
+rabbitmq:
+  name: rabbitmq
+  replicaCount: 1
+  image:
+    repository: rabbitmq 
+    tag: management
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    ports:
+      management: 15672
+      amqp: 5672
+  container:
+    targetPorts:
+      management: 15672
+      amqp: 5672
+  environment:
+    RABBITMQ_REQUEST_QUEUE: simulation_request_queue
+    RABBITMQ_URL: amqp://rabbitmq
+
+ingress:
+  host: apt.local
+

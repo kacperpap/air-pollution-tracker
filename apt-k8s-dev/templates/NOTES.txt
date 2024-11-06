@@ -1,0 +1,73 @@
+{{ .Chart.Name }}
+
+To deploy or update this Helm Chart with the appropriate variables, use one of the following commands:
+
+For a fresh installation  (specify correctly location of chart):
+
+  helm install <my-release> apt-k8s-dev \
+    --set secrets.databaseUrl='your-database-url' \
+    --set secrets.jwtKey='your-jwt-key' \
+    --namespace <your-namespace>
+
+If you want to check what exactly happens during installation, first run with option --dry-run.
+
+For an upgrade:
+
+  helm upgrade --install <my-release> apt-k8s-dev \
+    --set secrets.databaseUrl='your-database-url' \
+    --set secrets.jwtKey='your-jwt-key' \
+    --namespace <your-namespace>
+
+**NOTE**:
+1. `secrets.databaseUrl` - Sets the database connection URL.
+2. `secrets.jwtKey` - Sets the JWT key for authentication.
+
+USEFUL COMMANDS
+
+1. Check installed Helm release status:
+
+  helm status <release-name> -n <your-namespace>
+
+2. View Helm release history:
+
+  helm history <release-name> -n <your-namespace>
+
+3. Uninstall a Helm release:
+
+  helm uninstall <release-name> -n <your-namespace>
+
+4. Get pods, deployments, services, etc., in your namespace:
+
+  kubectl get all -n <your-namespace>
+
+5. Get details about specific resources (e.g., pods, deployments, services):
+
+  kubectl get pods -n <your-namespace>
+  kubectl get deployments -n <your-namespace>
+  kubectl get services -n <your-namespace>
+
+6. Check logs of a specific pod (and container):
+
+  kubectl logs <pod-name> -n <your-namespace>
+  kubectl logs <pod-name> -c <container-name> -n <your-namespace>
+
+7. Check detailed info about a specific pod, deployment, or service:
+
+  kubectl describe pod <pod-name> -n <your-namespace>
+  kubectl describe deployment <deployment-name> -n <your-namespace>
+  kubectl describe service <service-name> -n <your-namespace>
+  
+
+To use locally this app create a port forwarding:
+
+  kubectl port-forward service/air-pollution-tracker-<release-name>-frontend 3000:3000
+
+And go to adress defined in ingress controller as a host:
+
+    http://apt.local
+  
+
+
+
+
+

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "apt.fullname" . }}-{{ .Values.backend.name }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.backend.name }}
+      apt.kubernetes.io/version: {{ include "apt.version" . }}
+  template:
+    metadata:
+      labels:
+        apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.backend.name }}
+        apt.kubernetes.io/version: {{ include "apt.version" . }}
+    spec:
+      containers:
+        - name: {{ .Values.backend.name }}
+          image: "{{ .Values.backend.image.repository }}/{{ .Values.backend.name }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "apt.fullname" . }}-secrets
+                  key: DATABASE_URL
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "apt.fullname" . }}-secrets
+                  key: JWT_KEY
+          envFrom:
+            - configMapRef:
+                name: {{ include "apt.fullname" . }}-config
+          ports:
+            - containerPort: {{ .Values.backend.container.targetPort }}
