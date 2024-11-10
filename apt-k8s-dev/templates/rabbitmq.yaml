@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{ include "apt.fullname" . }}-{{ .Values.rabbitmq.name }}
 spec:
-  replicas: {{ .Values.rabbitmq.replicaCount }}
+  replicas: 1
   selector:
     matchLabels:
       apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.rabbitmq.name }}
@@ -18,20 +18,41 @@ spec:
         - name: {{ .Values.rabbitmq.name }}
           image: "{{ .Values.rabbitmq.image.repository }}:{{ .Values.rabbitmq.image.tag }}"
           imagePullPolicy: {{ .Values.rabbitmq.image.pullPolicy }}
+          # volumeMounts:
+          #   - name: rabbitmq-config
+          #     mountPath: /etc/rabbitmq/rabbitmq.conf
+          #     subPath: rabbitmq.conf
+          # env:
+          #   - name: RABBITMQ_CONFIG_FILE
+          #     value: /etc/rabbitmq/rabbitmq.conf
           env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "apt.fullname" . }}-secrets
-                  key: DATABASE_URL
-            - name: JWT_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "apt.fullname" . }}-secrets
-                  key: JWT_KEY
+            - name: RABBITMQ_DEFAULT_USER
+              value: {{ .Values.rabbitmq.config.RABBITMQ_DEFAULT_USER }}
+            - name: RABBITMQ_DEFAULT_PASS
+              value: {{ .Values.rabbitmq.config.RABBITMQ_DEFAULT_PASS }}
           envFrom:
             - configMapRef:
                 name: {{ include "apt.fullname" . }}-config
           ports:
             - containerPort: {{ .Values.rabbitmq.container.targetPorts.amqp }}
+              name: amqp
             - containerPort: {{ .Values.rabbitmq.container.targetPorts.management }}
+              name: management
+          livenessProbe:
+            exec:
+              command: ["rabbitmq-diagnostics", "status"]
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            timeoutSeconds: 15
+          # readinessProbe:
+          #   exec:
+          #     command: ["rabbitmq-diagnostics", "check_port_connectivity"]
+          #   initialDelaySeconds: 20
+          #   periodSeconds: 60
+      # volumes:
+      #   - name: rabbitmq-config
+      #     configMap:
+      #       name: {{ include "apt.fullname" . }}-rabbitmq-config
+
+
+            

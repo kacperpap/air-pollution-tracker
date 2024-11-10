@@ -1,10 +1,8 @@
-environment: dev
-
 frontend:
   name: frontend
   replicaCount: 2
   image:
-    repository: air-pollution-tracker/dev
+    repository: air-pollution-tracker/prod
     tag: latest
     pullPolicy: Never
   container:
@@ -13,13 +11,15 @@ frontend:
     type: ClusterIP
     port: 3000
   environment:
-    REACT_APP_API_BASE_URL: http://backend:9000/api
+    # defined in configMap
+    FAST_REFRESH: false
+    #REACT_APP_API_BASE_URL: http://{{ .Values.ingress.host }}/api
 
 backend:
   name: backend
   replicaCount: 1
   image:
-    repository: air-pollution-tracker/dev
+    repository: air-pollution-tracker/prod
     tag: latest
     pullPolicy: Never
   container:
@@ -28,8 +28,10 @@ backend:
     type: ClusterIP
     port: 9000
   environment:
-    ORIGIN: http://frontend:3000
-    RABBITMQ_URL: amqp://rabbitmq
+    PRISMA_CLI_BINARY_TARGETS: linux-musl-openssl-3.0.x,rhel-openssl-3.0.x
+    # defined in configMap
+    # ORIGIN: http://{{ include "apt.fullname" . }}-{{ .Values.frontend.name }}:3000
+    # RABBITMQ_URL: "amqp://{{ include "apt.fullname" . }}-rabbitmq:5672"
     RABBITMQ_REQUEST_QUEUE: simulation_request_queue
 
 calc_module:
@@ -37,7 +39,7 @@ calc_module:
   replicaCount: 1
   image:
     name: calc_module
-    repository: air-pollution-tracker/dev
+    repository: air-pollution-tracker/prod
     tag: latest
     pullPolicy: Never
   container:
@@ -47,13 +49,12 @@ calc_module:
     port: 5672
   environment:
     RABBITMQ_REQUEST_QUEUE: simulation_request_queue
-    RABBITMQ_URL: amqp://rabbitmq
+    # RABBITMQ_URL: "amqp://{{ include "apt.fullname" . }}-rabbitmq:5672"
 
 rabbitmq:
   name: rabbitmq
-  replicaCount: 1
   image:
-    repository: rabbitmq 
+    repository: rabbitmq
     tag: management
     pullPolicy: IfNotPresent
   service:
@@ -67,8 +68,9 @@ rabbitmq:
       amqp: 5672
   environment:
     RABBITMQ_REQUEST_QUEUE: simulation_request_queue
-    RABBITMQ_URL: amqp://rabbitmq
-
+    # RABBITMQ_URL: "amqp://{{ include "apt.fullname" . }}-rabbitmq:5672"
+  config:
+    RABBITMQ_DEFAULT_USER: guest
+    RABBITMQ_DEFAULT_PASS: guest
 ingress:
   host: apt.local
-
