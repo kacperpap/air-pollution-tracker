@@ -101,28 +101,28 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/frontend:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/frontend:${IMAGE_TAG}
-          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/frontend:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/frontend:latest
-          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/frontend:${IMAGE_TAG}
-          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/frontend:latest
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/frontend:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:frontend-${{ env.ENVIRONMENT }}-${IMAGE_TAG}
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/frontend:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:frontend-${{ env.ENVIRONMENT }}-latest
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:frontend-${{ env.ENVIRONMENT }}-${IMAGE_TAG}
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:frontend-${{ env.ENVIRONMENT }}-latest
   
       - name: Tag and Push Backend Image to ECR
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/backend:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/backend:${IMAGE_TAG}
-          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/backend:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/backend:latest
-          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/backend:${IMAGE_TAG}
-          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/backend:latest
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/backend:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:backend-${{ env.ENVIRONMENT }}-${IMAGE_TAG}
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/backend:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:backend-${{ env.ENVIRONMENT }}-latest
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:backend-${{ env.ENVIRONMENT }}-${IMAGE_TAG}
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:backend-${{ env.ENVIRONMENT }}-latest
   
       - name: Tag and Push Calc Module Image to ECR
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/calc_module:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/calc-module:${IMAGE_TAG}
-          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/calc_module:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/calc-module:latest
-          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/calc-module:${IMAGE_TAG}
-          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/calc-module:latest
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/calc_module:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:calc-module-${{ env.ENVIRONMENT }}-${IMAGE_TAG}
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/calc_module:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}calc-module-${{ env.ENVIRONMENT }}-latest
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:calc-module-${{ env.ENVIRONMENT }}-${IMAGE_TAG}
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}calc-module-${{ env.ENVIRONMENT }}-latest
       
 
 
