@@ -20,7 +20,9 @@ env:
   RABBITMQ_REQUEST_QUEUE: simulation_request_queue
   RABBITMQ_URL: amqp://rabbitmq
   AWS_REGION: ${{ vars.AWS_REGION }}
-  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}       
+  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}     
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
+  
 
 
 jobs:
@@ -97,33 +99,30 @@ jobs:
   
       - name: Tag and Push Frontend Image to ECR
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/frontend:latest $ECR_REGISTRY/$ECR_REPOSITORY/frontend/${{ env.ENVIRONMENT }}:$IMAGE_TAG
-          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/frontend:latest $ECR_REGISTRY/$ECR_REPOSITORY/frontend/${{ env.ENVIRONMENT }}:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY/frontend/${{ env.ENVIRONMENT }}:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY/frontend/${{ env.ENVIRONMENT }}:latest
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/frontend:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/frontend:${IMAGE_TAG}
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/frontend:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/frontend:latest
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/frontend:${IMAGE_TAG}
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/frontend:latest
   
       - name: Tag and Push Backend Image to ECR
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/backend:latest $ECR_REGISTRY/$ECR_REPOSITORY/backend/${{ env.ENVIRONMENT }}:$IMAGE_TAG
-          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/backend:latest $ECR_REGISTRY/$ECR_REPOSITORY/backend/${{ env.ENVIRONMENT }}:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY/backend/${{ env.ENVIRONMENT }}:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY/backend/${{ env.ENVIRONMENT }}:latest
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/backend:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/backend:${IMAGE_TAG}
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/backend:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/backend:latest
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/backend:${IMAGE_TAG}
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/backend:latest
   
       - name: Tag and Push Calc Module Image to ECR
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/calc_module:latest $ECR_REGISTRY/$ECR_REPOSITORY/calc-module/${{ env.ENVIRONMENT }}:$IMAGE_TAG
-          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/calc_module:latest $ECR_REGISTRY/$ECR_REPOSITORY/calc-module/${{ env.ENVIRONMENT }}:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY/calc-module/${{ env.ENVIRONMENT }}:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY/calc-module/${{ env.ENVIRONMENT }}:latest
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/calc_module:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/calc-module:${IMAGE_TAG}
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/calc_module:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/calc-module:latest
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/calc-module:${IMAGE_TAG}
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}/${{ env.ENVIRONMENT }}/calc-module:latest
       
 
 
