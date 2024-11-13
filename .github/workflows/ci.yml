@@ -4,9 +4,15 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy (dev or prod)'
+        required: true
+        default: 'prod'
 
 env:
-  ENVIRONMENT: prod
+  ENVIRONMENT: ${{ github.event.inputs.environment }}
   REACT_APP_API_BASE_URL: http://localhost:9000/api
   ORIGIN: http://localhost:3000
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -19,8 +25,40 @@ env:
 
 jobs:
 
-  build:
-    name: Build OCI images in Docker
+  prepare-ecr:
+    name: Prepare ECR Repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Check if ECR repository exists
+        id: check-ecr
+        run: |
+          set -e
+          if aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} > repository_info.json; then
+              echo "ECR repository ${{ env.ECR_REPOSITORY }} already exists."
+              cat repository_info.json
+              echo "::set-output name=ECR_EXISTS::true"
+          else
+              echo "ECR repository ${{ env.ECR_REPOSITORY }} does not exist."
+              echo "::set-output name=ECR_EXISTS::false"
+          fi
+
+      - name: Create ECR repository if not exists
+        if: steps.check-ecr.outputs.ECR_EXISTS == 'false'
+        run: |
+          aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }}
+          echo "ECR repository created successfully."
+
+  build-and-push:
+    name: Build and Push Docker Images to ECR
+    needs: prepare-ecr
     runs-on: ubuntu-latest
 
     steps:
@@ -45,110 +83,46 @@ jobs:
       - name: Build images via docker-compose.yml
         run: |
           docker compose -f docker-compose.yml build frontend backend calc_module
-
-      - name: Save Docker images as artifacts
-        run: |
-          docker save air-pollution-tracker/prod/frontend:latest -o frontend.tar
-          docker save air-pollution-tracker/prod/backend:latest -o backend.tar
-          docker save air-pollution-tracker/prod/calc_module:latest -o calc_module.tar
+          - name: Configure AWS credentials for ECR
+          uses: aws-actions/configure-aws-credentials@v1
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: ${{ env.AWS_REGION }}
   
-      - name: Upload Docker images as artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: docker-images
-          path: |
-            frontend.tar
-            backend.tar
-            calc_module.tar
-          
-  # integration-test:
-
-  #   name: Run Integration Tests
-  #   needs: build
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v4
-
-  #   - name: Download Images Artifact
-  #     uses: actions/download-artifact@v3
-  #     with:
-  #       name: docker-images
-
-  #   - name: Load Frontend Image
-  #     run: docker load < frontend.tar
-
-  #   - name: Load Backend Image
-  #     run: docker load < backend.tar
-
-  #   - name: Load Calc Module Image
-  #     run: docker load < calc_module.tar
-
-  #   - name: Run Integration Tests
-  #     env:
-  #       FAST_REFRESH: ${FAST_REFRESH}
-  #       REACT_APP_API_BASE_URL: ${REACT_APP_API_BASE_URL}
-  #       NODE_ENV: ${NODE_ENV}
-  #       ORIGIN: ${ORIGIN}
-  #       DATABASE_URL: ${DATABASE_URL}
-  #       JWT_KEY: ${JWT_KEY}
-  #       RABBITMQ_URL: ${RABBITMQ_URL}
-  #       RABBITMQ_REQUEST_QUEUE: ${RABBITMQ_REQUEST_QUEUE}
-  #       RABBITMQ_RESPONSE_QUEUE: ${RABBITMQ_RESPONSE_QUEUE}
-  #     run: |
-  #       # Uruchom testy integracyjne używając obrazów z ECR
-
-  push:
-    name: Push images to AWS Elastic Container Registry
-    # needs: integration-test
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Push Frontend Image to ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker load < frontend.tar
-          docker tag frontend $ECR_REGISTRY/$ECR_REPOSITORY/frontend:$IMAGE_TAG
-          docker tag frontend $ECR_REGISTRY/$ECR_REPOSITORY/frontend:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY/frontend:$IMAGE_TAG
   
-      - name: Push Backend Image to ECR
+      - name: Tag and Push Frontend Image to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker load < backend.tar
-          docker tag backend $ECR_REGISTRY/$ECR_REPOSITORY/backend:$IMAGE_TAG
-          docker tag backend $ECR_REGISTRY/$ECR_REPOSITORY/backend:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY/backend:$IMAGE_TAG
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/frontend:latest $ECR_REGISTRY/$ECR_REPOSITORY/frontend/${{ env.ENVIRONMENT }}:$IMAGE_TAG
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/frontend:latest $ECR_REGISTRY/$ECR_REPOSITORY/frontend/${{ env.ENVIRONMENT }}:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY/frontend/${{ env.ENVIRONMENT }}:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY/frontend/${{ env.ENVIRONMENT }}:latest
   
-      - name: Push Calc Module Image to ECR
+      - name: Tag and Push Backend Image to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker load < calc_module.tar
-          docker tag calc_module $ECR_REGISTRY/$ECR_REPOSITORY/calc-module:$IMAGE_TAG
-          docker tag calc_module $ECR_REGISTRY/$ECR_REPOSITORY/calc-module:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY/calc-module:$IMAGE_TAG
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/backend:latest $ECR_REGISTRY/$ECR_REPOSITORY/backend/${{ env.ENVIRONMENT }}:$IMAGE_TAG
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/backend:latest $ECR_REGISTRY/$ECR_REPOSITORY/backend/${{ env.ENVIRONMENT }}:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY/backend/${{ env.ENVIRONMENT }}:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY/backend/${{ env.ENVIRONMENT }}:latest
+  
+      - name: Tag and Push Calc Module Image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/calc_module:latest $ECR_REGISTRY/$ECR_REPOSITORY/calc-module/${{ env.ENVIRONMENT }}:$IMAGE_TAG
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/calc_module:latest $ECR_REGISTRY/$ECR_REPOSITORY/calc-module/${{ env.ENVIRONMENT }}:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY/calc-module/${{ env.ENVIRONMENT }}:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY/calc-module/${{ env.ENVIRONMENT }}:latest
       
 
 
