@@ -120,9 +120,9 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/calc_module:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:calc-module-${{ env.ENVIRONMENT }}-${IMAGE_TAG}
-          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/calc_module:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}calc-module-${{ env.ENVIRONMENT }}-latest
+          docker tag air-pollution-tracker/${{ env.ENVIRONMENT }}/calc_module:latest ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:calc-module-${{ env.ENVIRONMENT }}-latest
           docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:calc-module-${{ env.ENVIRONMENT }}-${IMAGE_TAG}
-          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}calc-module-${{ env.ENVIRONMENT }}-latest
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:calc-module-${{ env.ENVIRONMENT }}-latest
       
 
 
