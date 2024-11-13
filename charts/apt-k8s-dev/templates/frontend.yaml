@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "apt.fullname" . }}-{{ .Values.frontend.name }}
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  selector:
+    matchLabels:
+      apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.frontend.name }}
+      apt.kubernetes.io/version: {{ include "apt.version" . }}
+  template:
+    metadata:
+      labels:
+        apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.frontend.name }}
+        apt.kubernetes.io/version: {{ include "apt.version" . }}
+    spec:
+      # initContainers:
+      #   - name: wait-for-backend
+      #     image: busybox
+      #     command:
+      #       - sh
+      #       - -c
+      #       - >
+      #         until nslookup {{ include "apt.fullname" . }}-{{ .Values.frontend.name }};
+      #         do echo "Cannot start before backend...";
+      #         sleep 2;
+      #         done;
+      containers:
+        - name: {{ .Values.frontend.name }}
+          image: "{{ .Values.frontend.image.repository }}/{{ .Values.frontend.name }}:{{ .Values.frontend.image.tag }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "apt.fullname" . }}-config
+          ports:
+            - containerPort: {{ .Values.frontend.container.targetPort }}

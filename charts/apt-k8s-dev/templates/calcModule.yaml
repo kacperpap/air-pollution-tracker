@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "apt.fullname" . }}-{{ .Values.calc_module.name }}
+spec:
+  replicas: {{ .Values.calc_module.replicaCount }}
+  selector:
+    matchLabels:
+      apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.calc_module.name }}
+      apt.kubernetes.io/version: {{ include "apt.version" . }}
+  template:
+    metadata:
+      labels:
+        apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.calc_module.name }}
+        apt.kubernetes.io/version: {{ include "apt.version" . }}
+    spec:
+      containers:
+        - name: {{ .Values.calc_module.name }}
+          image: "{{ .Values.calc_module.image.repository }}/{{ .Values.calc_module.image.name }}:{{ .Values.calc_module.image.tag }}"
+          imagePullPolicy: {{ .Values.calc_module.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "apt.fullname" . }}-config
+          ports:
+            - containerPort: {{ .Values.calc_module.container.targetPort }}

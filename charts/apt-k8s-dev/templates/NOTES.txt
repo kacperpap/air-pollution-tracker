@@ -1,0 +1,105 @@
+{{ .Chart.Name }}
+
+To deploy or update this Helm Chart with the appropriate variables make sure you have corretly installed nginx-ingress and use one of the following commands (or run bash script innit.sh to install all step by step):
+
+For a fresh installation  (specify correctly location of chart):
+
+  helm install <my-release> apt-k8s-dev \
+    --set secrets.DATABASE_URL=your-database-url \
+    --set secrets.JWT_KEY=your-jwt-key \
+    --namespace <your-namespace>
+
+If you want to check what exactly happens during installation, first run with option --dry-run.
+
+For an upgrade:
+
+  helm upgrade --install <my-release> apt-k8s-dev \
+    --set secrets.DATABASE_URL=your-database-url \
+    --set secrets.JWT_KEY=your-jwt-key \
+    --namespace <your-namespace>
+
+**NOTE**:
+1. `secrets.DATABASE_URL` - Sets the database connection URL.
+2. `secrets.JWT_KEY` - Sets the JWT key for authentication.
+
+**WATCHOUT**
+Pass secrets without wrapping them in additional quotes, because it may casue PrismaInitializationError, to check wheather you passed it correctly as a secret run (on wsl or linux) (it should not consist any quotes), moreover if a string incluede any special characters as &, wrap them into "":
+
+  kubectl get secret air-pollution-tracker-<release_name>-secrets -o jsonpath='{.data.DATABASE_URL}' | base64 -d
+
+or check it explicitly in container:
+
+  kubectl exec -it deployment/air-pollution-tracker-<release_name>-backend -- env | grep DATABASE_URL
+
+
+To use locally this app make sure you installed correctly nginx ingress:
+
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace
+
+To check correct instalation and configuration use:
+
+  kubectl get pods -n ingress-nginx
+  kubectl get svc -n ingress-nginx
+
+  kubectl get ingress
+  kubectl describe ingress air-pollution-tracker-<release_name>-ingress
+
+*TIP*
+If you are encountering issues with ingress check logs:
+
+  kubect logs -n ingress-nginx pod/ingress-nginx-controller-<pod-symbolic-number>
+
+*RABBITMQ*
+If there is a problem with rabbitmq check logs and evetns:
+
+  kubectl logs pod/air-pollution-tracker-<release_name>-rabbitmq-xxx 
+  kubectl get events --field-selector involvedObject.name=air-pollution-tracker-<release_name>-rabbitmq-xxx
+
+USEFUL COMMANDS
+
+1. Check installed Helm release status:
+
+  helm status <release-name> -n <your-namespace>
+
+2. View Helm release history:
+
+  helm history <release-name> -n <your-namespace>
+
+3. Uninstall a Helm release:
+
+  helm uninstall <release-name> -n <your-namespace>
+
+4. Get pods, deployments, services, etc., in your namespace:
+
+  kubectl get all -n <your-namespace>
+
+5. Get details about specific resources (e.g., pods, deployments, services):
+
+  kubectl get pods -n <your-namespace>
+  kubectl get deployments -n <your-namespace>
+  kubectl get services -n <your-namespace>
+
+6. Check logs of a specific pod (and container):
+
+  kubectl logs <pod-name> -n <your-namespace>
+  kubectl logs <pod-name> -c <container-name> -n <your-namespace>
+
+7. Check detailed info about a specific pod, deployment, or service:
+
+  kubectl describe pod <pod-name> -n <your-namespace>
+  kubectl describe deployment <deployment-name> -n <your-namespace>
+  kubectl describe service <service-name> -n <your-namespace>
+  
+And go to adress:
+
+    http://localhost or http://localhost:80
+
+(or if you defined another host name, due to its local deployment, there is need to instruate DNS to resolve 127.0.0.1 also as your host name)
+  
+
+
+
+
+

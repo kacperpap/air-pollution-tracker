@@ -1,0 +1,76 @@
+frontend:
+  name: frontend
+  replicaCount: 2
+  image:
+    repository: air-pollution-tracker/prod
+    tag: latest
+    pullPolicy: Never
+  container:
+    targetPort: 3000
+  service:
+    type: ClusterIP
+    port: 3000
+  environment:
+    # defined in configMap
+    FAST_REFRESH: false
+    #REACT_APP_API_BASE_URL: http://{{ .Values.ingress.host }}/api
+
+backend:
+  name: backend
+  replicaCount: 1
+  image:
+    repository: air-pollution-tracker/prod
+    tag: latest
+    pullPolicy: Never
+  container:
+    targetPort: 9000
+  service:
+    type: ClusterIP
+    port: 9000
+  environment:
+    PRISMA_CLI_BINARY_TARGETS: linux-musl-openssl-3.0.x,rhel-openssl-3.0.x
+    # defined in configMap
+    # ORIGIN: http://{{ include "apt.fullname" . }}-{{ .Values.frontend.name }}:3000
+    # RABBITMQ_URL: "amqp://{{ include "apt.fullname" . }}-rabbitmq:5672"
+    RABBITMQ_REQUEST_QUEUE: simulation_request_queue
+
+calc_module:
+  name: calc-module
+  replicaCount: 1
+  image:
+    name: calc_module
+    repository: air-pollution-tracker/prod
+    tag: latest
+    pullPolicy: Never
+  container:
+    targetPort: 5672
+  service:
+    type: ClusterIP
+    port: 5672
+  environment:
+    RABBITMQ_REQUEST_QUEUE: simulation_request_queue
+    # RABBITMQ_URL: "amqp://{{ include "apt.fullname" . }}-rabbitmq:5672"
+
+rabbitmq:
+  name: rabbitmq
+  image:
+    repository: rabbitmq
+    tag: management
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    ports:
+      management: 15672
+      amqp: 5672
+  container:
+    targetPorts:
+      management: 15672
+      amqp: 5672
+  environment:
+    RABBITMQ_REQUEST_QUEUE: simulation_request_queue
+    # RABBITMQ_URL: "amqp://{{ include "apt.fullname" . }}-rabbitmq:5672"
+  config:
+    RABBITMQ_DEFAULT_USER: guest
+    RABBITMQ_DEFAULT_PASS: guest
+ingress:
+  host: apt.local
