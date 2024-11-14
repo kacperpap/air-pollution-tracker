@@ -36,7 +36,7 @@ jobs:
 
     - name: Terraform Init
       working-directory: ./infrastructure
-      run: terraform initmoój ka
+      run: terraform init
 
     - name: Terraform Plan
       working-directory: ./infrastructure
