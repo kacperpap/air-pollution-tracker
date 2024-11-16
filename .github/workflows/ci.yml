@@ -12,7 +12,7 @@ on:
         default: 'prod'
 
 env:
-  ENVIRONMENT: ${{ github.event.inputs.environment }}
+  ENVIRONMENT: ${{ github.event.inputs.environment || 'prod' }}
   REACT_APP_API_BASE_URL: http://localhost:9000/api
   ORIGIN: http://localhost:3000
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -27,10 +27,10 @@ env:
 
 jobs:
 
-  prepare-ecr:
-    name: Prepare ECR Repository
+  verify-ecr:
+    name: Verify ECR Repository
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -39,28 +39,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Check if ECR repository exists
+      - name: Check ECR repository
         id: check-ecr
         run: |
-          set -e
-          if aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} > repository_info.json; then
-              echo "ECR repository ${{ env.ECR_REPOSITORY }} already exists."
-              cat repository_info.json
-              echo "::set-output name=ECR_EXISTS::true"
-          else
-              echo "ECR repository ${{ env.ECR_REPOSITORY }} does not exist."
-              echo "::set-output name=ECR_EXISTS::false"
+          if ! aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} &>/dev/null; then
+            echo "::error::ECR repository ${{ env.ECR_REPOSITORY }} does not exist! Please create it using Terraform first."
+            exit 1
           fi
-
-      - name: Create ECR repository if not exists
-        if: steps.check-ecr.outputs.ECR_EXISTS == 'false'
-        run: |
-          aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }}
-          echo "ECR repository created successfully."
+          echo "ECR repository ${{ env.ECR_REPOSITORY }} exists and is ready to use."
 
   build-and-push:
     name: Build and Push Docker Images to ECR
-    needs: prepare-ecr
+    needs: verify-ecr
     runs-on: ubuntu-latest
 
     steps:

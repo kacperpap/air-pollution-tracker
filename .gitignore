@@ -1,1 +1,7 @@
 .env
+.env.aws
+terraform/*/.terraform
+terraform/*/.terraform.*
+terraform/*/tfplan
+terraform/*/terraform.tfstate
+terraform/*/terraform.tfstate.*
