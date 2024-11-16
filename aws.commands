@@ -1,0 +1,175 @@
+0. Before running github workflow and terraform scirpts you need to create iam user/s with adequate privilidges and add access keys to github secrets and .env.aws file (or authhorize in aws locl cli as terraform user for running terraform scripts):
+
+    github policies (access key to this user need to be added in github secrets to run ci.yml workflow):
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "ECRPermissions",
+                    "Effect": "Allow",
+                    "Action": [
+                        "ecr:CreateRepository",
+                        "ecr:DescribeRepositories",
+                        "ecr:GetAuthorizationToken",
+                        "ecr:BatchCheckLayerAvailability",
+                        "ecr:BatchGetImage",
+                        "ecr:PutImage",
+                        "ecr:ListImages",
+                        "ecr:DeleteRepository",
+                        "ecr:DeleteRepositoryPolicy"
+                    ],
+                    "Resource": "arn:aws:ecr:*:*:repository/*"
+                },
+                {
+                    "Sid": "ECRGlobalPermissions",
+                    "Effect": "Allow",
+                    "Action": [
+                        "ecr:GetAuthorizationToken"
+                    ],
+                    "Resource": "*"
+                },
+                {
+                    "Sid": "LogsAccess",
+                    "Effect": "Allow",
+                    "Action": [
+                        "logs:CreateLogStream",
+                        "logs:PutLogEvents"
+                    ],
+                    "Resource": "arn:aws:logs:*:*:log-group:/aws/codebuild/*"
+                },
+                {
+                    "Sid": "GeneralAWSAccess",
+                    "Effect": "Allow",
+                    "Action": [
+                        "sts:GetCallerIdentity"
+                    ],
+                    "Resource": "*"
+                }
+            ]
+        }
+
+
+    terraform policies (this user access_key needs to be added to .env.aws or it should be logged in aws cli when running terraform ):
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                "Effect": "Allow",
+                "Action": [
+                    "ecr:*",
+                    "ec2:*",
+                    "eks:*",
+                    "iam:*",
+                    "elasticloadbalancing:*"
+                ],
+                "Resource": "*"
+                }
+            ]
+        }
+
+
+    a\ Check exisiting users:
+        aws iam list-users
+
+    b\ If there is no user:
+        aws iam create-user --user-name terraform
+
+    c\ Add or modify policy:
+
+        ADD:
+
+        1. Create policy.json file:
+            {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                    "Effect": "Allow",
+                    "Action": [
+                        "ecr:*",
+                        "ec2:*",
+                        "eks:*",
+                        "iam:*",
+                        "elasticloadbalancing:*"
+                    ],
+                    "Resource": "*"
+                    }
+                ]
+            }
+        2. Create policy:
+            aws iam create-policy --policy-name FullEcrEc2EksAlbAccess --policy-document file://policy.json
+
+        3. Remember ARN of created policy:
+            arn:aws:iam::<*************>:policy/FullEcrEc2EksAlbAccess
+        
+        4. Assign policy to user:
+            aws iam attach-user-policy --user-name terraform --policy-arn arn:aws:iam::<*************>:policy/FullEcrEc2EksAlbAccess
+
+
+        MODIFY:
+
+        1. Get current policy:
+            aws iam get-policy-version --policy-arn arn:aws:iam::<*********>:policy/<ExistingPolicyName> --version-id v1
+        
+        2. Modify it and save to file update-policy.json
+
+        3. Update existing policy:
+            aws iam create-policy-version --policy-arn arn:aws:iam::<*********>:policy/<ExistingPolicyName> --policy-document file://updated-policy.json --set-as-default
+
+    d\ Verify user policies:
+        aws iam list-attached-user-policies --user-name terraform
+
+    e\ Create access keys for user and add them to github secrets:
+        aws iam create-access-key --user-name terraform
+
+    f\ If needed to deatch policy and remove it:
+        aws iam detach-user-policy --user-name terraform --policy-arn arn:aws:iam::<**********>:policy/FullEcrEc2EksAlbAccess
+
+        aws iam list-entities-for-policy --policy-arn <policy_arn>
+
+        aws iam delete-policy --policy-arn <policy_arn>
+
+        aws iam list-attached-user-policies --user-name <user_name>
+
+        aws iam list-user-policies --user-name <user_name> //inline policies
+
+        aws iam delete-user-policy --user-name <user_name> --policy-name <policy_name>
+
+        aws iam delete-login-profile --user-name <USER_NAME>
+
+        aws iam list-access-keys --user-name <USER_NAME>
+
+        aws iam delete-access-key --user-name <USER_NAME> --access-key-id <ACCESS_KEY_ID>
+
+        aws iam list-mfa-devices --user-name <USER_NAME>
+
+        aws iam deactivate-mfa-device --user-name <USER_NAME> --serial-number <SERIAL_NUMBER>
+aws iam delete-virtual-mfa-device --serial-number <SERIAL_NUMBER>
+
+        aws iam delete-user --user-name <USER_NAME>
+
+
+1. Describe all ECR repositories:
+    aws ecr describe-repositories --query "repositories[*].{Name:repositoryName,URI:repositoryUri}" --output table
+
+2. Describe specific ECR repo:
+    aws ecr describe-repositories --repository-names YOUR_REPOSITORY_NAME --output json
+
+2.a Descirbe images in repo:
+    aws ecr describe-images --repository-name YOUR_REPOSITORY_NAME --region YOUR_REGION
+
+3. Check all VPCs in region:
+    aws ec2 describe-vpcs --query "Vpcs[*].{ID:VpcId,CidrBlock:CidrBlock}" --output table
+
+4. Check subnets in created VPC:
+    a. find VpcId for your VPC (ad. 2)
+    b. filter subnets 
+        aws ec2 describe-subnets --filters "Name=vpc-id,Values=YOUR_VPC_ID" --query "Subnets[*].{ID:SubnetId,CidrBlock:CidrBlock,AZ:AvailabilityZone}" --output table
+
+5. Check NAT Gateway:
+    aws ec2 describe-nat-gateways --query "NatGateways[*].{ID:NatGatewayId,State:State,VpcId:VpcId}" --output table
+
+6. Describe EKS cluster:
+    aws eks describe-cluster --name YOUR_CLUSTER_NAME --query "cluster.{Name:name,Status:status,Endpoint:endpoint}" --output table
+
+7. AWS_ACCOUNT_ID:
+    aws sts get-caller-identity --query Account --output text
