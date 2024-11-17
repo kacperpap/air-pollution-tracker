@@ -54,7 +54,8 @@
                     "iam:*",
                     "elasticloadbalancing:*",
                     "kms:*",
-                    "logs:*"
+                    "logs:*",
+                    "cloudwatch:*"
                 ],
                 "Resource": "*"
                 }

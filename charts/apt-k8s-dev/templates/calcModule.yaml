@@ -14,10 +14,25 @@ spec:
         apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.calc_module.name }}
         apt.kubernetes.io/version: {{ include "apt.version" . }}
     spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.rabbitmq.name }}
+                  apt.kubernetes.io/version: {{ include "apt.version" . }}
+              topologyKey: "kubernetes.io/hostname"
       containers:
         - name: {{ .Values.calc_module.name }}
           image: "{{ .Values.calc_module.image.repository }}/{{ .Values.calc_module.image.name }}:{{ .Values.calc_module.image.tag }}"
           imagePullPolicy: {{ .Values.calc_module.image.pullPolicy }}
+          resources:
+            requests:
+              memory: {{ .Values.calc_module.resources.requests.memory }}
+              cpu: {{ .Values.calc_module.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.calc_module.resources.limits.memory }}
+              cpu: {{ .Values.calc_module.resources.limits.cpu }}
           envFrom:
             - configMapRef:
                 name: {{ include "apt.fullname" . }}-config
