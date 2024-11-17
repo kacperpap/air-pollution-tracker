@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "apt.fullname" . }}-{{ .Values.rabbitmq.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.rabbitmq.name }}
+      apt.kubernetes.io/version: {{ include "apt.version" . }}
+  template:
+    metadata:
+      labels:
+        apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.rabbitmq.name }}
+        apt.kubernetes.io/version: {{ include "apt.version" . }}
+    spec:
+      containers:
+        - name: {{ .Values.rabbitmq.name }}
+          image: "{{ .Values.rabbitmq.image.repository }}:{{ .Values.rabbitmq.image.tag }}"
+          imagePullPolicy: {{ .Values.rabbitmq.image.pullPolicy }}
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              value: {{ .Values.rabbitmq.config.RABBITMQ_DEFAULT_USER }}
+            - name: RABBITMQ_DEFAULT_PASS
+              value: {{ .Values.rabbitmq.config.RABBITMQ_DEFAULT_PASS }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "apt.fullname" . }}-config
+          ports:
+            - containerPort: {{ .Values.rabbitmq.container.targetPorts.amqp }}
+              name: amqp
+            - containerPort: {{ .Values.rabbitmq.container.targetPorts.management }}
+              name: management
+          livenessProbe:
+            exec:
+              command: ["rabbitmq-diagnostics", "status"]
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            timeoutSeconds: 15

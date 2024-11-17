@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "apt.fullname" . }}-{{ .Values.calc_module.name }}
+spec:
+  type: {{ .Values.calc_module.service.type }}
+  selector:
+    apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.calc_module.name }}
+  ports:
+    - port: {{ .Values.calc_module.service.port }}
+      targetPort: {{ .Values.calc_module.container.targetPort }}
