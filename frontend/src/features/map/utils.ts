@@ -1,8 +1,6 @@
 import { PollutantParameter, Range } from './MapTypes'
 import * as d3 from 'd3'
 import { POLLUTANT_RANGES } from './POLLUTANT_RANGES';
-import { DroneMeasurementType } from '../../types/DroneMeasurementType';
-import { EnvironmentType, PollutantsType, SimulationResponseType } from '../../types/SimulationResponseType';
 
 
 export const getRangeForParameter = (parameter: string): Range[] => {
@@ -48,6 +46,14 @@ export const getColorForValue = (value: number, parameter: string): string => {
 
 export const updateRectangleColors = (simulationData: any, selectedParameter: string, rectangles: L.Rectangle[]) => {
     if (!simulationData || !selectedParameter) return;
+
+    rectangles.forEach(rectangle => {
+      rectangle.setStyle({
+        color: 'transparent',
+        fillColor: 'transparent',
+        fillOpacity: 0.5
+      });
+    });
     
     const pollutantValues = simulationData.pollutants.final_step[selectedParameter] || simulationData.environment[selectedParameter];
     
@@ -59,7 +65,8 @@ export const updateRectangleColors = (simulationData: any, selectedParameter: st
         const color = getColorForValue(value, selectedParameter);
         rectangle.setStyle({
           color: color,
-          fillColor: color
+          fillColor: color,
+          fillOpacity: 0.5
         });
       }
     });
@@ -75,41 +82,39 @@ export const getUnit = (parameter: string) => {
   }
 };
 
-export function generateTooltipContent(
-  parameter: string,
-  point: DroneMeasurementType | SimulationResponseType | number | null
-): string {
-  let tooltipContent = '';
-
-  if (point && typeof point === 'object') {
-    if ('pollutionMeasurements' in point) {
-      if (parameter === 'wind') {
-        tooltipContent += `<br><strong>Wind Speed:</strong> ${point.windSpeed ?? 'N/A'} m/s`;
-        tooltipContent += `<br><strong>Wind Direction:</strong> ${point.windDirection ?? 'N/A'}°`;
-      } else if (parameter in point) {
-        const unit = getUnit(parameter as keyof DroneMeasurementType);
-        const value = point[parameter as keyof DroneMeasurementType];
-        tooltipContent += `<br><strong>${parameter}:</strong> ${value ?? 'N/A'} ${unit}`;
-      } else {
-        const pollutionMeasurement = point.pollutionMeasurements.find((p) => p.type === parameter);
-        if (pollutionMeasurement) {
-          tooltipContent += `<br><strong>${parameter}:</strong> ${pollutionMeasurement.value ?? 'N/A'} µg/m³`;
-        }
-      }
-    } 
-    else if ('environment' in point || 'pollutants' in point) {
-      const value = point.environment?.[parameter as keyof EnvironmentType] || point.pollutants?.[parameter as keyof PollutantsType];
-      const unit = getUnit(parameter as keyof SimulationResponseType);
-      tooltipContent += `<br><strong>${parameter}:</strong> ${value ?? 'N/A'} ${unit}`;
+function formatValue(value: number): string {
+  if(value !== undefined){
+    if (value % 1 === 0) {
+      return value.toFixed(0);
     }
-  } 
-  else if (typeof point === 'number') {
-    tooltipContent = `<strong>${parameter}:</strong> ${point ?? 'N/A'} µg/m³`;
-  } 
-  else {
-    tooltipContent = `<strong>Value:</strong> N/A`;
+    return value.toFixed(1);
+  } else {
+    return ""
+  }
+}
+
+export const generateTooltipContent = (
+  parameter: string,
+  value: number | [number, number]
+): string => {
+  if (Array.isArray(value)) {
+    if (parameter === 'wind') {
+      const [speed, direction] = value;
+      return `
+        <strong>Wind Speed:</strong> ${speed !== null ? formatValue(speed) : 'No Data'} m/s
+        <br><strong>Wind Direction:</strong> ${direction !== null ? formatValue(direction) : 'No Data'}°
+      `;
+    }
+    value = value[0];
   }
 
-  return tooltipContent;
+  const unit = parameter === 'wind' 
+    ? 'm/s' 
+    : ['temperature', 'pressure'].includes(parameter)
+      ? getUnit(parameter)
+      : 'µg/m³';
+
+  return `<strong>${parameter}:</strong> ${value !== null ? formatValue(value) : 'No Data'} ${unit}`;
 }
+
 

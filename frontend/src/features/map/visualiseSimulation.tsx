@@ -4,148 +4,245 @@ import { generateTooltipContent, getColorForValue, updateRectangleColors } from 
 import { NotificationProps } from '../../types/NotificationPropsType';
 import { getDroneFlightById } from '../drone/api/getDroneFlightById';
 import { DroneMeasurementType } from '../../types/DroneMeasurementType';
+import { EnvironmentType, PollutantDataType, SimulationResponseType } from '../../types/SimulationResponseType';
 
-export const visualiseSimulation = async (
-  simulationData: any,
-  flightId: string | number | undefined,
-  map: L.Map,
-  selectedParameter: string,
-  setAvailableParameters: (params: string[]) => void,
-  setRectangles: (rectangles: L.Rectangle[]) => void,
-  setWindArrows: (arrows: L.Polyline[]) => void,
-  setFlightData: (data: DroneMeasurementType[]) => void,
-  setMarkers: (markers: Marker[]) => void,
-  setNotification: (notification: NotificationProps) => void
-) => {
+interface WindData {
+  direction: number[];
+  speed: number[];
+}
 
-    if (!simulationData || !map) {
-        setNotification({
-            message: 'Error',
-            description: 'No simulation data found.',
-            type: 'error',
-        });
-        return;
-    }
+interface VisualisationParams {
+  simulationData: SimulationResponseType;
+  flightId: string | number | undefined;
+  map: L.Map;
+  selectedParameter: string;
+  setAvailableParameters: (params: string[]) => void;
+  setRectangles: (rectangles: L.Rectangle[]) => void;
+  setWindArrows: (arrows: L.Polyline[]) => void;
+  setFlightData: (data: DroneMeasurementType[]) => void;
+  setMarkers: (markers: Marker[]) => void;
+  setNotification: (notification: NotificationProps) => void;
+}
 
-    const { grid, pollutants, environment } = simulationData;
+const extractAvailableParameters = (
+  pollutants: SimulationResponseType['pollutants'], 
+  environment: SimulationResponseType['environment']
+): string[] => {
 
-    const pollutantParams = Object.keys(pollutants.final_step).filter(p => pollutants.final_step[p].length > 0);
-
-    let environmentParams = Object.keys(environment).filter(param => param !== 'windSpeed' && param !== 'windDirection');
-
-    if (environment.windSpeed && environment.windDirection) {
-        environmentParams.push('wind');
-    }
-
-    const availableParameters = [...pollutantParams, ...environmentParams];
-    setAvailableParameters(availableParameters);
+  const pollutantParams = Object.keys(pollutants.final_step)
+    .filter((p): p is keyof PollutantDataType => p in pollutants.final_step)
+    .filter(p => pollutants.final_step[p].length > 0);
 
 
-    const pollutantValues = simulationData.pollutants.final_step[selectedParameter] || simulationData.environment[selectedParameter];
+  const environmentParams = Object.keys(environment)
+    .filter(param => param !== 'windSpeed' && param !== 'windDirection');
 
-    if (!Array.isArray(pollutantValues)) {
-        setNotification({
-            message: 'Error',
-            description: `No data available for ${selectedParameter}.`,
-            type: 'error',
-        });
-        return;
-    }
+  return [
+    ...pollutantParams, 
+    ...(environment.windSpeed && environment.windDirection ? ['wind'] : []),
+    ...environmentParams
+  ];
+};
 
-    const rectangles: L.Rectangle[] = grid.boxes.map((box: Box, index: number) => {
-        const bounds: L.LatLngBoundsLiteral = [
-        [box.lat_min, box.lon_min],
-        [box.lat_max, box.lon_max],
-        ];
+const getParameterValues = (
+  simulationData: SimulationResponseType, 
+  selectedParameter: string
+): number[] | [number, number][] => {
+  if (selectedParameter === 'wind') {
+    return simulationData.grid.boxes.map((_, index) => {
+      const windSpeed = simulationData.environment.windSpeed[index] ?? 0;
+      const windDirection = simulationData.environment.windDirection[index] ?? 0;
+      return [windSpeed, windDirection] as [number, number];
+    });
+  }
 
-        const value = pollutantValues[index];
-        const color = value !== undefined ? getColorForValue(value, selectedParameter as PollutantParameter) : '#000000';
+  return simulationData.pollutants.final_step[selectedParameter as keyof PollutantDataType] || 
+         simulationData.environment[selectedParameter as keyof EnvironmentType];
+};
 
 
-        const rectangle = L.rectangle(bounds, {
-            color: color,
-            fillColor: color,
-            fillOpacity: 0.5,
-            weight: 1,
-        });
+const createMapRectangles = (
+  grid: { boxes: Box[] }, 
+  selectedParameter: string, 
+  pollutantValues: number[] | [number, number][],
+  map: L.Map
+): L.Rectangle[] => {
+  return grid.boxes.map((box: Box, index: number) => {
+    const bounds: L.LatLngBoundsLiteral = [
+      [box.lat_min, box.lon_min],
+      [box.lat_max, box.lon_max]
+    ];
 
-        const tooltipContent = generateTooltipContent(selectedParameter, pollutantValues[index])
+    const value = 
+      selectedParameter === 'wind' 
+        ? (pollutantValues[index] as [number, number]) 
+        : (pollutantValues[index] as number);
 
-        rectangle.bindTooltip(tooltipContent, {
-          permanent: false,
-          direction: 'center',
-          className: 'box-tooltip',
-        })
+    const color = 
+      selectedParameter === 'wind'
+        ? (value && Array.isArray(value)
+            ? getColorForValue(value[0], selectedParameter as PollutantParameter)
+            : '#000000')
+        : (value !== undefined
+            ? getColorForValue(value as number, selectedParameter as PollutantParameter)
+            : '#000000');
 
-        rectangle.addTo(map);
-        return rectangle;
-
+    const rectangle = L.rectangle(bounds, {
+      color: color,
+      fillColor: color,
+      fillOpacity: 0.5,
+      weight: 1,
     });
 
-    updateRectangleColors(simulationData, selectedParameter, rectangles);
-    setRectangles(rectangles);
+    const tooltipContent = generateTooltipContent(selectedParameter, value);
 
-    const windData = {
-      direction: environment.windDirection,
-      speed: environment.windSpeed,
-    };
-    
-    const arrows = drawWindArrows(grid, map, windData, selectedParameter === 'wind');
-    setWindArrows(arrows);
+    rectangle.bindTooltip(tooltipContent, {
+      permanent: false,
+      direction: 'center',
+      className: 'box-tooltip',
+    });
 
-    if (flightId) {
-      try {
-        const flight = await getDroneFlightById(flightId as number);
-        const validPoints = flight.measurements.filter(
-          (point: DroneMeasurementType) => point.latitude !== null && point.longitude !== null
-        );
+    rectangle.addTo(map);
+    return rectangle;
+  });
+};
 
-        setFlightData(validPoints);
+export const visualiseSimulation = async ({
+  simulationData,
+  flightId,
+  map,
+  selectedParameter,
+  setAvailableParameters,
+  setRectangles,
+  setWindArrows,
+  setFlightData,
+  setMarkers,
+  setNotification
+}: VisualisationParams) => {
 
-        const markers: L.Marker[] = validPoints.map((point: DroneMeasurementType) => {
-          let tooltipContent = `<strong>Measurement:</strong> ${point.name}`;
-        
-          tooltipContent += generateTooltipContent(selectedParameter, point)
+  if (!simulationData || !map) {
+    setNotification({
+      message: 'Error',
+      description: 'No simulation data found.',
+      type: 'error',
+    });
+    return;
+  }
 
-          const marker = L.marker([point.latitude as number, point.longitude as number], {
-            icon: L.icon({
-              iconUrl: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png', 
-              iconSize: [32, 32],
-              iconAnchor: [16, 32],
-            }),
-          })
+  const { grid, pollutants, environment } = simulationData;
 
-          marker.bindTooltip(tooltipContent, {
-            permanent: false,
-            direction: 'top',
-            className: 'measurement-tooltip',
-          });
+  const availableParameters = extractAvailableParameters(pollutants, environment);
+  setAvailableParameters(availableParameters);
 
-          marker.addTo(map)
+  const pollutantValues = getParameterValues(simulationData, selectedParameter);
 
-          return marker
-        });
+  if (selectedParameter !== 'wind' && !Array.isArray(pollutantValues)) {
+    setNotification({
+      message: 'Error',
+      description: `No data available for ${selectedParameter}.`,
+      type: 'error',
+    });
+    return;
+  }
 
-        setMarkers(markers)
+  const rectangles = createMapRectangles(grid, selectedParameter, pollutantValues, map);
+  updateRectangleColors(simulationData, selectedParameter, rectangles);
+  setRectangles(rectangles);
 
-        const bounds = L.latLngBounds(
-          validPoints.map((point: DroneMeasurementType) => [point.latitude, point.longitude] as [number, number])
-        );
-        map.fitBounds(bounds);
-      } catch (error) {
-        setNotification({
-          message: 'Error',
-          description: 'Failed to load flight data.',
-          type: 'error',
-        });
-      }
+  const windData: WindData = {
+    direction: environment.windDirection,
+    speed: environment.windSpeed,
+  };
+  
+  const arrows = drawWindArrows(grid, map, windData, selectedParameter === 'wind');
+  setWindArrows(arrows);
+
+  if (flightId) {
+    try {
+      const flight = await getDroneFlightById(flightId as number);
+      const validPoints = flight.measurements.filter(
+        (point: DroneMeasurementType) => 
+          point.latitude !== null && point.longitude !== null
+      );
+
+      setFlightData(validPoints);
+
+      const markers = createFlightMarkers(
+        validPoints, 
+        selectedParameter, 
+        map
+      );
+
+      setMarkers(markers);
+
+      const bounds = L.latLngBounds(
+        validPoints.map((point: DroneMeasurementType) => 
+          [point.latitude, point.longitude] as [number, number]
+        )
+      );
+      map.fitBounds(bounds);
+
+    } catch (error) {
+      setNotification({
+        message: 'Error',
+        description: 'Failed to load flight data.',
+        type: 'error',
+      });
     }
+  }
+};
+
+const createFlightMarkers = (
+  points: DroneMeasurementType[], 
+  selectedParameter: string, 
+  map: L.Map
+): L.Marker[] => {
+  return points.map((point: DroneMeasurementType) => {
+    let tooltipContent = `<strong>Measurement:</strong> ${point.name}<br>`;
+    let value: number | [number, number] | null = null;
+
+    if (selectedParameter === 'wind') {
+      value = point.windSpeed !== null && point.windDirection !== null 
+        ? [point.windSpeed, point.windDirection] 
+        : null;
+    } else if (['temperature', 'pressure'].includes(selectedParameter)) {
+      value = point[selectedParameter as keyof DroneMeasurementType] as number;
+    } else if (['CO', 'NO2', 'O3', 'SO2'].includes(selectedParameter)) {
+      const pollutant = point.pollutionMeasurements.find(p => p.type === selectedParameter);
+      value = pollutant ? pollutant.value : null;  // Poprawione
+    }
+
+    tooltipContent += value !== null 
+      ? generateTooltipContent(selectedParameter, value)
+      : `\n${selectedParameter}: No Data`;
+
+    const marker = L.marker(
+      [point.latitude as number, point.longitude as number], 
+      {
+        icon: L.icon({
+          iconUrl: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png', 
+          iconSize: [32, 32],
+          iconAnchor: [16, 32],
+        }),
+      }
+    );
+
+    marker.bindTooltip(tooltipContent, {
+      permanent: false,
+      direction: 'top',
+      className: 'measurement-tooltip',
+    });
+
+    marker.addTo(map);
+
+    return marker;
+  });
 };
 
 export const drawWindArrows = (
   grid: any,
   map: L.Map,
-  windData: { direction: number[], speed: number[]},
+  windData: WindData,
   isVisible: boolean
 ) => {
   const arrows: L.Polyline[] = [];
@@ -203,5 +300,5 @@ export const drawWindArrows = (
     arrows.push(arrow, arrowHead);
   });
 
-  return arrows
+  return arrows;
 };
