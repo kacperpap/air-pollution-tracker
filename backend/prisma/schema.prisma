@@ -3,7 +3,6 @@ generator client {
   binaryTargets = ["native", "linux-musl-openssl-3.0.x", "rhel-openssl-3.0.x"]
 }
 
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -16,6 +15,7 @@ model User {
   password     String        @db.VarChar(255)
   createdAt    DateTime      @default(now()) @db.Timestamp(6)
   droneFlights DroneFlight[] @relation("UserDroneFlights")
+  Simulation   Simulation[]
 }
 
 model DroneFlight {
@@ -26,6 +26,7 @@ model DroneFlight {
   measurements DroneMeasurement[] @relation("FlightMeasurements")
   userId       Int
   user         User               @relation("UserDroneFlights", fields: [userId], references: [id])
+  Simulation   Simulation[]
 }
 
 model DroneMeasurement {
@@ -55,4 +56,24 @@ model PollutionMeasurement {
   value         Float
   measurementId Int
   measurement   DroneMeasurement @relation("MeasurementPollutions", fields: [measurementId], references: [id])
+}
+
+model Simulation {
+  id            Int              @id @default(autoincrement())
+  userId        Int
+  user          User             @relation(fields: [userId], references: [id])
+  droneFlightId Int?
+  droneFlight   DroneFlight?     @relation(fields: [droneFlightId], references: [id])
+  status        SimulationStatus @default(pending)
+  parameters    Json
+  result        Bytes?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+enum SimulationStatus {
+  pending
+  completed
+  failed
+  timeExceeded
 }
