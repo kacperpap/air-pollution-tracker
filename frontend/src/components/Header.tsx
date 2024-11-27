@@ -175,7 +175,7 @@ export default function Header() {
                 </div>
                 <div className="grid bg-gray-50">
                   <a
-                    href="/logout"
+                    href="/"
                     onClick={handleLogout}
                     className="flex items-center justify-center gap-x-2.5 p-3 text-sm font-semibold leading-6 text-gray-900 hover:bg-gray-100"
                   >
@@ -258,7 +258,7 @@ export default function Header() {
                     </a>
                   ) : (
                     <a
-                      href="/logout"
+                      href="/"
                       onClick={handleLogout}
                       className="-mx-3 block rounded-lg py-2.5 px-3 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-400/10"
                     >
