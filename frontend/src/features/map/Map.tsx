@@ -5,7 +5,7 @@ import { useLocation, useParams } from 'react-router-dom';
 
 import { NotificationProps } from '../../types/NotificationPropsType';
 import { DroneMeasurementType } from '../../types/DroneMeasurementType';
-import { SimulationResponseType, PollutantDataType, EnvironmentType, PollutantsType } from '../../types/SimulationResponseType';
+import { PollutantDataType, EnvironmentType, PollutantsType } from '../../types/SimulationResponseType';
 
 import { Notification } from "../../components/Notification";
 import { ParameterSelector } from './ParameterSelector';
@@ -15,18 +15,8 @@ import { generateTooltipContent, updateRectangleColors } from './utils';
 import { loadFlightData } from './loadFlightData';
 import { visualiseSimulation } from './visualiseSimulation';
 
-import { PollutantParameter } from './MapTypes';
+import { MapState, PollutantParameter } from './MapTypes';
 
-interface MapState {
-  map: L.Map | null;
-  selectedParameter: string;
-  availableParameters: string[];
-  rectangles: L.Rectangle[];
-  windArrows: L.Polyline[];
-  simulationData?: SimulationResponseType;
-  flightData: DroneMeasurementType[];
-  markers: L.Marker[];
-}
 
 export default function Map() {
   const { flightId } = useParams();
@@ -102,7 +92,7 @@ export default function Map() {
         });        
       }
     } else if (flightId && state.map && location.pathname === `/map/${flightId}`) {
-      loadFlightData(Number(flightId), state.map, setNotification);
+      loadFlightData(Number(flightId), state.map, setNotification, updateState);
     }
   }, [flightId, location.pathname, location.state, state.map, state.selectedParameter, updateState]);
 
