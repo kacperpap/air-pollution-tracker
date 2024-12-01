@@ -78,15 +78,16 @@ def simulate(data):
             v_values
         )
         
-        return final_data
+        return final_data, "completed"
 
     except Exception as e:
         log_with_time(f"simulate -> Error occurred during simulation: {str(e)}")
-        raise  
+        traceback.print_exc()
+        return None, "failed"  
 
 
 
-async def process_message(message: aio_pika.IncomingMessage, channel: aio_pika.Channel):
+async def process_message(message: aio_pika.IncomingMessage, channel: aio_pika.Channel, timeout: int = 60):
     async with message.process():
         correlation_id = message.correlation_id
         unique_id = str(uuid.uuid4())
@@ -97,13 +98,28 @@ async def process_message(message: aio_pika.IncomingMessage, channel: aio_pika.C
             data = json.loads(message.body)
             
             log_with_time('Starting simulation...')
-            result = simulate(data)
-            log_with_time(f'Simulation completed.')
+            
+            try:
+                result, status = await asyncio.wait_for(
+                    asyncio.to_thread(simulate, data), 
+                    timeout=timeout
+                )
+            except asyncio.TimeoutError:
+                log_with_time(f'Simulation timed out after {timeout} seconds')
+                status = "timeExceeded"
+                result = None
+
+            log_with_time(f'Simulation status: {status}')
 
             if message.reply_to:
                 log_with_time(f'Publishing result to reply queue: {message.reply_to} for message ID: {unique_id}')
+                
+                response_data = {
+                    "status": status,
+                    "result": result
+                }
                         
-                serialized_result = serialize_output(result)
+                serialized_result = serialize_output(response_data)
         
             
                 await channel.default_exchange.publish(
@@ -121,6 +137,15 @@ async def process_message(message: aio_pika.IncomingMessage, channel: aio_pika.C
         except Exception as e:
             log_with_time(f'Error processing message {unique_id}: {str(e)}')
             log_with_time(f'Traceback: {traceback.format_exc()}')
+            
+            if message.reply_to:
+                await channel.default_exchange.publish(
+                    aio_pika.Message(
+                        body=json.dumps({"status": "failed", "result": None}).encode(),
+                        correlation_id=correlation_id
+                    ),
+                    routing_key=message.reply_to
+                )
 
 async def rabbitmq_listener():
     request_queue = os.getenv('RABBITMQ_REQUEST_QUEUE')
