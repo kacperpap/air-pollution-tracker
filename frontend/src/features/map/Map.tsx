@@ -73,6 +73,7 @@ export default function Map() {
   useEffect(() => {
     if (location.pathname === `/map/run-simulation/${flightId}`) {
       const simulationData = location.state.simulationData;
+      console.log(simulationData)
       
       updateState({ simulationData });
 

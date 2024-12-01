@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DroneFlightType } from '../../types/DroneFlightType';
 import { SimulationRequestType } from '../../types/SimulationRequestType';
-import { getAllDroneFlights } from './api/getAllDroneFlights';
+import { getAllDroneFlights } from '../overview/api/getAllDroneFlights';
 import { Notification } from "../../components/Notification";
 import { NotificationProps } from '../../types/NotificationPropsType';
 import { simulatePollutionSpread } from './api/simulate';
@@ -83,7 +83,6 @@ export function SimulationInput() {
     
 
         if (formData.numSteps <= 0) {
-          console.log('whhhhattt')
             setNotification({
                 message: 'Error',
                 description: 'Number of steps must be a positive value.',
@@ -158,16 +157,8 @@ export function SimulationInput() {
         try {
             setLoading(true)
             
-            setNotification({
-              message: 'Data sent to simulation successfully!',
-              description: 'Your drone measurements are being processed to simulate pollution spread.',
-              type: 'success',
-              duration: 5000
-            });
+            const { simulationId }: { simulationId: number } = await simulatePollutionSpread(formData);
 
-            const simulationData: SimulationResponseType = await simulatePollutionSpread(formData);
-          
-            
             setFormData({
                 droneFlight: {
                     id: null,
@@ -186,7 +177,8 @@ export function SimulationInput() {
                 initialDistance: 1,
             });
 
-            navigate(`/map/run-simulation/${formData.droneFlight.id}`, {state: {simulationData}});
+            sessionStorage.setItem('isFromSimulationCreation', 'true');
+            navigate(`/simulation-overview/${simulationId}`);
 
         } catch (error) {
             setNotification({
