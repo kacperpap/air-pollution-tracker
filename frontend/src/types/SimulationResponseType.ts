@@ -1,4 +1,3 @@
-import { DroneFlightType } from "./DroneFlightType";
 
 export type EnvironmentType = {
   pressure: number[];
