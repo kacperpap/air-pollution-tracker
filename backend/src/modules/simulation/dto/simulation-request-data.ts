@@ -35,6 +35,9 @@ export class SimulationRequestType {
   @IsBoolean()
   urbanized: boolean;
 
+  @IsOptional()
+  simulationId: number
+
 
   /**
     * Partial<T> is ts type which changes all fields from data into non-obligatory

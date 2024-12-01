@@ -5,6 +5,8 @@ import { UserID } from 'src/decorators/user.decorator';
 import { SimulationRequestType } from './dto/simulation-request-data';
 import { PrismaService } from '../prisma/prisma.service';
 import { Simulation } from './dto/simulation';
+import { SimulationLight } from './dto/simulation-light';
+import { logWithTime } from '../utils';
 
 @Controller('simulation-pollution-spread')
 export class SimulationController {
@@ -27,23 +29,31 @@ export class SimulationController {
           droneFlightId
         );
 
+        /*
+         * Instead of waiting for result of simulation, send simulation id right after
+         * creating a db record
+         */
 
-        try {
-          await this.simulationService.runSimulationOfPollutionSpreadForDroneFlight(
-            simulationData,
-            simulationId
-          );
-        } catch (error) {
-
-          await this.simulationService.updateSimulationResult(simulationId, 'failed');
-          throw new HttpException(
-            'Simulation failed to start.',
-            HttpStatus.INTERNAL_SERVER_ERROR
-          );
-        }
+        this.simulationService.runSimulationOfPollutionSpreadForDroneFlight(
+          simulationData,
+          simulationId
+        );
     
+        logWithTime(`SimulationController (droneFlight/) -> written to db simulationId: ${simulationId}`)
         return { simulationId };
         
+      }
+
+      @UseGuards(TokenGuard)
+      @Get('light/')
+      async getSimulationsForUserLight(@UserID() userId: number): Promise<SimulationLight[]> {
+        return this.simulationService.getSimulationsForUserLightVersion(userId);
+      }
+
+      @UseGuards(TokenGuard)
+      @Get()
+      async getSimulationsForUser(@UserID() userId: number): Promise<Simulation[]> {
+        return this.simulationService.getSimulationsForUser(userId);
       }
 
       @UseGuards(TokenGuard)
@@ -65,11 +75,6 @@ export class SimulationController {
         return simulation;
       }
 
-      @UseGuards(TokenGuard)
-      @Get()
-      async getSimulationsForUser(@UserID() userId: number): Promise<Simulation[]> {
-        return this.simulationService.getSimulationsForUser(userId);
-      }
 
       @UseGuards(TokenGuard)
       @Delete(':simulationId')

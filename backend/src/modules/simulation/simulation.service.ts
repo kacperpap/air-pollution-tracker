@@ -1,67 +1,53 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { RabbitMQService } from '../rabbitmq/rabbitmq.service'; 
 import { SimulationRequestType } from './dto/simulation-request-data';
 import { SimulationResponseType } from './dto/simulation-response-data';
 import { PrismaService } from '../prisma/prisma.service';
 import { Simulation } from './dto/simulation';
+import { gzipSync } from 'zlib';
+import { SimulationLight } from './dto/simulation-light';
+import { error } from 'console';
+import { logWithTime } from '../utils';
 
 
 @Injectable()
 export class SimulationService {
   constructor(
+    @Inject(forwardRef(() => RabbitMQService))
     private rabbitMQService: RabbitMQService,
     private prisma: PrismaService
   ) {}
     
 
-    /**
-     * This function wraps a simulation run function to properly process and pass request and resposne data
-     * from and to simulation module 
-     */
-
     async runSimulationOfPollutionSpreadForDroneFlight(
       simulationData: SimulationRequestType,
       simulationId: number
     ): Promise<void> {
-      try {
-        const simulationRequest = new SimulationRequestType({
-          droneFlight: simulationData.droneFlight,
-          numSteps: simulationData.numSteps,
-          dt: simulationData.dt,
-          pollutants: simulationData.pollutants,
-          boxSize: simulationData.boxSize,
-          gridDensity: simulationData.gridDensity,
-          urbanized: simulationData.urbanized,
-          marginBoxes: simulationData.marginBoxes,
-          initialDistance: simulationData.initialDistance,
-        });
+        try {
+
+            const simulationRequest = new SimulationRequestType({
+                  droneFlight: simulationData.droneFlight,
+                  numSteps: simulationData.numSteps,
+                  dt: simulationData.dt,
+                  pollutants: simulationData.pollutants,
+                  boxSize: simulationData.boxSize,
+                  gridDensity: simulationData.gridDensity,
+                  urbanized: simulationData.urbanized,
+                  marginBoxes: simulationData.marginBoxes,
+                  initialDistance: simulationData.initialDistance,
+                  simulationId: simulationId
+                });
+
+            logWithTime(`runSimulationOfPollutionSpreadForDroneFlight -> Simulation request parsed as SimulationRequestType`)
     
-        const simulationResult = await this.run(simulationRequest);
-    
-        await this.updateSimulationResult(simulationId, 'completed', simulationResult);
-      } catch (error) {
-        if (error instanceof HttpException && error.getStatus() === HttpStatus.REQUEST_TIMEOUT) {
-          await this.updateSimulationResult(simulationId, 'timeExceeded');
-        } else {
-          await this.updateSimulationResult(simulationId, 'failed');
+            await this.rabbitMQService.sendTask(this.rabbitMQService.requestQueue, simulationRequest, simulationId);
+        } catch (error) {
+            logWithTime(`runSimulationOfPollutionSpreadForDroneFlight -> failed passing simulation request to sendTask: ${error}`)
+            await this.updateSimulationResult(simulationId, 'failed', null);
         }
-    
-        throw error;
-      }
     }
+  
     
-
-    async run(data: SimulationRequestType): Promise<SimulationResponseType> {
-
-        const simulationResult = await this.rabbitMQService.sendMessage(
-            this.rabbitMQService.requestQueue,
-            data
-        );
-
-        return this.processSimulationResult(simulationResult);
-    }
-
-
     private processSimulationResult(result: any): SimulationResponseType {
       const processedResult = new SimulationResponseType({
         grid: {
@@ -109,6 +95,7 @@ export class SimulationService {
           droneFlightId,
           status: 'pending',
           parameters: filteredParameters,
+          updatedAt: undefined
         },
       });
       return newSimulation.id;
@@ -117,21 +104,58 @@ export class SimulationService {
     async updateSimulationResult(
       simulationId: number,
       status: 'completed' | 'failed' | 'timeExceeded',
-      resultData?: SimulationResponseType
+      resultData?
     ): Promise<void> {
-      const resultBuffer = resultData
-        ? Buffer.from(JSON.stringify(resultData)) 
-        : undefined;
-    
-      await this.prisma.simulation.update({
-        where: { id: simulationId },
-        data: {
-          status,
-          result: resultBuffer,
-        },
-      });
-    }
 
+      /*
+      * Data saved to db are compressed and saved as bytes (binary format)
+      * After receiving data by getSimulationById (without decompressing and converting from bytes to json)
+      * data format is as following:
+      *   { type: "Buffer", data: [...] }
+      *   where data is an array of numbers representing each byte from buffer
+      */
+
+        let resultBuffer: Buffer | null = null;
+    
+        if (resultData) {
+            try {
+                const processedResult: SimulationResponseType = this.processSimulationResult(resultData);
+                resultBuffer = gzipSync(Buffer.from(JSON.stringify(processedResult)));
+                
+                await this.prisma.simulation.update({
+                  where: { id: simulationId },
+                  data: {
+                      status,
+                      result: resultBuffer,
+                      updatedAt: new Date()
+                  },
+                });
+                logWithTime(`updateSimulationResult -> Successfully updated simulation with id ${simulationId}, status: ${status}`);
+            } catch (error) {
+                logWithTime(`updateSimulationResult -> Error during parsing received data to SimulationResponseType: ${error}`);
+  
+                await this.prisma.simulation.update({
+                  where: { id: simulationId },
+                  data: {
+                      status: "failed",
+                      result: null,
+                      updatedAt: new Date()
+                  },
+              });
+            }
+        } else {
+          await this.prisma.simulation.update({
+            where: { id: simulationId },
+            data: {
+                status,
+                result: null,
+                updatedAt: new Date()
+            },
+          });
+          logWithTime(`updateSimulationResult -> saving with null result, status: ${status}`);
+        }
+    }
+  
     async getSimulationById(simulationId: number): Promise<Simulation> {
       return this.prisma.simulation.findUnique({
         where: { id: simulationId },
@@ -144,6 +168,28 @@ export class SimulationService {
         orderBy: { createdAt: 'desc' },
       });
     }
+
+    /*
+    * This function enables to get from db all simulation data for user 
+    * without result data, it is for viewing puposes, where we need this data
+    * only when user downloads them - use getSimulationById in that case
+    */
+    async getSimulationsForUserLightVersion(userId: number): Promise<SimulationLight[]> {
+      return this.prisma.simulation.findMany({
+          where: { userId },
+          orderBy: { createdAt: 'desc' },
+          select: {
+              id: true,
+              userId: true,
+              droneFlightId: true,
+              status: true,
+              parameters: true,
+              createdAt: true,
+              updatedAt: true,
+          },
+      });
+  }
+  
 
     async deleteSimulationById(simulationId: number): Promise<void> {
       await this.prisma.simulation.delete({
