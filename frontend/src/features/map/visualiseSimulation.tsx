@@ -248,27 +248,28 @@ export const drawWindArrows = (
   const arrows: L.Polyline[] = [];
 
   grid.boxes.forEach((box: Box, index: number) => {
-    const direction = windData.direction[index];
-    const speed = windData.speed[index];
-    
+    const azimuth = windData.direction[index];
+    const speed = windData.speed[index]; 
+
     const center: L.LatLngExpression = [
       (box.lat_min + box.lat_max) / 2,
       (box.lon_min + box.lon_max) / 2
     ];
-    
+
     const arrowLength = Math.min(
       (box.lat_max - box.lat_min) * 0.4,
       (box.lon_max - box.lon_min) * 0.4
-    ) * speed; 
+    ) * speed;
 
-    const angleRad = (direction * Math.PI) / 180;
+    const angleRad = (azimuth * Math.PI) / 180;
+
     const endPoint: L.LatLngExpression = [
-      center[0] + Math.cos(angleRad) * arrowLength,
-      center[1] + Math.sin(angleRad) * arrowLength
+      center[0] + Math.sin(angleRad) * arrowLength, 
+      center[1] + Math.cos(angleRad) * arrowLength 
     ];
 
     const arrowColor = getColorForValue(
-      windData.speed[index], 
+      windData.speed[index],
       'wind' as PollutantParameter
     );
 
@@ -277,17 +278,17 @@ export const drawWindArrows = (
       weight: 2,
       opacity: isVisible ? 1 : 0
     }).addTo(map);
-    
+
     const arrowHead = L.polyline(
       [
         [
-          endPoint[0] - Math.cos(angleRad + Math.PI / 6) * arrowLength * 0.2,
-          endPoint[1] - Math.sin(angleRad + Math.PI / 6) * arrowLength * 0.2
-        ] as L.LatLngExpression, 
+          endPoint[0] - Math.sin(angleRad + Math.PI / 6) * arrowLength * 0.2,
+          endPoint[1] - Math.cos(angleRad + Math.PI / 6) * arrowLength * 0.2
+        ] as L.LatLngExpression,
         endPoint,
         [
-          endPoint[0] - Math.cos(angleRad - Math.PI / 6) * arrowLength * 0.2,
-          endPoint[1] - Math.sin(angleRad - Math.PI / 6) * arrowLength * 0.2
+          endPoint[0] - Math.sin(angleRad - Math.PI / 6) * arrowLength * 0.2,
+          endPoint[1] - Math.cos(angleRad - Math.PI / 6) * arrowLength * 0.2
         ] as L.LatLngExpression
       ],
       {

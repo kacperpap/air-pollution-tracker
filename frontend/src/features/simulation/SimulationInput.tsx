@@ -22,6 +22,7 @@ export function SimulationInput() {
       });
 
     const [droneFlights, setDroneFlights] = useState<DroneFlightType[]>([]);
+    const [availablePollutants, setAvailablePollutants] = useState<string[]>([]);
 
     const [formData, setFormData] = useState<SimulationRequestType>({
         droneFlight: {
@@ -75,6 +76,11 @@ export function SimulationInput() {
             ...prev,
             droneFlight: selectedFlight, 
           }));
+
+          const availablePollutants = selectedFlight.measurements
+          .flatMap(measurement => measurement.pollutionMeasurements.map(pm => pm.type));
+
+          setAvailablePollutants(Array.from(new Set(availablePollutants)));
         }
       };
 
@@ -307,26 +313,36 @@ export function SimulationInput() {
             <div className="sm:col-span-4">
               <label className="block text-sm font-medium leading-6 text-gray-900">Pollutants</label>
               <div className="mt-2 space-y-2">
-                {['CO', 'O3', 'SO2', 'NO2'].map((pollutant) => (
-                  <label key={pollutant} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="pollutants"
-                      checked={formData.pollutants.includes(pollutant)}
-                      onChange={(e) => {
-                        const newPollutants = e.target.checked
-                          ? [...formData.pollutants, pollutant]
-                          : formData.pollutants.filter((p) => p !== pollutant);
-                        setFormData((prev) => ({ ...prev, pollutants: newPollutants }));
-                      }}
-                      className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-600">{pollutant}</span>
-                  </label>
-                ))}
+                {['CO', 'O3', 'SO2', 'NO2'].map((pollutant) => {
+                  const isDisabled = !availablePollutants.includes(pollutant);
+                  return (
+                    <label
+                      key={pollutant}
+                      className={`flex items-center ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        name="pollutants"
+                        checked={formData.pollutants.includes(pollutant)}
+                        onChange={(e) => {
+                          const newPollutants = e.target.checked
+                            ? [...formData.pollutants, pollutant]
+                            : formData.pollutants.filter((p) => p !== pollutant);
+                          setFormData((prev) => ({ ...prev, pollutants: newPollutants }));
+                        }}
+                        disabled={isDisabled}
+                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <span className={`ml-2 text-sm ${isDisabled ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {pollutant}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
               <p className="text-sm text-gray-600 mt-1">Select which pollutants to include in the simulation.</p>
             </div>
+
     
             {/* Box Size */}
             <div className="sm:col-span-4">

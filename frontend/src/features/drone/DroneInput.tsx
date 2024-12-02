@@ -517,7 +517,7 @@ export function DroneInput() {
 
                 <div>
                     <h4 className="text-md font-semibold text-gray-800">Weather Data</h4>
-                    <p className="text-sm text-gray-600">Please enter weather-related data. Wind speed is measured in m/s, and wind direction in degrees.</p>
+                    <p className="text-sm text-gray-600">Please enter weather-related data. Wind speed is measured in m/s, and wind direction in degrees - as azymuth / deviation from north (N is 0°, E is 90°, S is 180° and W is 270°).</p>
                     <div className="grid grid-cols-4 gap-4 mt-2">
                     <div>
                         <label className="block text-sm font-medium leading-6 text-gray-900">Pressure (Pa)</label>
