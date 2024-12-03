@@ -68,7 +68,10 @@ def convert_to_output_type(
     wind_direction = []
     for u, v in zip(u_values, v_values):
         speed = (u**2 + v**2)**0.5
-        direction = np.degrees(np.arctan2(v, u)) % 360
+        
+        # direction need to be parsed back as azymuth
+        
+        direction = (np.degrees(np.arctan2(u, v)) + 360) % 360
         wind_speed.append(speed)
         wind_direction.append(direction)
 
