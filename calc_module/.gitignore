@@ -3,5 +3,6 @@ weather_data*
 models/euler_volume_muliboxes_model/*.png 
 */__pycache__
 __pycache__
-models/euler_modified_multiboxes_model/*/debug
+models/*/*/debug
+models/*/debug
 venv/
