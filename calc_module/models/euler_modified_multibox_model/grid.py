@@ -1,9 +1,8 @@
 import numpy as np
 
-from models.euler_modified_multibox_model.debug_utils.logging import log_to_file
+from utils import log_with_time
 
-
-def create_uniform_boxes(data, pollutants, grid_density=None, urbanized=False, margin_boxes=1, debug=False, debug_file=None, max_boxes=5000):
+def create_uniform_boxes(data, pollutants, grid_density=None, urbanized=False, margin_boxes=1, max_boxes=5000):
     
     latitudes = np.array([point["latitude"] for point in data])
     longitudes = np.array([point["longitude"] for point in data])
@@ -14,10 +13,7 @@ def create_uniform_boxes(data, pollutants, grid_density=None, urbanized=False, m
 
     pollutants_initial_values = {pollutant: np.array([point[f'{pollutant}'] for point in data]) for pollutant in pollutants}
     
-    if debug and debug_file:
-        log_to_file(debug_file, "create_uniform_boxes", f"latitudes=\n{latitudes}\nlongitudes=\n{longitudes}\ntemperatures=\n{temperatures}\npressures=\n{pressures}\nwind_speeds=\n{wind_speeds}\nwind_directions=\n{wind_directions}\npollutants_initial_values=\n{pollutants_initial_values}", "simulation data")
     
-
     """
     Kierunek wiatru podawany jest w stopniach, jako azymut, czyli odchylenie od północy co oznacza, że np. kierunek północny to 0 st.
     Aby rozłożyć kierunek wiatru na składowe u, v (nie uwzględniamy kierunku pionowego - pomiary na stałej wysokości),
@@ -29,11 +25,6 @@ def create_uniform_boxes(data, pollutants, grid_density=None, urbanized=False, m
     u_values = wind_speeds * np.sin(wind_directions_rad)  # Składowa w kierunku x
     v_values = wind_speeds * np.cos(wind_directions_rad)  # Składowa w kierunku y
     
-    if debug and debug_file:
-        log_to_file(debug_file, "create_uniform_boxes", f"wind_directions_rad=\n{wind_directions_rad}", "wind directions to radians conversion")
-        log_to_file(debug_file, "create_uniform_boxes", f"u_values=\n{u_values}", "u values as x part of wind")
-        log_to_file(debug_file, "create_uniform_boxes", f"v_values=\n{v_values}", "v values as y part of wind")
-
 
     lat_min, lat_max = np.min(latitudes), np.max(latitudes)
     lon_min, lon_max = np.min(longitudes), np.max(longitudes)
@@ -61,11 +52,6 @@ def create_uniform_boxes(data, pollutants, grid_density=None, urbanized=False, m
     if total_boxes > max_boxes:
         raise ValueError(f"Exceeded maximum number of boxes. Generated {total_boxes} boxes, max allowed is {max_boxes}")
     
-    if debug and debug_file:
-        log_to_file(debug_file, "create_uniform_boxes", f"box_size_lat={box_size_lat}\nbox_size_lon={box_size_lon}", "box size calculation")
-        log_to_file(debug_file, "create_uniform_boxes", f"num_lat_boxes={num_lat_boxes}\num_lon_boxes={num_lon_boxes}\ntotal={num_lat_boxes * num_lon_boxes}", "box numer")
-
-
     
     boxes = []
     pollutant_values = {pollutant: np.full((num_lat_boxes, num_lon_boxes), None) for pollutant in pollutants}
@@ -124,27 +110,6 @@ def create_uniform_boxes(data, pollutants, grid_density=None, urbanized=False, m
     
     flattened_pollutant_values = {pollutant: values.flatten() for pollutant, values in pollutant_values.items()}
     
-    if debug and debug_file:
-        for i in range(num_lat_boxes):
-            for j in range(num_lon_boxes):
-                box_info = {
-                    "lat_min_box": lat_min + i * box_size_lat,
-                    "lat_max_box": lat_min + (i + 1) * box_size_lat,
-                    "lon_min_box": lon_min + j * box_size_lon,
-                    "lon_max_box": lon_min + (j + 1) * box_size_lon,
-                    "temperature": temperature_values[i, j],
-                    "pressure": pressure_values[i, j],
-                    "u_value": u_grid[i, j],
-                    "v_value": v_grid[i, j],
-                    "pollutants": {
-                        pollutant: pollutant_values[pollutant][i, j]
-                        for pollutant in pollutants
-                    },
-                    "measurements": measurements_in_boxes[i][j]
-                }
-                log_to_file(debug_file, "create_uniform_boxes", 
-                            f"Box[{i}, {j}] Details:\n{box_info}", 
-                            f"box[{i}, {j}] detailed logging")
-    
-    
+    log_with_time(f"create_uniform_boxes -> Grid created, shape: {num_lat_boxes} x {num_lon_boxes}, total boxes number: {num_lat_boxes * num_lon_boxes}")
+         
     return boxes, temperature_values.flatten(), pressure_values.flatten(), u_grid.flatten(), v_grid.flatten(), flattened_pollutant_values, grid_shape

@@ -6,7 +6,6 @@ import traceback
 import aio_pika # type: ignore
 import json
 import uuid
-from models.euler_modified_multibox_model.debug_utils.logging import log_to_file
 from dotenv import load_dotenv # type: ignore
 
 
@@ -20,7 +19,7 @@ load_dotenv()
 
     
 
-def simulate(data, debug=True):
+def simulate(data, debug=False):
     """
     Wraps simulataion of pollution spread using given data and parameters.
     
@@ -34,16 +33,14 @@ def simulate(data, debug=True):
         margin_boxes (int, optional): Number of margin boxes. Defaults to 1.
         initial_distance (int, optional): Initial distance between simulation boxes. Defaults to 1.
     """
-    
-    timestamp = datetime.now().strftime("%Y_%m_%d_%H%M%S")
+    debug_dir = None
+    if debug:
+        timestamp = datetime.now().strftime("%Y_%m_%d_%H%M%S")
         
-    debug_dir = f"models/euler_modified_multibox_model/debug/{timestamp}/"
-    if not os.path.exists(debug_dir):
-        os.makedirs(debug_dir)
-        
-    debug_filepath = os.path.join(debug_dir, "debug.txt")
-    debug_file = open(debug_filepath, "w") if debug else None
-    
+        debug_dir = f"models/euler_modified_multibox_model/debug/{timestamp}/"
+        if not os.path.exists(debug_dir):
+            os.makedirs(debug_dir)
+            
     if debug:
         log_with_time(f"simulate -> runnig in debug mode, created debug directory in: {debug_dir}")
     
@@ -51,34 +48,34 @@ def simulate(data, debug=True):
         converted_data: InputType = convert_to_input_type(data)
                 
         num_steps = data['numSteps']
-        dt = data['dt']
         pollutants = data.get('pollutants', [])
         grid_density = data['gridDensity']
         urbanized = data['urbanized']
         margin_boxes = data['marginBoxes']
         initial_distance = data['initialDistance']
-        
-        if debug:
-            log_to_file(debug_file, "simulate", f"num_steps={num_steps}\ndt={dt}\npollutants={pollutants}\ngrid_density={grid_density}\nurbanized={urbanized}\nmargin_boxes={margin_boxes}\ninitial_distance={initial_distance}", "Simulation parameters")
-                
+        decay_rate = data['decayRate']
+        snap_interval = data['snapInterval']
+                    
         log_with_time(f"simulate -> starting function simulate_pollution_spread with parameters: "
-                      f"num_steps={num_steps}, dt={dt}, pollutants={pollutants}, "
+                      f"num_steps={num_steps}, pollutants={pollutants}, "
                       f"grid_density={grid_density}, "
-                      f"urbanized={urbanized}, margin_boxes={margin_boxes}, initial_distance={initial_distance}")
+                      f"urbanized={urbanized}, margin_boxes={margin_boxes}, initial_distance={initial_distance}, "
+                      f"decay_rate={decay_rate}, snap_interval={snap_interval}")
         
         start_time = time.time()
 
-        concentrations, boxes, temp_values, press_values, u_values, v_values = simulate_pollution_spread(
-            converted_data, num_steps, dt, 
-            pollutants=pollutants, 
+        concentrations, snap_concentrations, boxes, temp_values, press_values, u_values, v_values = simulate_pollution_spread(
+            converted_data, 
+            num_steps, 
+            pollutants, 
             grid_density=grid_density, 
             urbanized=urbanized, 
             margin_boxes=margin_boxes, 
             initial_distance=initial_distance, 
-            debug=debug, 
-            debug_with_plots=debug, 
+            decay_rate=decay_rate,
+            debug=False,
             debug_dir=debug_dir,
-            debug_file=debug_file
+            snap_interval=snap_interval
         )
         
         
@@ -89,6 +86,7 @@ def simulate(data, debug=True):
         
         final_data: OutputType = convert_to_output_type(
             concentrations,
+            snap_concentrations,
             boxes,
             temp_values,
             press_values,

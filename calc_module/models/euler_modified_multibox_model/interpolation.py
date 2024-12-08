@@ -1,6 +1,4 @@
-import numpy as np
-
-from models.euler_modified_multibox_model.debug_utils.logging import log_to_file
+from utils import log_with_time
 
 
 def chessboard_distance(i1, j1, i2, j2):
@@ -26,10 +24,9 @@ def get_neighbors(grid_shape, i, j, distance):
     return neighbors
 
 
-def weighted_interpolation(values, grid_shape, distance, value_name=None, debug=False, debug_file=None):
+def weighted_interpolation(values, grid_shape, distance, value_name=None):
     interpolated_values = values.copy()
     num_rows, num_cols = grid_shape
-    log_entries = []
 
     effective_distance = max(1, min(distance, max(num_rows, num_cols)))
 
@@ -37,10 +34,6 @@ def weighted_interpolation(values, grid_shape, distance, value_name=None, debug=
         (i, j) for i in range(num_rows) for j in range(num_cols)
         if interpolated_values[i * num_cols + j] is not None
     ]
-
-    if debug:
-        log_to_file(debug_file, "weighted_interpolation_expansion", full_indices,
-                    f"Starting iteration with distance={distance}")
 
     updated_boxes = {}
 
@@ -64,39 +57,16 @@ def weighted_interpolation(values, grid_shape, distance, value_name=None, debug=
                         existing_weight + weight
                     )
 
-                # if debug:
-                #     log_entries.append({
-                #         "source_box": (i, j),
-                #         "target_box": (ni, nj),
-                #         "source_value": interpolated_values[i * num_cols + j],
-                #         "distance": dist,
-                #         "weight": weight,
-                #         "accumulated_value": updated_boxes[(ni, nj)][0],
-                #         "total_weight": updated_boxes[(ni, nj)][1]
-                #     })
-
     for (ni, nj), (total_value, total_weight) in updated_boxes.items():
         interpolated_values[ni * num_cols + nj] = total_value / total_weight
-
-        if debug:
-            log_entries.append({
-                "finalized_box": (ni, nj),
-                "final_value": interpolated_values[ni * num_cols + nj],
-                "total_weight": total_weight
-            })
-
-    if debug and debug_file:
-        log_to_file(debug_file, "weighted_interpolation", log_entries,
-                    header=f"Interpolation for {value_name}, distance={distance}")
 
     return interpolated_values
 
 
-def recursive_interpolation_until_filled(boxes, temp_values, press_values, u_values, v_values, pollutant_values, grid_shape, initial_distance=1, increment=1, debug=False, debug_file=None):
+def recursive_interpolation_until_filled(boxes, temp_values, press_values, u_values, v_values, pollutant_values, grid_shape, initial_distance=1, increment=1):
 
 
     distance = max(1, initial_distance)
-    iteration_logs = []
     
     while (
         any(value is None for value in temp_values) or 
@@ -104,53 +74,47 @@ def recursive_interpolation_until_filled(boxes, temp_values, press_values, u_val
         any(value is None for value in u_values) or 
         any(value is None for value in v_values) or 
         any(any(value is None for value in pollutant_values[pollutant]) for pollutant in pollutant_values)
-    ):      
-        if debug:
-            iteration_logs.append(f"Interpolation iteration with distance={distance}")
+    ):  
+            
+        iteration_details = {
+            "Interpolation Distance": distance,
+            "Grid Shape": grid_shape,
+            "Interpolation Values": {}
+        }
   
 
         temp_values = weighted_interpolation(
             temp_values, grid_shape,
             distance, 
             value_name="temperature",
-            debug=debug, 
-            debug_file=debug_file
         )
+        
         press_values = weighted_interpolation(
             press_values, grid_shape, 
             distance, 
-            value_name="pressure",
-            debug=debug, 
-            debug_file=debug_file
+            value_name="pressure"
         )
+        
         u_values = weighted_interpolation(
             u_values, grid_shape, 
             distance, 
-            value_name="u value",
-            debug=debug, 
-            debug_file=debug_file
+            value_name="u value"
         )
+                
         v_values = weighted_interpolation(
             v_values, grid_shape,
             distance, 
             value_name="v value",
-            debug=debug, 
-            debug_file=debug_file
         )
-        
+                
         for pollutant in pollutant_values:
             pollutant_values[pollutant] = weighted_interpolation(
                 pollutant_values[pollutant], grid_shape, 
                 distance, 
-                value_name=str(pollutant),
-                debug=debug, 
-                debug_file=debug_file
+                value_name=str(pollutant)
             )
         
         distance += increment
         
-    if debug and debug_file:
-        log_to_file(debug_file, "recursive_interpolation_until_filled", iteration_logs, header="Interpolation completed")
-
-    
+    log_with_time(f"recursive_interpolation_until_filled -> interpolation finished")    
     return temp_values, press_values, u_values, v_values, pollutant_values
