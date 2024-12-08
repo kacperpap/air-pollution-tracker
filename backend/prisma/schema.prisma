@@ -67,6 +67,7 @@ model Simulation {
   status        SimulationStatus @default(pending)
   parameters    Json
   result        Bytes?
+  snapshots     Bytes?          
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 }

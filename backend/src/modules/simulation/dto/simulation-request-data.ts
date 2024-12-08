@@ -11,17 +11,9 @@ export class SimulationRequestType {
   @IsPositive()
   numSteps: number;
 
-  @IsNumber()
-  @IsPositive()
-  dt: number;
-
   @IsArray()
   @IsOptional()
   pollutants: string[];
-
-  @IsArray()
-  @IsOptional()
-  boxSize: [number | null, number | null];
 
   @IsString()
   gridDensity: string;
@@ -34,6 +26,12 @@ export class SimulationRequestType {
 
   @IsBoolean()
   urbanized: boolean;
+
+  @IsNumber()
+  decayRate: number
+
+  @IsNumber()
+  snapInterval: number
 
   @IsOptional()
   simulationId: number

@@ -41,6 +41,9 @@ class StepPollutants {
 class PollutantsData {
   @IsNotEmpty()
   final_step: StepPollutants;
+
+  @IsOptional()
+  steps?: { [step: number]: StepPollutants };
 }
 
 class Environment {
@@ -73,5 +76,7 @@ export class SimulationResponseType {
 
   constructor(data: Partial<SimulationResponseType>) {
     Object.assign(this, data);
+    this.pollutants.steps = data.pollutants?.steps || {};
   }
+    
 }

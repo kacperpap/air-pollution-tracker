@@ -28,13 +28,13 @@ export class SimulationService {
             const simulationRequest = new SimulationRequestType({
                   droneFlight: simulationData.droneFlight,
                   numSteps: simulationData.numSteps,
-                  dt: simulationData.dt,
                   pollutants: simulationData.pollutants,
-                  boxSize: simulationData.boxSize,
                   gridDensity: simulationData.gridDensity,
                   urbanized: simulationData.urbanized,
                   marginBoxes: simulationData.marginBoxes,
                   initialDistance: simulationData.initialDistance,
+                  snapInterval: simulationData.snapInterval,
+                  decayRate: simulationData.decayRate,
                   simulationId: simulationId
                 });
 
@@ -49,6 +49,7 @@ export class SimulationService {
   
     
     private processSimulationResult(result: any): SimulationResponseType {
+            
       const processedResult = new SimulationResponseType({
         grid: {
           boxes: result.grid.boxes.map((box: any) => ({
@@ -73,6 +74,8 @@ export class SimulationService {
           windDirection: result.environment.windDirection || [],
         },
       });
+
+      processedResult.pollutants.steps = result.pollutants.steps || {};
     
       return processedResult;
     }
@@ -116,17 +119,25 @@ export class SimulationService {
       */
 
         let resultBuffer: Buffer | null = null;
+        let snapshotsBuffer: Buffer | null = null;
     
         if (resultData) {
             try {
                 const processedResult: SimulationResponseType = this.processSimulationResult(resultData);
                 resultBuffer = gzipSync(Buffer.from(JSON.stringify(processedResult)));
                 
+                if (resultData.pollutants && resultData.pollutants.steps) {
+                  snapshotsBuffer = gzipSync(
+                    Buffer.from(JSON.stringify(resultData.pollutants.steps))
+                  );
+                }
+          
                 await this.prisma.simulation.update({
                   where: { id: simulationId },
                   data: {
                       status,
                       result: resultBuffer,
+                      snapshots: snapshotsBuffer,
                       updatedAt: new Date()
                   },
                 });
@@ -139,6 +150,7 @@ export class SimulationService {
                   data: {
                       status: "failed",
                       result: null,
+                      snapshots: null,
                       updatedAt: new Date()
                   },
               });
@@ -149,6 +161,7 @@ export class SimulationService {
             data: {
                 status,
                 result: null,
+                snapshots: null,
                 updatedAt: new Date()
             },
           });

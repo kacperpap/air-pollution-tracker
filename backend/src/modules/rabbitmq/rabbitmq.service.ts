@@ -4,6 +4,7 @@ import * as amqp from 'amqplib';
 import { SimulationService } from '../simulation/simulation.service';
 import { SimulationResponseType } from '../simulation/dto/simulation-response-data';
 import { logWithTime } from '../utils';
+import { log } from 'console';
 
 @Injectable()
 export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
@@ -195,7 +196,10 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
           logWithTime(`consumeResults -> Received reply with correlationId: ${correlationId}`);
   
           try {
-            const messageContent = JSON.parse(msg.content.toString());
+            const rawMessage = msg.content.toString();
+            const sanitizedMessage = rawMessage.replace(/\bNaN\b/g, "null");
+
+            const messageContent = JSON.parse(sanitizedMessage);
             const { status, result } = messageContent;
             logWithTime(`consumeResults -> Status of received reply for simulation ${simulationId}: ${status}`);
             
@@ -206,6 +210,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
           } catch (error) {
             this.channel.nack(msg, false, false);
             this.simulationService.updateSimulationResult(simulationId, "failed", null)
+            logWithTime(`consumeResult -> Error parsing message: ${msg.content.toString()}`);
             logWithTime(`consumeResult -> Error: ${error}`);
           }
         }
