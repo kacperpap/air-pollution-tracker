@@ -1,36 +1,30 @@
 import numpy as np
 
+def extend_grid_with_buffer(C, S_c, K_x, K_y, u, v, nx, ny):
+    C_extended = np.pad(C, pad_width=1, mode='constant', constant_values=0)
+    S_c_extended = np.pad(S_c, pad_width=1, mode='constant', constant_values=0)
+    K_x_extended = np.pad(K_x, pad_width=1, mode='edge')
+    K_y_extended = np.pad(K_y, pad_width=1, mode='edge')
+    u_extended = np.pad(u, pad_width=1, mode='edge')
+    v_extended = np.pad(v, pad_width=1, mode='edge')
+    return C_extended, S_c_extended, K_x_extended, K_y_extended, u_extended, v_extended, nx + 2, ny + 2
 
-def update_concentration_crank_nicolson(C, u, v, K_x, K_y, dx, dy, dt, S_c, nx, ny, max_iter=20, tol=1e-4, verbose=False):
-    """
-    Aktualizuje stężenie zanieczyszczeń w każdym pudełku na podstawie metody Cranka-Nicolsona,
-    z dodatkowym wypisywaniem wyników obliczeń dla celów debugowania.
+def trim_grid_to_original(C_extended, nx, ny):
+    return C_extended[1:nx-1, 1:ny-1]
 
-    Parametry:
-    - C: 2D macierz (nx, ny) stężenia zanieczyszczeń.
-    - u: 2D macierz (nx, ny) prędkości wiatru w kierunku x.
-    - v: 2D macierz (nx, ny) prędkości wiatru w kierunku y.
-    - K_x: 2D macierz współczynnika dyfuzji w kierunku x.
-    - K_y: 2D macierz współczynnika dyfuzji w kierunku y.
-    - dx, dy: wymiary pudełka.
-    - dt: krok czasowy.
-    - S_c: źródła emisji zanieczyszczeń.
-    - nx, ny: liczba pudełek w kierunku x i y.
-    - max_iter: maksymalna liczba iteracji Picarda.
-    - tol: tolerancja konwergencji.
-    - verbose: czy wyświetlać szczegółowe wyniki obliczeń.
 
-    Zwraca:
-    - Zaktualizowana macierz stężenia C.
-    """
+def update_concentration_crank_nicolson(C, u, v, K_x, K_y, dx, dy, dt, S_c, nx, ny, max_iter=20, tol=1e-4, decay_rate=0.01):
+
+    C, S_c, K_x, K_y, u, v, nx, ny = extend_grid_with_buffer(C, S_c, K_x, K_y, u, v, nx, ny)
+
     C_new = C.copy()
+    decay_factor = np.exp(-decay_rate * dt / 3600)
+
     
     for it in range(max_iter):
+        
         C_prev = C_new.copy()  
         
-        if verbose:
-            print(f"--- Iteracja {it+1} ---")
-
         for i in range(1, nx - 1):
             for j in range(1, ny - 1):
                 # Konwekcja (transport przez wiatr) dla Cranka-Nicolsona (średnie wartości między krokami n a n+1)
@@ -75,124 +69,82 @@ def update_concentration_crank_nicolson(C, u, v, K_x, K_y, dx, dy, dt, S_c, nx, 
 
                 # Zaktualizowane stężenie (iteracyjne rozwiązanie)
                 C_new[i, j] = C[i, j] + dt * (conv_x + conv_y + diff_x + diff_y + source)
+                
+                 # Eksponencjalny mechanizm zanikania
+                C_new *= decay_factor
 
-                # Jeśli verbose=True, wypisz szczegółowe informacje dla każdego kroku
-                if verbose:
-                    print(f"Pudełko [{i},{j}]:")
-                    print(f"  C[{i},{j}] = {C[i, j]}")
-                    print(f"  conv_x_n = {conv_x_n}, conv_x_np1 = {conv_x_np1}, conv_x = {conv_x}")
-                    print(f"  conv_y_n = {conv_y_n}, conv_y_np1 = {conv_y_np1}, conv_y = {conv_y}")
-                    print(f"  diff_x_n = {diff_x_n}, diff_x_np1 = {diff_x_np1}, diff_x = {diff_x}")
-                    print(f"  diff_y_n = {diff_y_n}, diff_y_np1 = {diff_y_np1}, diff_y = {diff_y}")
-                    print(f"  source = {source}")
-                    print(f"  C_new[{i},{j}] = {C_new[i, j]}")
-                    print()
-
+        
         # Sprawdzenie konwergencji
         max_diff = np.max(np.abs(C_new - C_prev))
-        if verbose:
-            print(f"Max różnica między krokami iteracyjnymi: {max_diff}")
-
         if max_diff < tol:
-            if verbose:
-                print(f"Konwergencja osiągnięta po {it+1} iteracjach.")
             break
+            
+    C_trimmed = trim_grid_to_original(C_new, nx, ny)
 
-    return C_new
+    return C_trimmed
+
 
 def calculate_stable_dt(u, v, K_x, K_y, dx, dy):
-    """
-    Oblicza stabilny krok czasowy dt na podstawie kryterium CFL.
-    
-    Parametry:
-    - u: 2D macierz prędkości wiatru w kierunku x.
-    - v: 2D macierz prędkości w kierunku y.
-    - K_x: 2D macierz współczynnika dyfuzji w kierunku x.
-    - K_y: 2D macierz współczynnika dyfuzji w kierunku y.
-    - dx: rozmiar pudełka w kierunku x.
-    - dy: rozmiar pudełka w kierunku y.
-    
-    Zwraca:
-    - Stabilny krok czasowy dt na podstawie kryterium CFL.
-    """
-    # Maksymalne prędkości wiatru
+
     u_max = np.max(np.abs(u))
     v_max = np.max(np.abs(v))
-
-    # Maksymalny współczynnik dyfuzji
     K_max = max(np.max(K_x), np.max(K_y))
 
-    # Kryterium CFL dla adwekcji i dyfuzji
-    dt_advection_x = dx / (u_max + 1e-10)  # dodajemy małą wartość, aby uniknąć dzielenia przez 0
+    dt_advection_x = dx / (u_max + 1e-10) 
     dt_advection_y = dy / (v_max + 1e-10)
-    
     dt_diffusion_x = (dx ** 2) / (2 * K_max + 1e-10)
     dt_diffusion_y = (dy ** 2) / (2 * K_max + 1e-10)
 
-    # Ostateczny stabilny krok czasowy
     dt_stable = min(dt_advection_x, dt_advection_y, dt_diffusion_x, dt_diffusion_y)
 
     return dt_stable
 
 
-def calculate_diffusion_coefficient(pollutant, temperature, pressure=101325):
-    """
-    Oblicza współczynnik dyfuzji w powietrzu dla zanieczyszczenia w zależności od temperatury, ciśnienia i innych parametrów.
+def calculate_diffusion_coefficients(pollutant, temperatures, pressures, u_wind, z_levels=None, 
+                                     box_size=1.0, method="turbulent"):
     
-    Parametry:
-    - pollutant: str, nazwa zanieczyszczenia (np. 'CO')
-    - temperature: temperatura w stopniach Celsjusza
-    - pressure: ciśnienie w Pa (domyślnie 101325 Pa)
-    
-    Zwraca:
-    - Współczynnik dyfuzji (K) w [m^2/s]
-    """
+    if method == "molecular":
+        K = molecular_diffusion_coefficients_grid(pollutant, temperatures, pressures)
+    elif method == "turbulent":
+        if z_levels is None:
+            raise ValueError("z_levels must be provided for turbulent diffusion.")
+        K = turbulent_diffusion_coefficients_grid(u_wind, z_levels)
+    else:
+        raise ValueError(f"Unsupported diffusion method: {method}")
 
+    K_scaled = K * box_size
+    
+    return K_scaled
+
+
+def molecular_diffusion_coefficients_grid(pollutant, temperatures, pressures):
     coefficients = {
-      "CO": {
-        "D_0": 0.16,
-        "exponent": 1.75
-      },
-      "NO2": {
-          "D_0": 0.14,
-          "exponent": 1.76
-      },
-      "SO2": {
-          "D_0": 0.15,
-          "exponent": 1.78
-      },
-      "O3": {
-          "D_0": 0.11,
-          "exponent": 1.82
-      },
-      "CH4": {
-          "D_0": 0.22,
-          "exponent": 1.70
-      },
-      "NH3": {
-          "D_0": 0.19,
-          "exponent": 1.74
-      },
-      "C2H6": {
-          "D_0": 0.19,
-          "exponent": 1.73
-      },
-      "H2S": {
-          "D_0": 0.13,
-          "exponent": 1.80
-      }
+        "CO": {"D_0": 0.16, "exponent": 1.75},
+        "NO2": {"D_0": 0.14, "exponent": 1.76},
+        "SO2": {"D_0": 0.15, "exponent": 1.78},
+        "O3": {"D_0": 0.11, "exponent": 1.82},
     }
 
     if pollutant not in coefficients:
-        raise ValueError(f"Nieznane zanieczyszczenie: {pollutant}")
+        raise ValueError(f"Unknown pollutant: {pollutant}")
 
     coeffs = coefficients[pollutant]
-    D_0 = coeffs['D_0'] / 10000  # Zamiana z cm^2/s na m^2/s
+    D_0 = coeffs['D_0'] / 10000  # Convert from cm^2/s to m^2/s
     exponent = coeffs['exponent']
 
-    T_kelvin = temperature + 273.15  
+    T_kelvin = temperatures + 273.15
+    K_grid = D_0 * (T_kelvin / 293.15) ** exponent
 
-    # Empiryczna zależność od temperatury, na podstawie prawa Arrheniusa
-    K = D_0 * (T_kelvin / 293.15) ** exponent
+    return K_grid
 
-    return K
+
+def turbulent_diffusion_coefficients_grid(u_wind, z_levels, alpha=0.4):
+    if np.isscalar(z_levels):
+        z_levels = np.full_like(u_wind, z_levels)
+
+    K_grid = alpha * np.abs(u_wind) * z_levels
+
+    return K_grid
+
+
+

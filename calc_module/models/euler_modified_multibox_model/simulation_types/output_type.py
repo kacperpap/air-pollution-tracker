@@ -18,6 +18,7 @@ class StepPollutants(TypedDict):
     SO2: Optional[List[float]]
 
 class PollutantsData(TypedDict):
+    steps: Dict[int, StepPollutants]
     final_step: StepPollutants
 
 class Environment(TypedDict):
@@ -33,27 +34,14 @@ class OutputType(TypedDict):
 
 def convert_to_output_type(
     concentration_data: Dict[str, List[float]], 
+    snap_concentrations: Dict[str, List[List[float]]],
     boxes: List[tuple],
     temp_values: List[float],
     press_values: List[float],
     u_values: List[float],
     v_values: List[float]
 ) -> OutputType:
-    """
-    Konwertuje dane z symulacji na format wyjściowy.
-    
-    Args:
-        concentration_data: Słownik z końcowymi stężeniami zanieczyszczeń
-        boxes: Lista krotek z koordynatami boksów (lon_min, lon_max, lat_min, lat_max)
-        temp_values: Lista wartości temperatur
-        press_values: Lista wartości ciśnienia
-        u_values: Lista składowych poziomych prędkości wiatru
-        v_values: Lista składowych pionowych prędkości wiatru
-        
-    Returns:
-        OutputType: Sformatowane dane wyjściowe
-    """
-
+  
     formatted_boxes = [
         {
             "lat_min": box[0],
@@ -80,18 +68,29 @@ def convert_to_output_type(
             "boxes": formatted_boxes
         },
         "pollutants": {
-            "final_step": {
-                pollutant: values.tolist() if isinstance(values, np.ndarray) else values
-                for pollutant, values in concentration_data.items()
-            }
+            "steps": {}
         },
         "environment": {
             "temperature": temp_values,
             "pressure": press_values,
-            "windSpeed": wind_speed,
-            "windDirection": wind_direction
+            "windSpeed": list(wind_speed),
+            "windDirection": list(wind_direction)
         }
     }
+    
+    num_steps = len(next(iter(snap_concentrations.values())))
+    for step_idx in range(num_steps):
+        output_data["pollutants"]["steps"][step_idx] = {
+            pollutant: snap_concentrations[pollutant][step_idx]
+            for pollutant in snap_concentrations
+        }
+
+
+    output_data["pollutants"]["final_step"] = {
+        pollutant: concentrations.tolist() if isinstance(concentrations, np.ndarray) else concentrations
+        for pollutant, concentrations in concentration_data.items()
+    }
+
 
     return output_data
 
