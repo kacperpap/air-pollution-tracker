@@ -261,11 +261,14 @@ export const drawWindArrows = (
       (box.lon_max - box.lon_min) * 0.4
     ) * speed;
 
-    const angleRad = (azimuth * Math.PI) / 180;
+    // Konwersja azymutu z geograficznego na matematyczny
+    // Azymut geograficzny: 0° = North, rosnący zgodnie z ruchem zegara
+    // Kąt matematyczny: 0° = East, rosnący przeciwnie do ruchu zegara
+    const angleRad = azimuth * Math.PI / 180;
 
     const endPoint: L.LatLngExpression = [
-      center[0] + Math.sin(angleRad) * arrowLength, 
-      center[1] + Math.cos(angleRad) * arrowLength 
+      center[0] + Math.cos(angleRad) * arrowLength, 
+      center[1] + Math.sin(angleRad) * arrowLength 
     ];
 
     const arrowColor = getColorForValue(
@@ -282,13 +285,13 @@ export const drawWindArrows = (
     const arrowHead = L.polyline(
       [
         [
-          endPoint[0] - Math.sin(angleRad + Math.PI / 6) * arrowLength * 0.2,
-          endPoint[1] - Math.cos(angleRad + Math.PI / 6) * arrowLength * 0.2
+          endPoint[0] - Math.cos(angleRad + Math.PI / 6) * arrowLength * 0.2,
+          endPoint[1] - Math.sin(angleRad + Math.PI / 6) * arrowLength * 0.2
         ] as L.LatLngExpression,
         endPoint,
         [
-          endPoint[0] - Math.sin(angleRad - Math.PI / 6) * arrowLength * 0.2,
-          endPoint[1] - Math.cos(angleRad - Math.PI / 6) * arrowLength * 0.2
+          endPoint[0] - Math.cos(angleRad - Math.PI / 6) * arrowLength * 0.2,
+          endPoint[1] - Math.sin(angleRad - Math.PI / 6) * arrowLength * 0.2
         ] as L.LatLngExpression
       ],
       {
