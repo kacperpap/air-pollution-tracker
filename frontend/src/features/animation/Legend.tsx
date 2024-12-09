@@ -12,16 +12,19 @@ export const Legend: React.FC<LegendProps> = ({ parameter, className }) => {
 
   const ranges = POLLUTANT_RANGES[parameter as PollutantParameter];
   const colorScale = getColorScale(parameter);
+
   if (!colorScale) return null;
 
   const createGradient = (min: number, max: number) => {
     const steps = 20;
+    const effectiveMin = min === -Infinity ? (max / 10) : min;
+    const effectiveMax = max === Infinity ? (min * 10) : max;
+    
     const values = Array.from({ length: steps }, (_, i) =>
-      min + (max - min) * (i / (steps - 1))
+      effectiveMin + (effectiveMax - effectiveMin) * (i / (steps - 1))
     );
-
-    return `linear-gradient(to right, ${values.map(v => colorScale(v)).join(', ')
-      })`;
+  
+    return `linear-gradient(to right, ${values.map(v => colorScale(v)).join(', ')})`;
   };
 
 
@@ -34,7 +37,7 @@ export const Legend: React.FC<LegendProps> = ({ parameter, className }) => {
             <div
               className="w-6 h-6 rounded"
               style={{
-                backgroundColor: createGradient(range.min, range.max)
+                background: createGradient(range.min, range.max)
               }}
             />
             <span className="text-sm">

@@ -1,8 +1,17 @@
 import { PollutantParameter, Range } from './MapTypes'
 import * as d3 from 'd3'
 import { POLLUTANT_RANGES } from './POLLUTANT_RANGES';
-import { EnvironmentType, PollutantDataType } from '../../types/SimulationResponseType';
 
+const COLOR_PALETTE = [
+  '#00ff00',   // Bardzo dobry (jasny zielony)
+  '#90EE90',   // Dobry (jasnozielony)
+  '#ffff00',   // Zadowalający (żółty)
+  '#FFA500',   // Umiarkowany (pomarańczowy)
+  '#FF4500',   // Słaby (czerwono-pomarańczowy)
+  '#FF0000',   // Zły (czerwony)
+  '#8B0000',   // Bardzo zły (ciemnoczerwony)
+  '#4B0082'    // Ekstremalnie zły (fioletowy)
+];
 
 export const getRangeForParameter = (parameter: string): Range[] => {
   if (parameter in POLLUTANT_RANGES) {
@@ -15,20 +24,22 @@ export const getColorScale = (parameter: string) => {
   const ranges = getRangeForParameter(parameter);
   if (!ranges.length) return null;
 
-  const colors = [
-    '#00ff00', // Good - zielony
-    '#ffff00', // Fair - żółty
-    '#ffa500', // Moderate - pomarańczowy
-    '#ff4500', // Poor - czerwono-pomarańczowy
-    '#ff0000'  // Very Poor - czerwony
-  ];
+  const fullDomain = ranges.flatMap(range => [range.min, range.max]);
+  const uniqueDomain = Array.from(new Set(fullDomain)).sort((a, b) => a - b);
 
-  const colorScale = d3.scaleLinear<string>()
-    .domain(ranges.map(range => range.min))
-    .range(colors.slice(0, ranges.length))
-    .interpolate(d3.interpolateRgb.gamma(2.2));
+  const safeColorScale = (value: number) => {
+    if (value === -Infinity) return COLOR_PALETTE[0];
+    if (value === Infinity) return COLOR_PALETTE[COLOR_PALETTE.length - 1];
+    
+    const colorScale = d3.scaleLinear<string>()
+      .domain(uniqueDomain)
+      .range(COLOR_PALETTE)
+      .interpolate(d3.interpolateHcl);
+    
+    return colorScale(value);
+  };
 
-  return colorScale;
+  return safeColorScale;
 };
 
 export const getColorForValue = (value: number, parameter: string): string => {
@@ -42,7 +53,6 @@ export const getColorForValue = (value: number, parameter: string): string => {
   const clampedValue = Math.max(minValue, Math.min(maxValue, value));
   return colorScale(clampedValue);
 };
-
 
 
 export const updateRectangleColors = (data: number[], selectedParameter: string, rectangles: L.Rectangle[]) => {
