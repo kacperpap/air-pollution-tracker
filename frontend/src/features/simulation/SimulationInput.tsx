@@ -34,7 +34,7 @@ export function SimulationInput() {
         },
         numSteps: 1000,
         pollutants: [],
-        gridDensity: '',
+        gridDensity: 'medium',
         urbanized: false,
         marginBoxes: 1,
         initialDistance: 1,
@@ -167,7 +167,7 @@ export function SimulationInput() {
                 },
                 numSteps: 1000,
                 pollutants: [],
-                gridDensity: '',
+                gridDensity: 'medium',
                 urbanized: false,
                 marginBoxes: 1,
                 initialDistance: 1,
@@ -347,7 +347,7 @@ export function SimulationInput() {
                 onChange={handleFormChange}
                 className="block w-full rounded-md border border-gray-300 p-2 shadow-sm sm:text-sm"
               >
-                <option value="spare">Spare</option>
+                <option value="sparse">Sparse</option>
                 <option value="medium">Medium</option>
                 <option value="dense">Dense</option>
               </select>
