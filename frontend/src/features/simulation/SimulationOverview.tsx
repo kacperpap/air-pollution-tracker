@@ -245,36 +245,10 @@ export function SimulationOverview() {
         }
     };
 
-    const handleRunSimulationOnMap = async (droneFlightId: number, simulationId: number) => {
-         
+    const handleRunSimulationOnMap = async (simulationId: number) => {
+    
         try {
-            const simulation = await getSimulationById(simulationId)
-    
-            if (simulation.result) {
-
-                const uint8Array = new Uint8Array(simulation.result.data);
-                
-                const decompressedResult = pako.ungzip(
-                    uint8Array,
-                    { to: 'string' }
-                );
-    
-                const parsedResult = JSON.parse(decompressedResult);
-                console.log('Parsed Result:', parsedResult)
-    
-                navigate(`/map/run-simulation/${droneFlightId}`, {
-                    state: { 
-                        simulationData: parsedResult 
-                    }
-                })
-    
-            } else {
-                setNotification({
-                    message: 'Error',
-                    description: `Simulation with ID ${simulationId} does not contain a result.`,
-                    type: 'error'
-                });
-            }
+            navigate(`/map/run-simulation/${simulationId}`)
         } catch (error) {
             setNotification({
                 message: 'Error',
@@ -480,7 +454,7 @@ export function SimulationOverview() {
                                             <div className="mt-4 flex justify-end gap-6">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleRunSimulationOnMap(simulation.droneFlightId, simulation.id)}
+                                                    onClick={() => handleRunSimulationOnMap(simulation.id)}
                                                     className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                                 >
                                                     Show simulation on map

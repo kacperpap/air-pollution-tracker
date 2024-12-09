@@ -3,7 +3,7 @@ import 'leaflet-spline'
 import { getDroneFlightById } from '../drone/api/getDroneFlightById';
 import { DroneMeasurementType } from '../../types/DroneMeasurementType';
 import { NotificationProps } from '../../types/NotificationPropsType';
-import { MapState } from './MapTypes';
+import { FlightMap } from './Map';
 
 
 const createSplinePath = (points: [number, number][]): L.Polyline => {
@@ -19,9 +19,9 @@ const updateLineWeight = (polyline: L.Polyline, map: L.Map) => {
   const currentZoom = map.getZoom();
   const baseWeight = 3;
   const scaleFactor = Math.max(1, currentZoom / 10);
-  
-  polyline.setStyle({ 
-    weight: baseWeight * scaleFactor 
+
+  polyline.setStyle({
+    weight: baseWeight * scaleFactor
   });
 };
 
@@ -29,11 +29,11 @@ export const loadFlightData = async (
   flightId: number,
   map: L.Map,
   setNotification: (notification: NotificationProps) => void,
-  updateState: (newState: Partial<MapState>) => void
+  updateState: (newState: Partial<FlightMap>) => void
 ) => {
   try {
     const flight = await getDroneFlightById(flightId);
-    
+
     if (!flight || !flight.measurements || !Array.isArray(flight.measurements) || flight.measurements.length === 0) {
       console.error('Invalid flight data or no measurements');
       setNotification({
@@ -45,8 +45,8 @@ export const loadFlightData = async (
     }
 
     const validPoints = flight.measurements
-      .filter((point: DroneMeasurementType): point is DroneMeasurementType => 
-        point.latitude != null && 
+      .filter((point: DroneMeasurementType): point is DroneMeasurementType =>
+        point.latitude != null &&
         point.longitude != null
       );
 
@@ -67,9 +67,9 @@ export const loadFlightData = async (
     const markers: L.Marker[] = [];
 
     const routePoints: [number, number][] = validPoints
-      .map((point: DroneMeasurementType) => 
-        point.latitude != null && point.longitude != null 
-          ? [point.latitude, point.longitude] as [number, number] 
+      .map((point: DroneMeasurementType) =>
+        point.latitude != null && point.longitude != null
+          ? [point.latitude, point.longitude] as [number, number]
           : null
       )
       .filter((point: [number, number]): point is [number, number] => point !== null);
@@ -128,7 +128,7 @@ export const loadFlightData = async (
       try {
         const routePolyline = createSplinePath(routePoints);
         routePolyline.addTo(map);
-    
+
         map.on('zoomend', () => {
           updateLineWeight(routePolyline, map);
         });

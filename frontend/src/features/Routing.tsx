@@ -8,6 +8,7 @@ import { SimulationInput } from "./simulation/SimulationInput"
 import { Overview } from "./overview/Overview"
 import { ErrorPage } from "./error/ErrorPage"
 import { SimulationOverview } from "./simulation/SimulationOverview"
+import MapSimulation from "./animation/MapSimulation"
 
 
 const publicRoutes: RouteObject[] = [
@@ -69,8 +70,8 @@ const privateRoutes: RouteObject[] = [
                 element: <Map />
             },
             {
-                path: '/map/run-simulation/:flightId',
-                element: <Map />
+                path: '/map/run-simulation/:simulationId',
+                element: <MapSimulation />
             }
         ]
     },
