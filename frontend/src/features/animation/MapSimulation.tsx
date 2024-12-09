@@ -6,7 +6,7 @@ import { getSimulationById } from "../simulation/api/getSimulationById";
 import { Notification } from "../../components/Notification";
 import { ParameterSelector } from "./ParameterSelector";
 import { Legend } from "./Legend";
-import { visualiseStep } from "./VisualiseStep"
+import { iniciateVisulaization } from "./VisualizationInicializator"
 import { NotificationProps } from "../../types/NotificationPropsType";
 import { EnvironmentType, PollutantDataType, PollutantsType } from "../../types/SimulationResponseType";
 import { MapState, PollutantParameter } from "./MapTypes";
@@ -14,10 +14,13 @@ import { DroneMeasurementType } from "../../types/DroneMeasurementType";
 import { generateTooltipContent, updateRectangleColors } from "./utils";
 import { getDroneFlightById } from "../drone/api/getDroneFlightById";
 import { SimulationAnimation } from "./SimulationAnimation";
+import { getSimulationLightById } from "../simulation/api/getSimulationLightById";
 
 export default function MapSimulation() {
   const { simulationId } = useParams<{ simulationId: string }>();
   const location = useLocation();
+
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const [notification, setNotification] = useState<NotificationProps>({
     message: "",
@@ -29,6 +32,7 @@ export default function MapSimulation() {
     map: null,
     simulationId: null,
     simulationData: null,
+    simulationLightData: null,
     selectedParameter: "",
     availableParameters: [],
     rectangles: [],
@@ -43,6 +47,7 @@ export default function MapSimulation() {
   }, []);
 
   useEffect(() => {
+    
     const mapInstance = L.map("mapSimulation", {
       zoomAnimation: true,
       markerZoomAnimation: true,
@@ -70,7 +75,8 @@ export default function MapSimulation() {
           const decompressed = pako.ungzip(new Uint8Array(simulation.result.data), { to: "string" });
           updateState({
             simulationData: JSON.parse(decompressed),
-            simulationId: Number(simulationId)
+            simulationId: Number(simulationId),
+            simulationLightData: await getSimulationLightById(Number(simulationId))
           });
 
           if (simulation.droneFlightId) {
@@ -108,7 +114,7 @@ export default function MapSimulation() {
 
 
   useEffect(() => {
-    if (state.simulationData) {
+    if (state.simulationData && state.map && state.flightData) {
       const { pollutants, environment } = state.simulationData;
 
       const availableParameters = [
@@ -121,27 +127,16 @@ export default function MapSimulation() {
           .filter(param => param !== 'windSpeed' && param !== 'windDirection')
       ];
 
-      updateState({
+      const initialParameter = availableParameters.length > 0 ? availableParameters[0] : '';
+
+      updateState({ 
         availableParameters,
+        selectedParameter: initialParameter 
       });
-    }
-  }, [state.simulationData, updateState]);
 
-
-  useEffect(() => {
-    if (state.simulationData) {
-      const validParams = Object.keys(state.simulationData.pollutants?.final_step || {})
-        .filter(param =>
-          (state.simulationData?.pollutants?.final_step[param as keyof PollutantDataType]?.length || 0) > 0
-        );
-
-      const initialParameter = validParams.length > 0 ? validParams[0] : '';
-      updateState({ selectedParameter: initialParameter });
-
-      if (initialParameter && state.map && state.flightData) {
+      if (initialParameter) {
         clearPreviousVisualization();
-
-        visualiseStep({
+        iniciateVisulaization({
           environment: state.simulationData.environment,
           grid: state.simulationData.grid,
           step: state.simulationData.pollutants.final_step,
@@ -160,6 +155,9 @@ export default function MapSimulation() {
 
 
   const handleParameterChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+
+    if (isAnimating) return;
+
     const selectedParameter = event.target.value as PollutantParameter;
     updateState({ selectedParameter });
 
@@ -237,21 +235,28 @@ export default function MapSimulation() {
         }
       });
     }
-  }, [state, updateState]);
+  }, [state, updateState, isAnimating]);
+
+  const handleUpdate = useCallback((pollutantValues: number[]) => {
+    if (!state.map || !state.simulationData || !state.selectedParameter || !state.flightData) return;
+
+    updateRectangleColors(pollutantValues, state.selectedParameter, state.rectangles);
+
+    state.rectangles.forEach((rectangle, index) => {
+      const value = pollutantValues[index];
+      const tooltipContent = value !== undefined 
+        ? generateTooltipContent(state.selectedParameter, value)
+        : `No data for ${state.selectedParameter}`;
+      rectangle.getTooltip()?.setContent(tooltipContent);
+    });
+  }, [state]);
 
   const clearPreviousVisualization = () => {
-    state.rectangles.forEach(rectangle => {
-      rectangle.remove();
-    });
-
-    state.windArrows.forEach(arrow => {
-      arrow.remove();
-    });
-
-    state.markers.forEach(marker => {
-      marker.remove();
-    });
+    state.rectangles.forEach(rectangle => rectangle.remove());
+    state.windArrows.forEach(arrow => arrow.remove());
+    state.markers.forEach(marker => marker.remove());
   };
+
 
   const handleCloseNotification = () => {
     setNotification({ message: "", description: "", type: "" });
@@ -273,12 +278,28 @@ export default function MapSimulation() {
 
       {location.pathname === `/map/run-simulation/${simulationId}` && state.selectedParameter && (
         <>
-          <Legend parameter={state.selectedParameter} />
+          <Legend 
+            parameter={state.selectedParameter}
+            className="absolute top-10 right-10"
+          />
           <ParameterSelector
             parameters={state.availableParameters}
             selectedParameter={state.selectedParameter}
             onChange={handleParameterChange}
+            className="absolute bottom-10 right-10"
           />
+        
+          {["CO", "NO2", "O3", "SO2"].includes(state.selectedParameter) && (
+            <SimulationAnimation
+              simulationData={state.simulationData!}
+              simulationLightData={state.simulationLightData!}
+              selectedParameter={state.selectedParameter}
+              handleUpdate={handleUpdate}
+              setNotification={setNotification}
+              setIsAnimating={setIsAnimating}
+              className="absolute bottom-40 right-10"
+            />
+          )}
         </>
       )}
     </>

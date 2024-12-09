@@ -2,13 +2,14 @@ interface ParameterSelectorProps {
     parameters: string[];
     selectedParameter: string;
     onChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
+    className?: string;
 }
   
-export const ParameterSelector: React.FC<ParameterSelectorProps> = ({ parameters, selectedParameter, onChange }) => {
+export const ParameterSelector: React.FC<ParameterSelectorProps> = ({ parameters, selectedParameter, onChange, className }) => {
   if (!parameters || parameters.length === 0) return null;
   
   return (
-    <div className="absolute bottom-10 right-10 bg-white p-4 rounded-lg shadow-md z-20">
+    <div className={`bg-white p-4 rounded-lg shadow-md z-20 ${className}`}>
       <label htmlFor="parameter-select" className="block text-sm font-medium text-gray-700 mb-2">
         Select parameter to display
       </label>

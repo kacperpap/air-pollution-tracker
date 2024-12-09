@@ -92,7 +92,7 @@ const createMapRectangles = (
   });
 };
 
-export const visualiseStep = async ({
+export const iniciateVisulaization = async ({
   environment,
   grid,
   step,

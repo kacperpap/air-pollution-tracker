@@ -4,9 +4,10 @@ import { getColorScale, getUnit } from "./utils";
 
 interface LegendProps {
   parameter: string;
+  className?: string
 }
 
-export const Legend: React.FC<LegendProps> = ({ parameter }) => {
+export const Legend: React.FC<LegendProps> = ({ parameter, className }) => {
   if (!parameter || !POLLUTANT_RANGES[parameter as PollutantParameter]) return null;
 
   const ranges = POLLUTANT_RANGES[parameter as PollutantParameter];
@@ -25,7 +26,7 @@ export const Legend: React.FC<LegendProps> = ({ parameter }) => {
 
 
   return (
-    <div className="absolute top-10 right-10 bg-white p-4 rounded-lg shadow-md z-20">
+    <div className={`bg-white p-4 rounded-lg shadow-md z-20 ${className}`}>
       <h3 className="font-semibold mb-2 text-gray-800">Legend: {parameter} ({getUnit(parameter)})</h3>
       <div className="space-y-2">
         {ranges.map((range: Range, index: number) => (
@@ -37,7 +38,7 @@ export const Legend: React.FC<LegendProps> = ({ parameter }) => {
               }}
             />
             <span className="text-sm">
-              {range.min === -Infinity ? '-∞' : range.min} - {range.max === Infinity ? '∞' : range.max}
+              {range.min === -Infinity ? '0' : range.min} - {range.max === Infinity ? '∞' : range.max}
               <span className="ml-2 text-gray-600">({range.label})</span>
             </span>
           </div>
