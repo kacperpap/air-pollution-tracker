@@ -16,3 +16,4 @@ terraform/*/tfplan
 terraform/*/terraform.tfstate
 terraform/*/terraform.tfstate.*
 charts/*/generated-values.yaml
+.vscode/
