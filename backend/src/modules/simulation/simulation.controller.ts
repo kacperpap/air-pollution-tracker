@@ -51,6 +51,15 @@ export class SimulationController {
       }
 
       @UseGuards(TokenGuard)
+      @Get('light/:simulationId')
+      async getSimulationLightById(
+        @UserID() userId: number,
+        @Param('simulationId') simulationId: number
+      ): Promise<SimulationLight> {
+        return this.simulationService.getSimulationLightVersionById(simulationId);
+      }
+
+      @UseGuards(TokenGuard)
       @Get()
       async getSimulationsForUser(@UserID() userId: number): Promise<Simulation[]> {
         return this.simulationService.getSimulationsForUser(userId);

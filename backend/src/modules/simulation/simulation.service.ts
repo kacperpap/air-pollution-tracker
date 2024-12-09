@@ -201,7 +201,22 @@ export class SimulationService {
               updatedAt: true,
           },
       });
-  }
+    }
+
+    async getSimulationLightVersionById(simulationId: number): Promise<SimulationLight> {
+      return this.prisma.simulation.findUnique({
+          where: { id: simulationId },
+          select: {
+              id: true,
+              userId: true,
+              droneFlightId: true,
+              status: true,
+              parameters: true,
+              createdAt: true,
+              updatedAt: true,
+          },
+      });
+    }
   
 
     async deleteSimulationById(simulationId: number): Promise<void> {
