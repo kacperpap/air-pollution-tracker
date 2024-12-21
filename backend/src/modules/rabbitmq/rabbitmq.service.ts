@@ -2,9 +2,8 @@ import { Injectable, OnModuleInit, OnModuleDestroy, HttpStatus, HttpException, I
 import { ConfigService } from '@nestjs/config';
 import * as amqp from 'amqplib';
 import { SimulationService } from '../simulation/simulation.service';
-import { SimulationResponseType } from '../simulation/dto/simulation-response-data';
 import { logWithTime } from '../utils';
-import { log } from 'console';
+import { v4 as uuidv4 } from 'uuid'
 
 @Injectable()
 export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
@@ -67,7 +66,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       await this.connectToRabbitMQ();
     }
 
-    const correlationId = Math.random().toString();
+    const correlationId = uuidv4();
     const serializedMessage = Buffer.from(JSON.stringify(message));
 
     /**
@@ -142,7 +141,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
         await this.connectToRabbitMQ();
       }
 
-      const correlationId = Math.random().toString();
+      const correlationId = uuidv4();
 
       const { queue: replyTo } = await this.channel.assertQueue('', { exclusive: true });
 
