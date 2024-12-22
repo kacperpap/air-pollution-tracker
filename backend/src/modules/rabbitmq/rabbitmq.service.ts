@@ -88,7 +88,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       }, timeoutMs);
 
       this.channel.sendToQueue(this.requestQueue, serializedMessage, {
-        persistent: true,
+        persistent: false,
         correlationId: correlationId,
         replyTo: replyTo,
       });
@@ -155,7 +155,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       this.consumeResults(replyTo, correlationId, simulationId);
 
       this.channel.sendToQueue(queue, serializedMessage, { 
-        persistent: true,
+        persistent: false,
         correlationId: correlationId,
         replyTo: replyTo,
       });
