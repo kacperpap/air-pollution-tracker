@@ -497,7 +497,13 @@ export function SimulationOverview() {
                                                         <button
                                                             type="button"
                                                             onClick={() => handleDeleteSimulation(simulation.id)}
-                                                            className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto"
+                                                            disabled={simulation.status === 'pending'}
+                                                            title={simulation.status === 'pending' ? "Cannot delete while status is pending" : ""}
+                                                            className={`inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm sm:ml-3 sm:w-auto ${
+                                                                simulation.status === 'pending' 
+                                                                ? 'bg-gray-400 cursor-not-allowed' 
+                                                                : 'bg-red-600 hover:bg-red-500'
+                                                            }`}
                                                         >
                                                             Delete
                                                         </button>
