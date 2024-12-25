@@ -21,10 +21,17 @@ def create_uniform_boxes(data, pollutants, grid_density=None, urbanized=False, m
         u=V⋅sin(θ)
         v=V⋅cos(θ)
     """
-    wind_directions_rad = np.deg2rad(wind_directions)  # Konwersja stopni na radiany
+    # Zamiana kierunku wiatru z azymutalnych na matematyczne (składowe u, v)
+    # Konwersja stopni na radiany
+    wind_directions_rad = np.deg2rad((-wind_directions + 90) % 360)  
+
     u_values = wind_speeds * np.sin(wind_directions_rad)  # Składowa w kierunku x
     v_values = wind_speeds * np.cos(wind_directions_rad)  # Składowa w kierunku y
-    
+
+    u_values = np.where(np.abs(u_values) < 1e-10, 0, u_values)
+    v_values = np.where(np.abs(v_values) < 1e-10, 0, v_values)
+
+
 
     lat_min, lat_max = np.min(latitudes), np.max(latitudes)
     lon_min, lon_max = np.min(longitudes), np.max(longitudes)
@@ -90,6 +97,11 @@ def create_uniform_boxes(data, pollutants, grid_density=None, urbanized=False, m
                 pressure_values[lat_idx, lon_idx] = (pressure_values[lat_idx, lon_idx] + press) / 2
                 u_grid[lat_idx, lon_idx] = (u_grid[lat_idx, lon_idx] + u) / 2
                 v_grid[lat_idx, lon_idx] = (v_grid[lat_idx, lon_idx] + v) / 2
+
+                u_grid[lat_idx, lon_idx] = 0 if np.abs(u_grid[lat_idx, lon_idx]) < 1e-10 else u_grid[lat_idx, lon_idx]
+                v_grid[lat_idx, lon_idx] = 0 if np.abs(v_grid[lat_idx, lon_idx]) < 1e-10 else v_grid[lat_idx, lon_idx]
+
+
                 
                 for pollutant, concentration in zip(pollutant_values.keys(), pollutant_concentrations):
                     if pollutant_values[pollutant][lat_idx, lon_idx] is None:

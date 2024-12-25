@@ -77,8 +77,8 @@ def simulate(data, debug=False):
             debug_dir=debug_dir,
             snap_interval=snap_interval
         )
-        
-        
+               
+                
         end_time = time.time()
         elapsed_time = end_time - start_time
 

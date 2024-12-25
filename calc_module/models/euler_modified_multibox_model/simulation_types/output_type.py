@@ -58,10 +58,11 @@ def convert_to_output_type(
         speed = (u**2 + v**2)**0.5
         
         # direction need to be parsed back as azymuth
+        math_angle = np.degrees(np.arctan2(u, v))
+        azimuth = (90 - math_angle) % 360
         
-        direction = (np.degrees(np.arctan2(u, v)) + 360) % 360
         wind_speed.append(speed)
-        wind_direction.append(direction)
+        wind_direction.append(azimuth)
 
     output_data: OutputType = {
         "grid": {
