@@ -141,25 +141,38 @@ def molecular_diffusion_coefficients_grid(pollutant, temperatures, pressures):
 
 def turbulent_diffusion_coefficients_grid(u_wind, v_wind, z_levels=10, alpha=0.4, surface_roughness=0.1):
     """
-    Calculate turbulent diffusion coefficients using the log-law wind profile.
-
+    Calculate turbulent diffusion coefficients using Monin-Obukhov similarity theory.
+    
     Parameters:
-        u_wind (2D array): Horizontal wind component (u).
-        v_wind (2D array): Horizontal wind component (v).
-        z_levels (float): Reference height in meters.
-        alpha (float): Proportionality constant (von Kármán constant, default 0.4).
-        surface_roughness (float): Surface roughness length in meters.
-
+        u_wind (2D array): Horizontal wind component (u)
+        v_wind (2D array): Horizontal wind component (v)
+        z_levels (float): Reference height in meters (typically measurement height)
+        alpha (float): von Kármán constant (default 0.4)
+        surface_roughness (float): Surface roughness length in meters (z0)
+                                 Typical values:
+                                 - 0.0002 (sea)
+                                 - 0.03 (grass)
+                                 - 0.1 (low crops)
+                                 - 0.25 (high crops)
+                                 - 1-2 (urban)
+    
     Returns:
-        2D array: Turbulent diffusion coefficients grid.
+        2D array: Turbulent diffusion coefficients grid (m²/s)
     """
+    
     u_wind = np.array(u_wind, dtype=np.float64)
     v_wind = np.array(v_wind, dtype=np.float64)
 
-    wind_speed = np.sqrt(u_wind**2 + v_wind**2)  # Calculate wind speed
-    z = z_levels
-    u_star = (alpha * wind_speed) / (np.log(z / surface_roughness) + 1e-10)  # Friction velocity
-    K_grid = alpha * u_star * z  # Diffusion coefficient
+    wind_speed = np.sqrt(u_wind**2 + v_wind**2)
+    
+    # Calculate friction velocity (u*)
+    # Using log law relationship
+    u_star = (alpha * wind_speed) / (np.log(z_levels / surface_roughness) + 1e-10)
+    
+    # Calculate eddy diffusivity
+    # K = k * u* * z * phi(z/L)
+    # For neutral conditions, phi(z/L) = 1
+    K_grid = alpha * u_star * z_levels
 
     return K_grid
 

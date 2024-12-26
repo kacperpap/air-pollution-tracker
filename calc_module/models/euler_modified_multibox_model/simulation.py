@@ -116,7 +116,7 @@ def simulate_pollution_spread(data, num_steps, pollutants, grid_density="medium"
           method="turbulent") # "molecular" | "turbulent"
 
       K_y = K_x
-             
+                
       u = np.array(u_values).reshape((nx, ny))  
       v = np.array(v_values).reshape((nx, ny)) 
                          
