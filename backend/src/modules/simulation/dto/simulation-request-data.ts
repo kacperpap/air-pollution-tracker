@@ -31,6 +31,9 @@ export class SimulationRequestType {
   decayRate: number
 
   @IsNumber()
+  emissionRate: number
+
+  @IsNumber()
   snapInterval: number
 
   @IsOptional()

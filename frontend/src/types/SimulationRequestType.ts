@@ -10,5 +10,6 @@ import { DroneFlightType } from "./DroneFlightType";
     marginBoxes: number;
     initialDistance: number;
     decayRate: number;
+    emissionRate: number;
     snapInterval: number;
   };

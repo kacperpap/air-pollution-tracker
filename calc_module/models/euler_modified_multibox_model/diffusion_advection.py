@@ -1,5 +1,7 @@
 import numpy as np
 
+from utils import log_with_time
+
 def extend_grid_with_buffer(C, S_c, K_x, K_y, u, v, nx, ny):
     C_extended = np.pad(C, pad_width=1, mode='constant', constant_values=0)
     S_c_extended = np.pad(S_c, pad_width=1, mode='constant', constant_values=0)
@@ -19,8 +21,7 @@ def update_concentration_crank_nicolson(C, u, v, K_x, K_y, dx, dy, dt, S_c, nx, 
 
     C_new = C.copy()
     decay_factor = np.exp(-decay_rate * dt / 3600)
-
-    
+        
     for it in range(max_iter):
         
         C_prev = C_new.copy()  
@@ -67,11 +68,11 @@ def update_concentration_crank_nicolson(C, u, v, K_x, K_y, dx, dy, dt, S_c, nx, 
                 # Źródło emisji pozostaje bez zmian
                 source = S_c[i, j]
 
-                # Zaktualizowane stężenie (iteracyjne rozwiązanie)
-                C_new[i, j] = C[i, j] + dt * (conv_x + conv_y + diff_x + diff_y + source)
+                # Aktualizacja wszystkich stężeń
+                C_new[i, j] = C[i, j] + dt * (conv_x + conv_y + diff_x + diff_y)
                 
-                 # Eksponencjalny mechanizm zanikania
-                C_new *= decay_factor
+                # Uwzględnienie mechanizmu rozpadu i emisji
+                C_new[i, j] = C_new[i, j] * decay_factor + source * dt
 
         
         # Sprawdzenie konwergencji
@@ -100,7 +101,7 @@ def calculate_stable_dt(u, v, K_x, K_y, dx, dy):
     return dt_stable
 
 
-def calculate_diffusion_coefficients(pollutant, temperatures, pressures, u_wind, z_levels=None, 
+def calculate_diffusion_coefficients(pollutant, temperatures, pressures, u_wind, v_wind, z_levels=None, 
                                      box_size=1.0, method="turbulent"):
     
     if method == "molecular":
@@ -108,7 +109,7 @@ def calculate_diffusion_coefficients(pollutant, temperatures, pressures, u_wind,
     elif method == "turbulent":
         if z_levels is None:
             raise ValueError("z_levels must be provided for turbulent diffusion.")
-        K = turbulent_diffusion_coefficients_grid(u_wind, z_levels)
+        K = turbulent_diffusion_coefficients_grid(u_wind, v_wind, z_levels)
     else:
         raise ValueError(f"Unsupported diffusion method: {method}")
 
@@ -138,13 +139,31 @@ def molecular_diffusion_coefficients_grid(pollutant, temperatures, pressures):
     return K_grid
 
 
-def turbulent_diffusion_coefficients_grid(u_wind, z_levels, alpha=0.4):
-    if np.isscalar(z_levels):
-        z_levels = np.full_like(u_wind, z_levels)
+def turbulent_diffusion_coefficients_grid(u_wind, v_wind, z_levels=10, alpha=0.4, surface_roughness=0.1):
+    """
+    Calculate turbulent diffusion coefficients using the log-law wind profile.
 
-    K_grid = alpha * np.abs(u_wind) * z_levels
+    Parameters:
+        u_wind (2D array): Horizontal wind component (u).
+        v_wind (2D array): Horizontal wind component (v).
+        z_levels (float): Reference height in meters.
+        alpha (float): Proportionality constant (von Kármán constant, default 0.4).
+        surface_roughness (float): Surface roughness length in meters.
+
+    Returns:
+        2D array: Turbulent diffusion coefficients grid.
+    """
+    u_wind = np.array(u_wind, dtype=np.float64)
+    v_wind = np.array(v_wind, dtype=np.float64)
+
+    wind_speed = np.sqrt(u_wind**2 + v_wind**2)  # Calculate wind speed
+    z = z_levels
+    u_star = (alpha * wind_speed) / (np.log(z / surface_roughness) + 1e-10)  # Friction velocity
+    K_grid = alpha * u_star * z  # Diffusion coefficient
 
     return K_grid
+
+
 
 
 

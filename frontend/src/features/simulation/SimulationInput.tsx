@@ -39,6 +39,7 @@ export function SimulationInput() {
         marginBoxes: 1,
         initialDistance: 1,
         decayRate: 0.01,
+        emissionRate: 0.01,
         snapInterval: 10
     });
 
@@ -172,6 +173,7 @@ export function SimulationInput() {
                 marginBoxes: 1,
                 initialDistance: 1,
                 decayRate: 0.01,
+                emissionRate: 0.01,
                 snapInterval: 10
             });
 
@@ -335,6 +337,22 @@ export function SimulationInput() {
                 className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
               />
               <p className="text-sm text-gray-600 mt-1">Set the exponenital decay rate for decay mechanism in simulation</p>
+            </div>
+
+            {/* Emission rate (1/h) */}
+            <div className="sm:col-span-4">
+              <label className="block text-sm font-medium leading-6 text-gray-900">Emission rate (1/h)</label>
+              <input
+                type="number"
+                name="emissionRate"
+                value={formData.emissionRate = Number(formData.emissionRate)}
+                onChange={handleFormChange}
+                min="0.00"
+                step="0.01"
+                max="0.99"
+                className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+              />
+              <p className="text-sm text-gray-600 mt-1">Set the exponenital emission rate for emission mechanism in simulation</p>
             </div>
 
     

@@ -35,6 +35,7 @@ export class SimulationService {
                   initialDistance: simulationData.initialDistance,
                   snapInterval: simulationData.snapInterval,
                   decayRate: simulationData.decayRate,
+                  emissionRate: simulationData.emissionRate,
                   simulationId: simulationId
                 });
 

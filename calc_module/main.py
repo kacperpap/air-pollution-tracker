@@ -54,13 +54,14 @@ def simulate(data, debug=False):
         margin_boxes = data['marginBoxes']
         initial_distance = data['initialDistance']
         decay_rate = data['decayRate']
+        emission_rate = data['emissionRate']
         snap_interval = data['snapInterval']
                     
         log_with_time(f"simulate -> starting function simulate_pollution_spread with parameters: "
                       f"num_steps={num_steps}, pollutants={pollutants}, "
                       f"grid_density={grid_density}, "
                       f"urbanized={urbanized}, margin_boxes={margin_boxes}, initial_distance={initial_distance}, "
-                      f"decay_rate={decay_rate}, snap_interval={snap_interval}")
+                      f"decay_rate={decay_rate}, emission_rate={emission_rate}, snap_interval={snap_interval}")
         
         start_time = time.time()
 
@@ -73,6 +74,7 @@ def simulate(data, debug=False):
             margin_boxes=margin_boxes, 
             initial_distance=initial_distance, 
             decay_rate=decay_rate,
+            emission_rate=emission_rate,
             debug=False,
             debug_dir=debug_dir,
             snap_interval=snap_interval
