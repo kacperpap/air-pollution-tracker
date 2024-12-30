@@ -100,6 +100,7 @@ def simulate_pollution_spread(data, num_steps, pollutants, grid_density="medium"
     
     final_concentration = {}
     snap_concentrations = {pollutant: [] for pollutant in pollutants}
+    surface_roughness = 1.0 if urbanized else 0.1
 
     for pollutant in pollutants:
       
@@ -113,6 +114,7 @@ def simulate_pollution_spread(data, num_steps, pollutants, grid_density="medium"
           v_wind=np.array(v_values).reshape((nx,ny)),
           z_levels=10,  # Stała wysokość referencyjna dla turbulentnej dyfuzji
           box_size=dx,
+          surface_roughness=surface_roughness,
           method="turbulent") # "molecular" | "turbulent"
 
       K_y = K_x

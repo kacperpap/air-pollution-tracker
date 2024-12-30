@@ -102,14 +102,14 @@ def calculate_stable_dt(u, v, K_x, K_y, dx, dy):
 
 
 def calculate_diffusion_coefficients(pollutant, temperatures, pressures, u_wind, v_wind, z_levels=None, 
-                                     box_size=1.0, method="turbulent"):
+                                     box_size=1.0, surface_roughness=0.1, method="turbulent"):
     
     if method == "molecular":
         K = molecular_diffusion_coefficients_grid(pollutant, temperatures, pressures)
     elif method == "turbulent":
         if z_levels is None:
             raise ValueError("z_levels must be provided for turbulent diffusion.")
-        K = turbulent_diffusion_coefficients_grid(u_wind, v_wind, z_levels)
+        K = turbulent_diffusion_coefficients_grid(u_wind, v_wind, z_levels, surface_roughness=surface_roughness)
     else:
         raise ValueError(f"Unsupported diffusion method: {method}")
 

@@ -6,3 +6,6 @@ fastapi
 aio_pika
 python-dotenv
 aiormq
+multiprocessing
+concurrent.futures
+functools

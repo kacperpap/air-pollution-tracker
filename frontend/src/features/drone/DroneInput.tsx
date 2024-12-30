@@ -146,15 +146,6 @@ export function DroneInput() {
             return;
         }
 
-        if (temperature < 0) {
-            setNotification({
-                message: 'Invalid Temperature',
-                description: 'Temperature must be non-negative value.',
-                type: 'error',
-            });
-            return;
-        }
-
         if (pressure < 0) {
             setNotification({
                 message: 'Invalid Pressure',
