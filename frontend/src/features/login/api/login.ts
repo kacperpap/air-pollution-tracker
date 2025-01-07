@@ -7,7 +7,8 @@ export const login = async (username: string, password: string) => {
             'Content-Type': 'application/json',
             'Authorization': 'Basic ' + window.btoa(username + ":" + password),
         },
-        credentials: "include"
+        credentials: "include",
+        mode: "cors"
     })
 
     if(response.status !== 200) throw new Error('Login failed');
