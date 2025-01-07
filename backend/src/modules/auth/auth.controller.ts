@@ -16,9 +16,11 @@ export class AuthController {
     const token = this.tokenService.createToken(userId);
     res.cookie('access-token', token, {
       httpOnly: true,
+      sameSite: 'lax',
       expires: new Date(Date.now() + 60 * 60 * 1000),
     });
     res.cookie('is-logged', true, {
+      sameSite: 'lax',
       expires: new Date(Date.now() + 60 * 60 * 1000),
     });
   }
