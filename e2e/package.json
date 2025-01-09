@@ -1,0 +1,16 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "main": "cypress.config.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "uuid": "^11.0.3"
+  },
+  "devDependencies": {
+    "cypress-terminal-report": "^7.1.0"
+  }
+}
