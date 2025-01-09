@@ -53,8 +53,6 @@ export default function Header() {
     try {
       await logout()
       navigate('/')
-      setNotification({ message: 'Logout successfull', description: "You have successfully loged out from your account", type: 'success' })
-      navigate('/')
     } catch (error) {
       setNotification({ message: 'Logout Failed', description: "" + error, type: 'error' })
     }
