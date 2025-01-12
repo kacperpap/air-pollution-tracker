@@ -9,6 +9,7 @@ module.exports = defineConfig({
   e2e: {
     baseUrl: process.env.CYPRESS_FRONTEND_URL,
     chromeWebSecurity: false,
+    experimentalModifyObstructiveThirdPartyCode: true,
     watchForFileChanges: false,
     supportFile: 'cypress/support/e2e.js',
     video: false,
@@ -18,15 +19,6 @@ module.exports = defineConfig({
     viewportHeight: 1080,
     setupNodeEvents(on, config) {
       config.env.API_BASE_URL = process.env.API_BASE_URL;
-      installLogsPrinter(on, {
-        printLogsToConsole: 'always',
-        // --Nie działajacy zpais do pliku--
-        // printLogsToFile: 'always',
-        // outputRoot: './cypress/logs',
-        // outputTarget: {
-        //   'run.log': 'txt',
-        // },
-      });
       return config;
     }
   },

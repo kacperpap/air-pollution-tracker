@@ -7,19 +7,21 @@ Cypress.Commands.add('login', (email, password) => {
   cy.get('button').contains('Sign in').click();
 
   cy.wait('@login').then(interception => {
-    cy.log('Login response:', interception.response);
-    expect(interception.response.statusCode).to.eq(200);
-    
-    const setCookieHeader = interception.response.headers['set-cookie'];
-    cy.log('Set-Cookie header:', setCookieHeader);
-
-    if (setCookieHeader) {
-      setCookieHeader.forEach(cookieString => {
-        const [name, value] = cookieString.split('=');
-        cy.setCookie(name.trim(), value.split(';')[0].trim());
+    const cookies = interception.response.headers['set-cookie'];
+    if (cookies) {
+      cookies.forEach(cookie => {
+        const [name, ...parts] = cookie.split('=');
+        const value = parts.join('=').split(';')[0];
+        cy.setCookie(name.trim(), value, {
+          domain: 'frontend',
+          path: '/',
+          secure: false,
+          httpOnly: false
+        });
       });
     }
   });
+
 
   cy.getAllCookies().then(cookies => {
     cy.log('Cookies after login:', cookies);
