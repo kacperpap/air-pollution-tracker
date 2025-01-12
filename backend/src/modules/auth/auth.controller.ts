@@ -15,24 +15,20 @@ export class AuthController {
   login(
     @UserID() userId: number,
     @Res({ passthrough: true }) res: Response,
-    @Body() body: { timezone: string, timezoneOffset: number }
   ) {
 
-    const { timezone, timezoneOffset } = body;
-
-    const token = this.tokenService.createToken(userId, timezone, timezoneOffset);
-
-    const expiresIn = 60 * 60 * 1000;
-    const expirationDate = new Date(Date.now() + expiresIn);
+    const token = this.tokenService.createToken(userId);
 
     res.cookie('access-token', token, {
       httpOnly: true,
-      sameSite: 'lax',
-      expires: expirationDate,
+      domain: undefined,
+      sameSite: 'none',
+      expires: new Date(Date.now() + 90 * 60 * 1000),
     });
     res.cookie('is-logged', true, {
-      sameSite: 'lax',
-      expires: expirationDate,
+      domain: undefined,
+      sameSite: 'none',
+      expires: new Date(Date.now() + 90 * 60 * 1000),
     });
   }
 
