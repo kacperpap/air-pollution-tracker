@@ -26,7 +26,7 @@ export function DroneInput() {
     const [formData, setFormData] = useState<DroneFlightFormType>({
         title: '',
         description: '',
-        date: undefined,
+        date: new Date(),
         measurements: []
     })
 
@@ -94,9 +94,16 @@ export function DroneInput() {
         const { name, value } = event.target
         setFormData((prevForm) => ({
             ...prevForm,
-            [name]: name === 'date' ? new Date(value) : value
+            [name]: name === 'date' ? new Date(value + 'T00:00:00') : value
         }))
     }
+
+    const formatDateForInput = (date: Date | undefined): string => {
+        if (!date) return '';
+        return date instanceof Date && !isNaN(date.getTime()) 
+            ? date.toISOString().split('T')[0]
+            : '';
+    };
 
     const addMeasurement = () => {
 
@@ -354,7 +361,7 @@ export function DroneInput() {
                     <input 
                         type="date" 
                         name="date"
-                        value={formData.date instanceof Date && !isNaN(formData.date.getTime()) ? formData.date.toISOString().substring(0,10) : ''}
+                        value={formatDateForInput(formData.date)}
                         onChange={handleFormChange}
                         className="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:date-gray-400 focus:ring-0 sm:text-sm sm:leading-6" 
                     />

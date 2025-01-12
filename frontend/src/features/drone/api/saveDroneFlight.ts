@@ -11,6 +11,19 @@ export const saveDroneFlight = async (dataInput: DroneFlightFormType) => {
         body: JSON.stringify(dataInput)
     })
 
-    if(response.status !== 201) throw new Error('Save failed');
+    if(response.status !== 201) {
+        let errorMessage = 'Save failed';
+        
+        try {
+            const errorData = await response.json();
+            if (errorData && errorData.message) {
+                errorMessage = `Save failed: ${errorData.message}`;
+            }
+        } catch (err) {
+            errorMessage = `Save failed with status ${response.status}`;
+        }
+
+        throw new Error(errorMessage);
+    }
     return await response.text();
 }
