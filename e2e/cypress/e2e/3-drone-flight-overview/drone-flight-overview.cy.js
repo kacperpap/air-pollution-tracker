@@ -31,9 +31,6 @@ describe('Drone Flight Overview', () => {
 
     cy.visit('/data-overview');
 
-    cy.contains('Features').click();
-    cy.contains('Data overview').click();
-
     cy.wait('@drone-overview', { timeout: 30000 })
       .its('response.statusCode')
       .should('eq',200);

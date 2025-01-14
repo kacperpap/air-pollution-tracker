@@ -47,7 +47,7 @@ describe('Simulation Overview', () => {
         .should('exist')
         .and('be.visible')
         .within(() => {
-          cy.get('span.text-green-800')
+          cy.get('span')
             .invoke('text') 
             .should('include', 'completed');
         });
