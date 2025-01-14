@@ -34,6 +34,10 @@ function Check-Prerequisites {
         Error "Git nie jest zainstalowany. Zainstaluj git przed kontynuowaniem."
     }
 
+    if (-not (Get-Command mkcert -ErrorAction SilentlyContinue)) {
+        Error "mkcert nie jest zainstalowany. Zainstaluj mkcert przed kontynuowaniem."
+    }
+
     Log "✅ Wszystkie wymagane narzędzia są zainstalowane"
 }
 
@@ -100,9 +104,9 @@ function Get-EnvVariables {
     
     $envContent = Get-Content $envPath
     $variables = @{
-        $JWT_KEY = ($envContent | Where-Object { $_ -match "^JWT_KEY=" -and $_ -notmatch "^#" }) -replace "JWT_KEY=", ""
-        $DATABASE_URL = ($envContent | Where-Object { $_ -match "^DATABASE_URL=" -and $_ -notmatch "^#" }) -replace "DATABASE_URL=", ""
-        $ENVIRONMENT = ($envContent | Where-Object { $_ -match "^ENVIRONMENT=" -and $_ -notmatch "^#" }) -replace "ENVIRONMENT=", ""
+        JWT_KEY = (($envContent | Where-Object { $_ -match "^JWT_KEY=" -and $_ -notmatch "^#" }) -replace "JWT_KEY=", "").Trim()
+        DATABASE_URL = (($envContent | Where-Object { $_ -match "^DATABASE_URL=" -and $_ -notmatch "^#" }) -replace "DATABASE_URL=", "").Trim()
+        ENVIRONMENT = (($envContent | Where-Object { $_ -match "^ENVIRONMENT=" -and $_ -notmatch "^#" }) -replace "ENVIRONMENT=", "").Trim()
     }
     
     if (-not $variables.JWT_KEY -or -not $variables.DATABASE_URL -or -not $variables.ENVIRONMENT) {
@@ -110,6 +114,51 @@ function Get-EnvVariables {
     }
     
     return $variables
+}
+
+function Install-Certificate {
+  Log "Generowanie lokalnego certyfikatu SSL..."
+  
+  $PROJECT_ROOT = (git rev-parse --show-toplevel)
+  $certsPath = Join-Path $PROJECT_ROOT "certs"
+  
+  if (-not (Test-Path $certsPath)) {
+      New-Item -ItemType Directory -Path $certsPath
+  }
+
+  Set-Location $certsPath
+  
+  if (-not (Test-Path "apt.local-key.pem") -or -not (Test-Path "apt.local.pem")) {
+    mkcert "apt.local"
+    if ($LASTEXITCODE -ne 0) {
+      throw "Błąd podczas generowania certyfikatu."
+    }
+  } else {
+    Log "Certyfikaty już istnieją, pomijam generowanie."
+  }
+
+  Log "Sprawdzanie, czy sekret TLS już istnieje..."
+  $secretExists = kubectl get secret apt-tls-secret --namespace default 2>$null
+  if ($?) {
+      Warn "Sekret TLS 'apt-tls-secret' już istnieje. Usuwanie starego sekretu..."
+      kubectl delete secret apt-tls-secret --namespace default
+      if ($LASTEXITCODE -ne 0) {
+        Error "Nie udało się usunąć istniejącego sekretu TLS 'apt-tls-secret'."
+      }
+  }
+
+  Log "Tworzenie nowego sekretu TLS..."
+  kubectl create secret tls apt-tls-secret `
+      --key apt.local-key.pem `
+      --cert apt.local.pem `
+      --namespace default
+
+  if ($LASTEXITCODE -ne 0) {
+    Error "Nie udało się utworzyć nowego sekretu TLS 'apt-tls-secret'."
+  }
+
+  Warn "Aby wygenerowany certyfikat był automatycznie zaufany przez system operacyjny i/lub przeglądarki wykonaj polecenie mkcert -install w terminalu z uprawnieniami administratora. Zainstaluje ono lokalny Certificate Authority (CA) w systemowym magazynie certyfikatów zaufania (brak tego kroku może powodować błędy zaufania certyfikatu)"
+  Log "Certyfikat i sekret TLS zostały pomyślnie utworzone."
 }
 
 function Generate-ValuesFile {
@@ -273,6 +322,8 @@ try {
         Warn "nginx-ingress nie jest zainstalowany. Rozpoczynam instalację..."
         Install-NginxIngress
     }
+
+    Install-Certificate
     
     $variables = Get-EnvVariables
     $chartsPath = Generate-ValuesFile $variables
@@ -282,7 +333,7 @@ try {
     Log "Aby sprawdzić status aplikacji, użyj:"
     Write-Host "  kubectl get pods"
     Write-Host "  kubectl get ingress"
-    Log "Możesz teraz wejść na http://apt.local aby sprawdzić działanie aplikacji"
+    Log "Możesz teraz wejść na https://apt.local aby sprawdzić działanie aplikacji"
     Log "WAŻNE: Upewnij się, że dodałeś wpis do pliku hosts:"
     Log "Ścieżka pliku hosts na Windows: C:\Windows\System32\drivers\etc\hosts"
     Log "Dodaj linię: 127.0.0.1 apt.local"

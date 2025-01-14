@@ -22,12 +22,14 @@ export class AuthController {
     res.cookie('access-token', token, {
       httpOnly: true,
       domain: undefined,
-      sameSite: 'none',
+      sameSite: process.env.SECURE === 'true' ? 'none' : 'lax',
+      secure: process.env.SECURE === 'true' ? true : false,
       expires: new Date(Date.now() + 90 * 60 * 1000),
     });
     res.cookie('is-logged', true, {
       domain: undefined,
-      sameSite: 'none',
+      sameSite: process.env.SECURE === 'true' ? 'none' : 'lax',
+      secure: process.env.SECURE === 'true' ? true : false,
       expires: new Date(Date.now() + 90 * 60 * 1000),
     });
   }

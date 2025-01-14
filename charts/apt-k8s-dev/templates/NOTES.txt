@@ -1,6 +1,6 @@
 {{ .Chart.Name }}
 
-To deploy or update this Helm Chart with the appropriate variables make sure you have corretly installed nginx-ingress and use one of the following commands (or run bash script innit.sh to install all step by step):
+To deploy or update this Helm Chart with the appropriate variables make sure you have corretly installed nginx-ingress, generated your local certificate for apt.local domain and use one of the following commands (or run bash script innit.sh to install all step by step):
 
 For a fresh installation  (specify correctly location of chart):
 
@@ -94,9 +94,9 @@ USEFUL COMMANDS
   
 And go to adress:
 
-    http://localhost or http://localhost:80
+    https://apt.local
 
-(or if you defined another host name, due to its local deployment, there is need to instruate DNS to resolve 127.0.0.1 also as your host name)
+(do not forget to define host name, due to its local deployment, there is need to instruate DNS to resolve 127.0.0.1 also as your host name, this is needed to provide certification for apt.local domain which is set in deploy script)
   
 
 
