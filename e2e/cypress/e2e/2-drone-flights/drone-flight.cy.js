@@ -31,7 +31,6 @@ describe('Drone Flight Management', () => {
     cy.intercept('POST', `${Cypress.env('API_BASE_URL')}/api/drone`, (req) => {
       req.headers['Cookie'] = cookieString;
       req.headers['Content-Type'] = 'application/json';
-      // req.headers['Origin'] = 'http://frontend:3000';
       return req;
     }).as('drone-flight');
 
@@ -62,11 +61,5 @@ describe('Drone Flight Management', () => {
       .should('eq', 201);
 
       cy.contains('Data saved successfully!', { timeout: 10000 }).should('be.visible');
-    });
-  
-    afterEach(() => {
-      cy.getAllCookies().then(cookies => {
-        cy.log('Cookies after test:', cookies);
-      });
     });
   });

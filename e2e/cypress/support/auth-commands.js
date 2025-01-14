@@ -12,16 +12,10 @@ Cypress.Commands.add('login', (email, password) => {
       cookies.forEach(cookie => {
         const [name, ...parts] = cookie.split('=');
         const value = parts.join('=').split(';')[0];
-        cy.setCookie(name.trim(), value, {
-          domain: 'frontend',
-          path: '/',
-          secure: false,
-          httpOnly: false
-        });
+        cy.setCookie(name.trim(), value);
       });
     }
   });
-
 
   cy.getAllCookies().then(cookies => {
     cy.log('Cookies after login:', cookies);
