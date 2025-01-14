@@ -53,6 +53,7 @@ export default function Header() {
     try {
       await logout()
       navigate('/')
+      window.location.reload();
     } catch (error) {
       setNotification({ message: 'Logout Failed', description: "" + error, type: 'error' })
     }

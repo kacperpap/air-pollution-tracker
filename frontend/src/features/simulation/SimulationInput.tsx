@@ -6,7 +6,6 @@ import { Notification } from "../../components/Notification";
 import { NotificationProps } from '../../types/NotificationPropsType';
 import { simulatePollutionSpread } from './api/simulate';
 import { useNavigate } from 'react-router-dom';
-import { SimulationResponseType } from '../../types/SimulationResponseType';
 
 
 export function SimulationInput() {

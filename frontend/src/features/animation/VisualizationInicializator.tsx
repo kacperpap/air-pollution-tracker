@@ -3,7 +3,7 @@ import { Box, PollutantParameter } from './MapTypes';
 import { generateTooltipContent, getColorForValue, updateRectangleColors } from './utils';
 import { NotificationProps } from '../../types/NotificationPropsType';
 import { DroneMeasurementType } from '../../types/DroneMeasurementType';
-import { EnvironmentType, GridType, PollutantDataType, SimulationResponseType } from '../../types/SimulationResponseType';
+import { EnvironmentType, GridType, PollutantDataType } from '../../types/SimulationResponseType';
 import { DroneFlightType } from '../../types/DroneFlightType';
 
 interface WindData {

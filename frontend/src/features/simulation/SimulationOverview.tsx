@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import pako from 'pako';
 import {
     DocumentIcon,
@@ -14,10 +14,8 @@ import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/re
 import { Notification } from "../../components/Notification";
 import { NotificationProps } from '../../types/NotificationPropsType';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { getAllSimulations } from './api/getAllSimulations';
 import { deleteSimulation } from './api/deleteSimulation';
 import { getAllDroneFlights } from '../overview/api/getAllDroneFlights';
-import { SimulationType } from '../../types/SimulationType';
 import { SimulationStatus } from '../../types/SimulationStatusType';
 import { DroneFlightType } from '../../types/DroneFlightType';
 import { SimulationLightType } from '../../types/SimulationLightType';

@@ -1,5 +1,4 @@
 import { DroneFlightType } from "../../types/DroneFlightType";
-import { DroneMeasurementType } from "../../types/DroneMeasurementType";
 import { SimulationLightType } from "../../types/SimulationLightType";
 import { SimulationResponseType } from "../../types/SimulationResponseType";
 import { POLLUTANT_RANGES } from "./POLLUTANT_RANGES";
