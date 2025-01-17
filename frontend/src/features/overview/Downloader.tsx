@@ -10,9 +10,9 @@ interface DownloadFlightDataProps {
 
 const generateTXTContent = (droneFlight: DroneFlightType): string => {
   let content = 'metadata;\n';
-  const metadataHeaders = ['id', 'title', 'description', 'date'];
+  const metadataHeaders = ['title', 'description', 'date'];
   content += metadataHeaders.join(';') + ';\n';
-  content += `${droneFlight.id};${droneFlight.title};${droneFlight.description || ''};${droneFlight.date ? new Date(droneFlight.date).toISOString().substring(0,10) : ''};\n\n`;
+  content += `${droneFlight.title};${droneFlight.description || ''};${droneFlight.date ? new Date(droneFlight.date).toISOString().substring(0,10) : ''};\n\n`;
 
   content += 'measurements;\n';
   const measurementHeaders = [
@@ -21,7 +21,6 @@ const generateTXTContent = (droneFlight: DroneFlightType): string => {
   ];
   content += measurementHeaders.join(';') + ';\n';
 
-  // Measurement data
   droneFlight.measurements.forEach(measurement => {
     const co = measurement.pollutionMeasurements.find(p => p.type === 'CO')?.value ?? '';
     const o3 = measurement.pollutionMeasurements.find(p => p.type === 'O3')?.value ?? '';
@@ -50,9 +49,8 @@ const generateTXTContent = (droneFlight: DroneFlightType): string => {
 const generateXLSXData = (droneFlight: DroneFlightType) => {
   const metadataData = [
     ['Metadata'],
-    ['ID', 'Title', 'Description', 'Date'],
+    ['Title', 'Description', 'Date'],
     [
-      droneFlight.id,
       droneFlight.title,
       droneFlight.description || '',
       droneFlight.date ? new Date(droneFlight.date).toISOString().substring(0,10) : ''

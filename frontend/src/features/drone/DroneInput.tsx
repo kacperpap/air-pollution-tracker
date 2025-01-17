@@ -7,6 +7,7 @@ import { NotificationProps } from "../../types/NotificationPropsType";
 import { saveDroneFlight } from "./api/saveDroneFlight";
 import { getDroneFlightById } from "./api/getDroneFlightById";
 import { editDroneFlight } from "./api/editDroneFlight";
+import ImportFlightData from "./Importer";
 
 
 export function DroneInput() {
@@ -600,26 +601,47 @@ export function DroneInput() {
 
 
             <div className="col-span-full space-y-6 border-t border-gray-900/10 pt-8">
-                <div className="flex items-center justify-end gap-x-6">
-                    <button 
-                        type="button"
-                        onClick={() => {
-                            if (isEditMode) {
-                              navigate('/data-overview');
-                            } else {
-                              setFormData({ title: '', description: '', measurements: [] });
-                            }
-                          }}
-                        className="text-sm font-semibold leading-6 text-gray-900"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                    >
-                        {isEditMode ? 'Save Edit' : 'Save'}
-                    </button>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <ImportFlightData
+                            onImport={(data) => {
+                                setFormData(data);
+                                setNotification({
+                                    message: 'Data imported successfully!',
+                                    description: 'Your flight data has been imported.',
+                                    type: 'success'
+                                });
+                            }}
+                            onError={(error) => {
+                                setNotification({
+                                    message: 'Import Error',
+                                    description: error,
+                                    type: 'error'
+                                });
+                            }}
+                        />
+                    </div>
+                    <div className="flex items-center gap-x-6">
+                        <button 
+                            type="button"
+                            onClick={() => {
+                                if (isEditMode) {
+                                    navigate('/data-overview');
+                                } else {
+                                    setFormData({ title: '', description: '', measurements: [] });
+                                }
+                            }}
+                            className="text-sm font-semibold leading-6 text-gray-900"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                        >
+                            {isEditMode ? 'Save Edit' : 'Save'}
+                        </button>
+                    </div>
                 </div>
             </div>
             </div>
