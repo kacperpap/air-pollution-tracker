@@ -13,7 +13,7 @@ import {
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
 import { Notification } from "../../components/Notification";
 import { NotificationProps } from '../../types/NotificationPropsType';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { deleteSimulation } from './api/deleteSimulation';
 import { getAllDroneFlights } from '../overview/api/getAllDroneFlights';
 import { SimulationStatus } from '../../types/SimulationStatusType';
@@ -29,7 +29,6 @@ interface SimulationSortConfig {
 
 export function SimulationOverview() {
     const navigate = useNavigate();
-    const location = useLocation();
     const { simulationId } = useParams<{ simulationId?: string }>();
 
     const [simulations, setSimulations] = useState<SimulationLightType[]>([]);
@@ -108,7 +107,7 @@ export function SimulationOverview() {
         };
 
         fetchData();
-    }, []);
+    },[]);
 
     const toggleExpand = (simulationId: number | null) => {
         setExpandedSimulation(expandedSimulation === simulationId ? null : simulationId);
@@ -353,7 +352,7 @@ export function SimulationOverview() {
                         </button>
                     </div>
 
-                    <ul role="list" className="divide-y divide-gray-100">
+                    <ul className="divide-y divide-gray-100">
                         {simulations.map((simulation) => (
                             <li key={simulation.id} className="flex flex-col gap-y-4 py-5">
                                 <div className="flex justify-between items-center gap-x-6">

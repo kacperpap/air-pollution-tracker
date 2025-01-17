@@ -33,18 +33,6 @@ const getParameterValues = (
   return step[selectedParameter as keyof PollutantDataType] || environment[selectedParameter as keyof EnvironmentType];
 };
 
-const getWindValues = (
-  grid: GridType,
-  environment: EnvironmentType,
-): [number, number][] => {
-
-  return grid.boxes.map((_, index) => {
-    const windSpeed = environment.windSpeed[index] ?? 0;
-    const windDirection = environment.windDirection[index] ?? 0;
-    return [windSpeed, windDirection] as [number, number]
-  })
-};
-
 
 const createMapRectangles = (
   grid: { boxes: Box[] },

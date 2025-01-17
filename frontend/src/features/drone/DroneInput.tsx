@@ -219,8 +219,8 @@ export function DroneInput() {
             return;
         }
     
-        if (formData.measurements.length === 0) {
-            setNotification({ message: 'Validation Error', description: 'At least one measurement is required.', type: 'error'
+        if (formData.measurements.length <= 1) {
+            setNotification({ message: 'Validation Error', description: 'At least two measurement points are required.', type: 'error'
             });
             return;
         }

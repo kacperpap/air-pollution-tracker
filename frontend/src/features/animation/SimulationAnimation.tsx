@@ -30,7 +30,6 @@ export const SimulationAnimation: React.FC<SimulationAnimationProps> = ({
   const [simulationTime, setSimulationTime] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const numSteps = simulationLightData.parameters.numSteps;
   const snapInterval = simulationLightData.parameters.snapInterval;
   const totalSimulationTime = (totalSteps - 1) * snapInterval;
 
