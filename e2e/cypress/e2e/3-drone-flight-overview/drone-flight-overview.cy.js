@@ -31,7 +31,7 @@ describe('Drone Flight Overview', () => {
 
     cy.visit('/data-overview');
 
-    cy.wait('@drone-overview', { timeout: 30000 })
+    cy.wait('@drone-overview')
       .its('response.statusCode')
       .should('eq',200);
        

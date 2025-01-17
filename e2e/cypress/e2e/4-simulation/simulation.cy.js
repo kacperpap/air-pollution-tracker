@@ -42,12 +42,12 @@ describe('Simulation Management', () => {
     }).as('simulate');
 
     cy.get('button').contains('Features').click();
-    cy.contains('Simulate data pollution spread', { timeout: 10000 })
+    cy.contains('Simulate data pollution spread')
       .should('be.visible')
       .click({ force: true });
 
     cy.url().should('include', '/simulation-input');
-    cy.contains('Simulation Setup', { timeout: 10000 }).should('be.visible');
+    cy.contains('Simulation Setup').should('be.visible');
 
     cy.wait('@drone-flights')
       .its('response.statusCode')
@@ -71,7 +71,7 @@ describe('Simulation Management', () => {
     testSimulation.pollutants.forEach(pollutant => {
       cy.contains('label', pollutant)
         .find('input[type="checkbox"]')
-        .check({ force: true, timeout: 10000 })
+        .check({ force: true })
         .should('be.checked');
     });
     

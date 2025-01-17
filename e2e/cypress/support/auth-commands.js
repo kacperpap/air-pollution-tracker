@@ -25,7 +25,7 @@ Cypress.Commands.add('login', (email, password) => {
 
   cy.reload();
 
-  cy.contains('Profile', { timeout: 10000 }).should('be.visible');
+  cy.contains('Profile').should('be.visible');
 });
 
   
@@ -50,7 +50,7 @@ Cypress.Commands.add('registerAndLogin', (user) => {
     expect(interception.response.statusCode).to.eq(201);
   });
 
-  cy.contains('Registration successful!', { timeout: 10000 }).should('be.visible');
+  cy.contains('Registration successful!').should('be.visible');
 
   cy.get('input[name="email"]').clear().type(user.email);
   cy.get('input[name="password"]').clear().type(user.password);
@@ -83,7 +83,7 @@ Cypress.Commands.add('registerAndLogin', (user) => {
 
   cy.reload();
   
-  cy.contains('Profile', { timeout: 10000 }).should('be.visible');
+  cy.contains('Profile').should('be.visible');
 });
 
 
@@ -92,7 +92,7 @@ Cypress.Commands.add('logout', () => {
   cy.intercept('POST', `${Cypress.env('API_BASE_URL')}/api/auth/logout`).as('logout');
 
   cy.visit('/');
-  cy.contains('Profile', { timeout: 10000 }).should('be.visible');
+  cy.contains('Profile').should('be.visible');
 
   cy.get('button').contains('Profile').click();
   cy.contains('Log out').click();
@@ -114,7 +114,7 @@ Cypress.Commands.add('logout', () => {
 
   cy.reload();
   
-  cy.contains('Log in', { timeout: 10000 }).should('be.visible');
+  cy.contains('Log in').should('be.visible');
 });
 
   

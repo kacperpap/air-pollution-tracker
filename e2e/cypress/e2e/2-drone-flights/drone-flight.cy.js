@@ -39,20 +39,22 @@ describe('Drone Flight Management', () => {
     cy.get('input[name="title"]').type(testFlight.title);
     cy.get('textarea[name="description"]').type(testFlight.description);
 
-    cy.get('input[name="name"]').type(testFlight.measurement.name);
-    cy.get('input[name="latitude"]').type(testFlight.measurement.latitude);
-    cy.get('input[name="longitude"]').type(testFlight.measurement.longitude);
-    cy.get('input[name="temperature"]').type(testFlight.measurement.temperature);
-    cy.get('input[name="pressure"]').type(testFlight.measurement.pressure);
-    cy.get('input[name="windSpeed"]').type(testFlight.measurement.windSpeed);
-    cy.get('input[name="windDirection"]').type(testFlight.measurement.windDirection);
+    testFlight.measurements.forEach((measurement, index) => {
+      cy.get('input[name="name"]').type(measurement.name);
+      cy.get('input[name="latitude"]').type(measurement.latitude);
+      cy.get('input[name="longitude"]').type(measurement.longitude);
+      cy.get('input[name="temperature"]').type(measurement.temperature);
+      cy.get('input[name="pressure"]').type(measurement.pressure);
+      cy.get('input[name="windSpeed"]').type(measurement.windSpeed);
+      cy.get('input[name="windDirection"]').type(measurement.windDirection);
 
-    cy.get('input[name="CO"]').type(testFlight.measurement.pollutants.CO);
-    cy.get('input[name="O3"]').type(testFlight.measurement.pollutants.O3);
-    cy.get('input[name="SO2"]').type(testFlight.measurement.pollutants.SO2);
-    cy.get('input[name="NO2"]').type(testFlight.measurement.pollutants.NO2);
+      cy.get('input[name="CO"]').type(measurement.pollutants.CO);
+      cy.get('input[name="O3"]').type(measurement.pollutants.O3);
+      cy.get('input[name="SO2"]').type(measurement.pollutants.SO2);
+      cy.get('input[name="NO2"]').type(measurement.pollutants.NO2);
 
-    cy.get('button').contains('Add measurement').click();
+      cy.get('button').contains('Add measurement').click();
+    });
     
     cy.get('button').contains('Save').click();
 
@@ -60,6 +62,6 @@ describe('Drone Flight Management', () => {
       .its('response.statusCode')
       .should('eq', 201);
 
-      cy.contains('Data saved successfully!', { timeout: 10000 }).should('be.visible');
+      cy.contains('Data saved successfully!').should('be.visible');
     });
   });
