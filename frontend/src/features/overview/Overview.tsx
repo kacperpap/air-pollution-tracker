@@ -7,6 +7,7 @@ import { NotificationProps } from '../../types/NotificationPropsType';
 import { useNavigate } from 'react-router-dom';
 import { getAllDroneFlights } from './api/getAllDroneFlights';
 import { DroneFlightType } from '../../types/DroneFlightType';
+import DownloadFlightData from './Downloader';
 
 export function Overview() {
     const navigate = useNavigate()
@@ -165,7 +166,8 @@ export function Overview() {
                     ) : (
                       <ChevronDownIcon aria-hidden="true" className="h-5 w-5 flex-none text-gray-400" />
                     )}
-                  </button>
+                  </button>  
+                  <DownloadFlightData droneFlight={droneFlight} />
                   <button
                     onClick={() => openDeleteDialog(droneFlight.id)}
                     className="flex h-12 w-12 flex-none items-center justify-center rounded-lg bg-gray-50 hover:bg-white hover:text-red-500"
