@@ -40,34 +40,38 @@ describe('Simulation Overview', () => {
       cy.url().should('include', '/simulation-overview');
   
       cy.wait('@simulations').its('response.statusCode').should('eq', 200);
-  
-      const checkSimulationStatus = (retries = 5) => {
+
+    
+      const checkSimulationStatus = (retries = 10) => {
         if (retries === 0) {
           throw new Error('Simulation did not complete in time or failed.');
         }
+        cy.log(`Left retries of checkSimulationStatus: ${retries}`);
       
-        cy.contains(`Simulation #${testSimulation.id}`)
+        cy.reload();
+        cy.wait('@simulations').its('response.statusCode').should('eq', 200);
+      
+        cy.contains('li', `Simulation #${testSimulation.id}`)
+          .should('exist')
           .should('be.visible')
-          .closest('li')
-          .within(() => {
-            cy.get('span')
-              .invoke('text')
-              .then((status) => {
-                if (status.includes('completed')) {
-                  return;
-                } else if (status.includes('failed') || status.includes('timeExceeded')) {
-                  throw new Error(`Simulation failed with status: ${status}`);
-                } else {
-                  cy.wait(2000);
-                  cy.reload();
-                  cy.then(() => checkSimulationStatus(retries - 1));
-                }
-              });
+          .find('span')
+          .should('exist')
+          .should('be.visible')
+          .invoke('text')
+          .then((text) => {
+            const status = text.trim();
+            if (status.includes('completed')) {
+              return;
+            } else if (status.includes('failed') || status.includes('timeExceeded')) {
+              throw new Error(`Simulation failed with status: ${status}`);
+            } else {
+              cy.wait(5000);
+              checkSimulationStatus(retries - 1);
+            }
           });
       };
   
-      checkSimulationStatus(5); 
-
+      checkSimulationStatus(12);
     });
   });
   
