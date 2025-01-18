@@ -41,16 +41,16 @@ spec:
           livenessProbe:
             exec:
               command: ["rabbitmq-diagnostics", "status"]
-            initialDelaySeconds: 60
-            periodSeconds: 30
-            timeoutSeconds: 20
+            initialDelaySeconds: 90
+            periodSeconds: 60
+            timeoutSeconds: 30
             failureThreshold: 3
           readinessProbe:
             exec:
               command: ["rabbitmq-diagnostics", "check_port_connectivity"]
-            initialDelaySeconds: 60
-            periodSeconds: 30
-            timeoutSeconds: 20
+            initialDelaySeconds: 90
+            periodSeconds: 60
+            timeoutSeconds: 30
             failureThreshold: 3
 
 

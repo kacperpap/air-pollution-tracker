@@ -266,11 +266,11 @@ rabbitmq:
     RABBITMQ_DEFAULT_PASS: guest
   resources:
     requests:
-      memory: "128Mi"
-      cpu: "100m"
-    limits:
       memory: "512Mi"
-      cpu: "300m"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
 
 ingress:
   host: apt.local

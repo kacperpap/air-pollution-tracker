@@ -1,6 +1,5 @@
 import numpy as np
 
-from utils import log_with_time
 
 def extend_grid_with_buffer(C, S_c, K_x, K_y, u, v, nx, ny):
     C_extended = np.pad(C, pad_width=1, mode='constant', constant_values=0)

@@ -1,7 +1,6 @@
 import asyncio
 import atexit
 import multiprocessing
-import signal
 import sys
 import time
 import traceback
