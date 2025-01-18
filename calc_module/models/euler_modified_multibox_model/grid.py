@@ -1,8 +1,11 @@
+import time
 import numpy as np
 
 from utils import log_with_time
 
 def create_uniform_boxes(data, pollutants, grid_density=None, urbanized=False, margin_boxes=1, max_boxes=5000):
+    
+    start_time = time.time()
     
     latitudes = np.array([point["latitude"] for point in data])
     longitudes = np.array([point["longitude"] for point in data])
@@ -123,5 +126,7 @@ def create_uniform_boxes(data, pollutants, grid_density=None, urbanized=False, m
     flattened_pollutant_values = {pollutant: values.flatten() for pollutant, values in pollutant_values.items()}
     
     log_with_time(f"create_uniform_boxes -> Grid created, shape: {num_lat_boxes} x {num_lon_boxes}, total boxes number: {num_lat_boxes * num_lon_boxes}")
+    end_time = time.time()
+    log_with_time(f"create_uniform_boxes -> gird creation completed within {end_time - start_time:.3f} seconds")
          
     return boxes, temperature_values.flatten(), pressure_values.flatten(), u_grid.flatten(), v_grid.flatten(), flattened_pollutant_values, grid_shape

@@ -8,11 +8,13 @@ COPY --chown=appuser:appgroup requirements.txt .
 
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
-    chown -R appuser:appgroup /app
+    mkdir -p /tmp/matplotlib && \
+    chown -R appuser:appgroup /app /tmp/matplotlib
 
 USER appuser
 
 ENV PYTHONPATH="/app:${PYTHONPATH}"
+ENV MPLCONFIGDIR=/tmp/matplotlib
 
 COPY --chown=appuser:appgroup . .
 

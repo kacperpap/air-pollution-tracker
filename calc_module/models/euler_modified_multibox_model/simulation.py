@@ -125,16 +125,16 @@ def simulate_pollution_spread(data, num_steps, pollutants, grid_density="medium"
       dt_stable = calculate_stable_dt(u, v, K_x, K_y, dx, dy)
       
       if dt > dt_stable:
-          log_with_time(f"Info: step time {dt} is unstable. Will be changed to: {dt_stable}.")          
+          log_with_time(f"Pollutant {pollutant} simulation: step time {dt} is unstable. Will be changed to: {dt_stable}.",'warning')          
           dt = dt_stable
           
       else:
-          log_with_time(f"Simulation running with step time {dt} (stability check passed: dt_stable = {dt_stable}).")
+          log_with_time(f"Pollutant {pollutant} simulation: running with step time {dt} (stability check passed: dt_stable = {dt_stable}).")
       
       source_emission = initialize_source_emission(flattened_pollutant_values, grid_shape, pollutant, dt=dt, emission_rate=emission_rate)
-      log_with_time(f'initialize_source_emission -> calculated emission_factor = {(1 - np.exp(-emission_rate * dt / 3600))} (based on emission_rate = {emission_rate})')
+      log_with_time(f'Pollutant {pollutant} simulation: initialize_source_emission -> calculated emission_factor = {(1 - np.exp(-emission_rate * dt / 3600))} (based on emission_rate = {emission_rate})')
       
-      log_with_time(f'update_concentration_crank_nicolson -> calculated decay_factor = {np.exp(-decay_rate * dt / 3600)} (based on decay_rate = {decay_rate})')
+      log_with_time(f'Pollutant {pollutant} simulation: update_concentration_crank_nicolson -> calculated decay_factor = {np.exp(-decay_rate * dt / 3600)} (based on decay_rate = {decay_rate})')
 
 
       S_c = np.zeros((nx, ny))
@@ -155,7 +155,7 @@ def simulate_pollution_spread(data, num_steps, pollutants, grid_density="medium"
                 
         
         if dt > dt_stable:
-          log_with_time(f"Simulation Info: step time {dt} becomce unstable in step: {step}. Will be changed to: {dt_stable}.")
+          log_with_time(f"Pollutant {pollutant} simulation: step time {dt} becomce unstable in step: {step}. Will be changed to: {dt_stable}.", 'warning')
           dt = min(dt, dt_stable)
         
       final_concentration[pollutant] = C.flatten().tolist()
@@ -167,5 +167,5 @@ def simulate_pollution_spread(data, num_steps, pollutants, grid_density="medium"
     return final_concentration, snap_concentrations, boxes, temp_values, press_values, u_values, v_values
   
   except Exception as e:
-    log_with_time(f"simulate_pollution_spread -> Error occurred: {str(e)}")
+    log_with_time(f"simulate_pollution_spread -> Error occurred: {str(e)}",'error')
     traceback.print_exc()

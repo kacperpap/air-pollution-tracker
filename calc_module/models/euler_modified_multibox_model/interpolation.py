@@ -1,3 +1,4 @@
+import time
 from utils import log_with_time
 
 
@@ -65,6 +66,7 @@ def weighted_interpolation(values, grid_shape, distance, value_name=None):
 
 def recursive_interpolation_until_filled(boxes, temp_values, press_values, u_values, v_values, pollutant_values, grid_shape, initial_distance=1, increment=1):
 
+    start_time = time.time()
 
     distance = max(1, initial_distance)
     
@@ -76,12 +78,6 @@ def recursive_interpolation_until_filled(boxes, temp_values, press_values, u_val
         any(any(value is None for value in pollutant_values[pollutant]) for pollutant in pollutant_values)
     ):  
             
-        iteration_details = {
-            "Interpolation Distance": distance,
-            "Grid Shape": grid_shape,
-            "Interpolation Values": {}
-        }
-  
 
         temp_values = weighted_interpolation(
             temp_values, grid_shape,
@@ -116,5 +112,6 @@ def recursive_interpolation_until_filled(boxes, temp_values, press_values, u_val
         
         distance += increment
         
-    log_with_time(f"recursive_interpolation_until_filled -> interpolation finished")    
+    end_time = time.time()
+    log_with_time(f"recursive_interpolation_until_filled -> interpolation finished within {end_time - start_time:.3f} seconds")
     return temp_values, press_values, u_values, v_values, pollutant_values
