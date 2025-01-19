@@ -4,7 +4,7 @@ RUN addgroup --system appgroup && adduser --system appuser --ingroup appgroup
 
 WORKDIR /app
 
-COPY --chown=appuser:appgroup requirements.txt .
+COPY --chown=appuser:appgroup ./calc_module/requirements.txt .
 
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
@@ -16,7 +16,7 @@ USER appuser
 ENV PYTHONPATH="/app:${PYTHONPATH}"
 ENV MPLCONFIGDIR=/tmp/matplotlib
 
-COPY --chown=appuser:appgroup . .
+COPY --chown=appuser:appgroup ./calc_module/ .
 
 CMD ["python", "./main.py"]
 

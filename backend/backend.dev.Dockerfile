@@ -11,15 +11,15 @@ RUN mkdir -p /app/node_modules /app/dist && \
 
 USER appuser
 
-COPY --chown=appuser:appgroup package*.json ./
-COPY --chown=appuser:appgroup prisma ./prisma/
-COPY --chown=appuser:appgroup tsconfig*.json ./
+COPY --chown=appuser:appgroup ./backend/package*.json ./
+COPY --chown=appuser:appgroup ./backend/prisma ./prisma/
+COPY --chown=appuser:appgroup ./backend/tsconfig*.json ./
 
 RUN npm install
 
 RUN npx prisma generate
 
-COPY --chown=appuser:appgroup . .
+COPY --chown=appuser:appgroup ./backend/ .
 
 EXPOSE 9000
 

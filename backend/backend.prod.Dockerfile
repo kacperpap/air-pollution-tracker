@@ -16,7 +16,7 @@ RUN mkdir -p /app/node_modules && chown -R appuser:appgroup /app
 
 USER appuser
 
-COPY --chown=appuser:appgroup package*.json ./
+COPY --chown=appuser:appgroup ./backend/package*.json ./
 
 RUN npm ci
 
@@ -25,12 +25,12 @@ FROM base AS builder
 
 WORKDIR /app
 
-RUN mkdir -p /app/dist && chown -R appuser:appgroup /app/dist
+RUN mkdir -p /app/dist && chown -R appuser:appgroup /app /app/dist
 
 USER appuser
 
 COPY --from=dependencies /app/node_modules ./node_modules
-COPY --chown=appuser:appgroup . .
+COPY --chown=appuser:appgroup ./backend/ .
 
 RUN npx prisma generate
 
