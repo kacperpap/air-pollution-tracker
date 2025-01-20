@@ -19,3 +19,5 @@ ENV MPLCONFIGDIR=/tmp/matplotlib
 COPY --chown=appuser:appgroup ./calc_module/ .
 
 CMD ["python", "./main.py"]
+
+
