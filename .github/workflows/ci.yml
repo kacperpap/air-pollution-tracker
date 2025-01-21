@@ -13,12 +13,6 @@ on:
 
 env:
   ENVIRONMENT: ${{ github.event.inputs.environment || 'prod' }}
-  REACT_APP_API_BASE_URL: http://localhost:9000/api
-  ORIGIN: http://localhost:3000
-  DATABASE_URL: ${{ secrets.DATABASE_URL }}
-  JWT_KEY: ${{ secrets.JWT_KEY }}
-  RABBITMQ_REQUEST_QUEUE: simulation_request_queue
-  RABBITMQ_URL: amqp://rabbitmq
   AWS_REGION: ${{ vars.AWS_REGION }}
   ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}     
   ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
