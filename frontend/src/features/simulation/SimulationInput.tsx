@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { DroneFlightType } from '../../types/DroneFlightType';
 import { SimulationRequestType } from '../../types/SimulationRequestType';
-import { getAllDroneFlights } from './api/getAllDroneFlights';
+import { getAllDroneFlights } from '../overview/api/getAllDroneFlights';
 import { Notification } from "../../components/Notification";
 import { NotificationProps } from '../../types/NotificationPropsType';
 import { simulatePollutionSpread } from './api/simulate';
 import { useNavigate } from 'react-router-dom';
-import { SimulationResponseType } from '../../types/SimulationResponseType';
 
 
 export function SimulationInput() {
@@ -22,6 +21,7 @@ export function SimulationInput() {
       });
 
     const [droneFlights, setDroneFlights] = useState<DroneFlightType[]>([]);
+    const [availablePollutants, setAvailablePollutants] = useState<string[]>([]);
 
     const [formData, setFormData] = useState<SimulationRequestType>({
         droneFlight: {
@@ -32,13 +32,14 @@ export function SimulationInput() {
             measurements: [],
         },
         numSteps: 1000,
-        dt: 1,
         pollutants: [],
-        boxSize: [null, null],
-        gridDensity: '',
+        gridDensity: 'medium',
         urbanized: false,
         marginBoxes: 1,
         initialDistance: 1,
+        decayRate: 0.01,
+        emissionRate: 0.01,
+        snapInterval: 10
     });
 
 
@@ -75,6 +76,11 @@ export function SimulationInput() {
             ...prev,
             droneFlight: selectedFlight, 
           }));
+
+          const availablePollutants = selectedFlight.measurements
+          .flatMap(measurement => measurement.pollutionMeasurements.map(pm => pm.type));
+
+          setAvailablePollutants(Array.from(new Set(availablePollutants)));
         }
       };
 
@@ -83,19 +89,9 @@ export function SimulationInput() {
     
 
         if (formData.numSteps <= 0) {
-          console.log('whhhhattt')
             setNotification({
                 message: 'Error',
                 description: 'Number of steps must be a positive value.',
-                type: 'error',
-            });
-            return;
-        }
-    
-        if (formData.dt <= 0) {
-            setNotification({
-                message: 'Error',
-                description: 'Time step (dt) must be a positive value.',
                 type: 'error',
             });
             return;
@@ -136,38 +132,31 @@ export function SimulationInput() {
             });
             return;
         }
-    
-        if (formData.boxSize[0] !== null && formData.boxSize[0] < 0) {
-            setNotification({
-                message: 'Error',
-                description: 'Box width cannot be a negative value.',
-                type: 'error',
-            });
-            return;
+
+        if (formData.decayRate <= 0 || formData.decayRate >= 1) {
+          setNotification({
+              message: 'Error',
+              description: 'Decay rate must be in (0,1) range.',
+              type: 'error',
+          });
+          return;
+        }
+
+        if (formData.snapInterval < 0) {
+          setNotification({
+              message: 'Error',
+              description: 'Snap interval cannot be a negative value.',
+              type: 'error',
+          });
+          return;
         }
     
-        if (formData.boxSize[1] !== null && formData.boxSize[1] < 0) {
-            setNotification({
-                message: 'Error',
-                description: 'Box height cannot be a negative value.',
-                type: 'error',
-            });
-            return;
-        }
 
         try {
             setLoading(true)
             
-            setNotification({
-              message: 'Data sent to simulation successfully!',
-              description: 'Your drone measurements are being processed to simulate pollution spread.',
-              type: 'success',
-              duration: 5000
-            });
+            const { simulationId }: { simulationId: number } = await simulatePollutionSpread(formData);
 
-            const simulationData: SimulationResponseType = await simulatePollutionSpread(formData);
-          
-            
             setFormData({
                 droneFlight: {
                     id: null,
@@ -177,16 +166,18 @@ export function SimulationInput() {
                     measurements: [],
                 },
                 numSteps: 1000,
-                dt: 1,
                 pollutants: [],
-                boxSize: [null, null],
-                gridDensity: '',
+                gridDensity: 'medium',
                 urbanized: false,
                 marginBoxes: 1,
                 initialDistance: 1,
+                decayRate: 0.01,
+                emissionRate: 0.01,
+                snapInterval: 10
             });
 
-            navigate(`/map/run-simulation/${formData.droneFlight.id}`, {state: {simulationData}});
+            sessionStorage.setItem('isFromSimulationCreation', 'true');
+            navigate(`/simulation-overview/${simulationId}`);
 
         } catch (error) {
             setNotification({
@@ -296,75 +287,73 @@ export function SimulationInput() {
               <p className="text-sm text-gray-600 mt-1">Define the total number of simulation steps (iterations).</p>
             </div>
     
-            {/* Time Step (dt) */}
-            <div className="sm:col-span-4">
-              <label className="block text-sm font-medium leading-6 text-gray-900">Time Step (dt)</label>
-              <input
-                type="number"
-                name="dt"
-                value={formData.dt = Number(formData.dt)}
-                onChange={handleFormChange}
-                min="0.1"
-                step="0.1"
-                className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
-              />
-              <p className="text-sm text-gray-600 mt-1">Set the time step for each simulation iteration.</p>
-            </div>
-    
+          
             {/* Pollutants Selection */}
             <div className="sm:col-span-4">
               <label className="block text-sm font-medium leading-6 text-gray-900">Pollutants</label>
               <div className="mt-2 space-y-2">
-                {['CO', 'O3', 'SO2', 'NO2'].map((pollutant) => (
-                  <label key={pollutant} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="pollutants"
-                      checked={formData.pollutants.includes(pollutant)}
-                      onChange={(e) => {
-                        const newPollutants = e.target.checked
-                          ? [...formData.pollutants, pollutant]
-                          : formData.pollutants.filter((p) => p !== pollutant);
-                        setFormData((prev) => ({ ...prev, pollutants: newPollutants }));
-                      }}
-                      className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-600">{pollutant}</span>
-                  </label>
-                ))}
+                {['CO', 'O3', 'SO2', 'NO2'].map((pollutant) => {
+                  const isDisabled = !availablePollutants.includes(pollutant);
+                  return (
+                    <label
+                      key={pollutant}
+                      className={`flex items-center ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        name="pollutants"
+                        checked={formData.pollutants.includes(pollutant)}
+                        onChange={(e) => {
+                          const newPollutants = e.target.checked
+                            ? [...formData.pollutants, pollutant]
+                            : formData.pollutants.filter((p) => p !== pollutant);
+                          setFormData((prev) => ({ ...prev, pollutants: newPollutants }));
+                        }}
+                        disabled={isDisabled}
+                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <span className={`ml-2 text-sm ${isDisabled ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {pollutant}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
               <p className="text-sm text-gray-600 mt-1">Select which pollutants to include in the simulation.</p>
             </div>
-    
-            {/* Box Size */}
+
+            {/* Decay rate (1/h) */}
             <div className="sm:col-span-4">
-              <label className="block text-sm font-medium leading-6 text-gray-900">Box Size*</label>
-              <div className="mt-2 grid grid-cols-2 gap-4">
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="Width"
-                  value={Number(formData.boxSize[0]) || ''}
-                  onChange={(e) => setFormData((prev) => ({
-                    ...prev,
-                    box_size: [parseFloat(e.target.value) || null, prev.boxSize[1]],
-                  }))}
-                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
-                />
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="Height"
-                  value={Number(formData.boxSize[1]) || ''}
-                  onChange={(e) => setFormData((prev) => ({
-                    ...prev,
-                    box_size: [prev.boxSize[0], parseFloat(e.target.value) || null],
-                  }))}
-                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
-                />
-              </div>
-              <p className="text-sm text-gray-600 mt-1">Specify the size of the simulation box (Width, Height). Do not specify if you want to run simulation with sizes calculated from other parameters such as grid density</p>
+              <label className="block text-sm font-medium leading-6 text-gray-900">Decay rate (1/h)</label>
+              <input
+                type="number"
+                name="decayRate"
+                value={formData.decayRate = Number(formData.decayRate)}
+                onChange={handleFormChange}
+                min="0.00"
+                step="0.01"
+                max="0.99"
+                className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+              />
+              <p className="text-sm text-gray-600 mt-1">Set the exponenital decay rate for decay mechanism in simulation</p>
             </div>
+
+            {/* Emission rate (1/h) */}
+            <div className="sm:col-span-4">
+              <label className="block text-sm font-medium leading-6 text-gray-900">Emission rate (1/h)</label>
+              <input
+                type="number"
+                name="emissionRate"
+                value={formData.emissionRate = Number(formData.emissionRate)}
+                onChange={handleFormChange}
+                min="0.00"
+                step="0.01"
+                max="0.99"
+                className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+              />
+              <p className="text-sm text-gray-600 mt-1">Set the exponenital emission rate for emission mechanism in simulation</p>
+            </div>
+
     
             {/* Grid Density */}
             <div className="sm:col-span-4">
@@ -375,7 +364,7 @@ export function SimulationInput() {
                 onChange={handleFormChange}
                 className="block w-full rounded-md border border-gray-300 p-2 shadow-sm sm:text-sm"
               >
-                <option value="spare">Spare</option>
+                <option value="sparse">Sparse</option>
                 <option value="medium">Medium</option>
                 <option value="dense">Dense</option>
               </select>
@@ -423,6 +412,21 @@ export function SimulationInput() {
                 className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
               />
               <p className="text-sm text-gray-600 mt-1">Set the initial distance between particles.</p>
+            </div>
+
+            {/* Snap interval */}
+            <div className="sm:col-span-4">
+              <label className="block text-sm font-medium leading-6 text-gray-900">Snap interval</label>
+              <input
+                type="number"
+                name="snapInterval"
+                value={formData.snapInterval = Number(formData.snapInterval)}
+                onChange={handleFormChange}
+                min="0"
+                max="100"
+                className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+              />
+              <p className="text-sm text-gray-600 mt-1">Define the frequency of simulation snap for further animation</p>
             </div>
     
             <div className='flex items-cneter justify-end '>

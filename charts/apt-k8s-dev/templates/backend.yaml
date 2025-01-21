@@ -14,52 +14,42 @@ spec:
         apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.backend.name }}
         apt.kubernetes.io/version: {{ include "apt.version" . }}
     spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.rabbitmq.name }}
+                  apt.kubernetes.io/version: {{ include "apt.version" . }}
+              topologyKey: "kubernetes.io/hostname"
       # initContainers:
-      # - name: wait-for-rabbitmq
-      #   image: busybox
-      #   command:
-      #     - sh
-      #     - -c
-      #     - |
-      #       command="nc -z -w1 {{ include "apt.fullname" . }}-{{ .Values.rabbitmq.name }} {{ .Values.rabbitmq.service.ports.amqp }}"
-      #       echo "Executing command: $command"
-            
-      #       while true; do
-      #         output=$($command 2>&1)
-      #         exit_code=$?
-
-      #         echo "Command output: $output"
-      #         echo "Command exit code: $exit_code"
-
-      #         if [ $exit_code -eq 0 ]; then
-      #           echo "RabbitMQ is reachable."
-      #           break
-      #         fi
-
-      #         echo "Waiting for RabbitMQ to be available..."
-      #         sleep 2
-      #       done
-
-      # initContainers:
-      # - name: wait-for-rabbitmq
-      #   image: busybox
-      #   command:
-      #     - sh
-      #     - -c
-          # - >
-          #   until nslookup {{ include "apt.fullname" . }}-{{ .Values.rabbitmq.name }};
-          #   do echo "waiting for rabbitmq to start";
-          #   sleep 2;
-          #   done;
-          # - >
-          #   until wget --spider -q http://{{ include "apt.fullname" . }}-{{ .Values.rabbitmq.name }}:{{ .Values.rabbitmq.container.targetPorts.management }}/api/health;
-          #   do echo "waiting for rabbitmq to start";
-          #   sleep 2;
-          #   done;
+      #   - name: wait-for-rabbitmq
+      #     image: busybox
+      #     command:
+      #       - sh
+      #       - -c
+      #       - |
+      #         echo "Full RabbitMQ service name: {{ include "apt.fullname" . }}-{{ .Values.rabbitmq.name }}"
+      #         echo "AMQP port: {{ .Values.rabbitmq.service.ports.amqp }}"
+      #         echo "Management port: {{ .Values.rabbitmq.container.targetPorts.management }}"
+              
+      #         echo "Checking service connectivity..."
+      #         until nc -z -w1 {{ include "apt.fullname" . }}-{{ .Values.rabbitmq.name }} {{ .Values.rabbitmq.service.ports.amqp }}; do
+      #           echo "Waiting for RabbitMQ service to be reachable..."
+      #           sleep 2
+      #         done
+      #         echo "SERVICE CONNECTIVITY CHECK PASSED"
       containers:
         - name: {{ .Values.backend.name }}
           image: "{{ .Values.backend.image.repository }}/{{ .Values.backend.name }}:{{ .Values.backend.image.tag }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          resources:
+            requests:
+              memory: {{ .Values.backend.resources.requests.memory }}
+              cpu: {{ .Values.backend.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.backend.resources.limits.memory }}
+              cpu: {{ .Values.backend.resources.limits.cpu }}
           env:
             - name: DATABASE_URL
               valueFrom:

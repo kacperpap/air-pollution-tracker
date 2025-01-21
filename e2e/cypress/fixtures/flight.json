@@ -1,0 +1,36 @@
+{
+  "title": "",
+  "description": "",
+  "measurements": [
+    {
+      "name": "",
+      "latitude": "",
+      "longitude": "",
+      "temperature": "",
+      "pressure": "",
+      "windSpeed": "",
+      "windDirection": "",
+      "pollutants": {
+        "CO": "",
+        "O3": "",
+        "SO2": "",
+        "NO2": ""
+      }
+    },
+    {
+      "name": "",
+      "latitude": "",
+      "longitude": "",
+      "temperature": "",
+      "pressure": "",
+      "windSpeed": "",
+      "windDirection": "",
+      "pollutants": {
+        "CO": "",
+        "O3": "",
+        "SO2": "",
+        "NO2": ""
+      }
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { Controller, HttpCode, HttpStatus, Post, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Res, UseGuards } from '@nestjs/common';
 import { UserID } from 'src/decorators/user.decorator';
 import { TokenService } from '../token/token.service';
 import { BasicGuard } from './basic.guard';
@@ -12,14 +12,25 @@ export class AuthController {
   @Post('login')
   @UseGuards(BasicGuard)
   @HttpCode(HttpStatus.OK)
-  login(@UserID() userId: number, @Res({ passthrough: true }) res: Response) {
+  login(
+    @UserID() userId: number,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+
     const token = this.tokenService.createToken(userId);
+
     res.cookie('access-token', token, {
       httpOnly: true,
-      expires: new Date(Date.now() + 60 * 60 * 1000),
+      domain: undefined,
+      sameSite: process.env.SECURE === 'true' ? 'none' : 'lax',
+      secure: process.env.SECURE === 'true' ? true : false,
+      expires: new Date(Date.now() + 90 * 60 * 1000),
     });
     res.cookie('is-logged', true, {
-      expires: new Date(Date.now() + 60 * 60 * 1000),
+      domain: undefined,
+      sameSite: process.env.SECURE === 'true' ? 'none' : 'lax',
+      secure: process.env.SECURE === 'true' ? true : false,
+      expires: new Date(Date.now() + 90 * 60 * 1000),
     });
   }
 

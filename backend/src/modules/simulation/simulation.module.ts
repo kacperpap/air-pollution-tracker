@@ -1,13 +1,14 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { SimulationService } from './simulation.service';
 import { SimulationController } from './simulation.controller';
-import { RabbitMQService } from '../rabbitmq/rabbitmq.service';
-import { RabbitMQModule } from '../rabbitmq/rabbitmq.module';
 import { DroneModule } from '../drone/drone.module';
+import { PrismaModule } from '../prisma/prisma.module';
+import { RabbitMQModule } from '../rabbitmq/rabbitmq.module';
 
 @Module({
-  imports: [RabbitMQModule, DroneModule],
-  providers: [SimulationService, RabbitMQService],
-  controllers: [SimulationController]
+  imports: [forwardRef(() => RabbitMQModule), DroneModule, PrismaModule],
+  providers: [SimulationService],
+  controllers: [SimulationController],
+  exports: [SimulationService]
 })
 export class SimulationModule {}

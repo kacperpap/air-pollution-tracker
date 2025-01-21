@@ -6,7 +6,7 @@ export class TokenService {
   constructor(private readonly jwtService: JwtService) { }
 
   createToken(userId: number): string {
-    return this.jwtService.sign({ sub: userId }, { expiresIn: '1h' });
+    return this.jwtService.sign({ sub: userId }, { expiresIn: '1.5 hrs' });
   }
 
   verifyToken(token: string): { sub: number } {

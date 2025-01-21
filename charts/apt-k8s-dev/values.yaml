@@ -14,6 +14,13 @@ frontend:
     # defined in configMap
     FAST_REFRESH: false
     #REACT_APP_API_BASE_URL: http://{{ .Values.ingress.host }}/api
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1024Mi"
+        cpu: "1000m"
 
 backend:
   name: backend
@@ -33,6 +40,13 @@ backend:
     # ORIGIN: http://{{ include "apt.fullname" . }}-{{ .Values.frontend.name }}:3000
     # RABBITMQ_URL: "amqp://{{ include "apt.fullname" . }}-rabbitmq:5672"
     RABBITMQ_REQUEST_QUEUE: simulation_request_queue
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500"
 
 calc_module:
   name: calc-module
@@ -50,6 +64,13 @@ calc_module:
   environment:
     RABBITMQ_REQUEST_QUEUE: simulation_request_queue
     # RABBITMQ_URL: "amqp://{{ include "apt.fullname" . }}-rabbitmq:5672"
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
 
 rabbitmq:
   name: rabbitmq
@@ -72,5 +93,13 @@ rabbitmq:
   config:
     RABBITMQ_DEFAULT_USER: guest
     RABBITMQ_DEFAULT_PASS: guest
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
 ingress:
   host: apt.local

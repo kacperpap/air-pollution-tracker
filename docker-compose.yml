@@ -18,6 +18,12 @@
 #   Zatrzymywanie aplikacji i usuwanie kontenerów i sieci:                                                  #
 #     docker compose -f .\docker-compose.yml down                                                           #
 #                                                                                                           #
+#   Samodzielne uruchamianie rabbita:                                                                       #
+#     docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:management                         #
+#                                                                                                           #
+#   UWAGA:                                                                                                  #
+#     context obrazów musi być ustawiony na . co pozwoli na wczytywanie przy budowie zmienny z pliku        #
+#     .env w głównym katalogu projektu a nie z katalogów poszczególnych modułów (centralizacja)             #
 #############################################################################################################
 
 networks:
@@ -27,8 +33,8 @@ networks:
 services:
   frontend:
     build:
-      context: ./frontend
-      dockerfile: frontend.${ENVIRONMENT}.Dockerfile
+      context: .
+      dockerfile: ./frontend/frontend.${ENVIRONMENT}.Dockerfile
     image: air-pollution-tracker/${ENVIRONMENT}/frontend:latest
     ports:
       - "3000:3000"
@@ -42,14 +48,15 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: backend.${ENVIRONMENT}.Dockerfile
+      context: .
+      dockerfile: ./backend/backend.${ENVIRONMENT}.Dockerfile
     image: air-pollution-tracker/${ENVIRONMENT}/backend:latest
     ports:
       - "9000:9000"
     environment:
       - PRISMA_CLI_BINARY_TARGETS=linux-musl-openssl-3.0.x,rhel-openssl-3.0.x
       - ORIGIN=${ORIGIN}
+      - SECURE=${SECURE}
       - DATABASE_URL=${DATABASE_URL}
       - JWT_KEY=${JWT_KEY}
       - RABBITMQ_URL=${RABBITMQ_URL:-amqp://rabbitmq}
@@ -62,8 +69,8 @@ services:
 
   calc_module:
     build:
-      context: ./calc_module
-      dockerfile: calc_module.${ENVIRONMENT}.Dockerfile
+      context: .
+      dockerfile: ./calc_module/calc_module.${ENVIRONMENT}.Dockerfile
     image: air-pollution-tracker/${ENVIRONMENT}/calc_module:latest
     environment:
       - RABBITMQ_REQUEST_QUEUE=${RABBITMQ_REQUEST_QUEUE:-simulation_request_queue}

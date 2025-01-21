@@ -7,6 +7,7 @@ import { NotificationProps } from "../../types/NotificationPropsType";
 import { saveDroneFlight } from "./api/saveDroneFlight";
 import { getDroneFlightById } from "./api/getDroneFlightById";
 import { editDroneFlight } from "./api/editDroneFlight";
+import ImportFlightData from "./Importer";
 
 
 export function DroneInput() {
@@ -26,7 +27,7 @@ export function DroneInput() {
     const [formData, setFormData] = useState<DroneFlightFormType>({
         title: '',
         description: '',
-        date: undefined,
+        date: new Date(),
         measurements: []
     })
 
@@ -94,9 +95,16 @@ export function DroneInput() {
         const { name, value } = event.target
         setFormData((prevForm) => ({
             ...prevForm,
-            [name]: name === 'date' ? new Date(value) : value
+            [name]: name === 'date' ? new Date(value + 'T00:00:00') : value
         }))
     }
+
+    const formatDateForInput = (date: Date | undefined): string => {
+        if (!date) return '';
+        return date instanceof Date && !isNaN(date.getTime()) 
+            ? date.toISOString().split('T')[0]
+            : '';
+    };
 
     const addMeasurement = () => {
 
@@ -141,15 +149,6 @@ export function DroneInput() {
             setNotification({
                 message: 'Invalid Wind Direction',
                 description: 'Wind direction must be between 0 and 360 degrees.',
-                type: 'error',
-            });
-            return;
-        }
-
-        if (temperature < 0) {
-            setNotification({
-                message: 'Invalid Temperature',
-                description: 'Temperature must be non-negative value.',
                 type: 'error',
             });
             return;
@@ -221,8 +220,8 @@ export function DroneInput() {
             return;
         }
     
-        if (formData.measurements.length === 0) {
-            setNotification({ message: 'Validation Error', description: 'At least one measurement is required.', type: 'error'
+        if (formData.measurements.length <= 1) {
+            setNotification({ message: 'Validation Error', description: 'At least two measurement points are required.', type: 'error'
             });
             return;
         }
@@ -363,7 +362,7 @@ export function DroneInput() {
                     <input 
                         type="date" 
                         name="date"
-                        value={formData.date instanceof Date && !isNaN(formData.date.getTime()) ? formData.date.toISOString().substring(0,10) : ''}
+                        value={formatDateForInput(formData.date)}
                         onChange={handleFormChange}
                         className="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:date-gray-400 focus:ring-0 sm:text-sm sm:leading-6" 
                     />
@@ -517,7 +516,7 @@ export function DroneInput() {
 
                 <div>
                     <h4 className="text-md font-semibold text-gray-800">Weather Data</h4>
-                    <p className="text-sm text-gray-600">Please enter weather-related data. Wind speed is measured in m/s, and wind direction in degrees.</p>
+                    <p className="text-sm text-gray-600">Please enter weather-related data. Wind speed is measured in m/s, and wind direction in degrees - as azymuth / deviation from north (N is 0°, E is 90°, S is 180° and W is 270°).</p>
                     <div className="grid grid-cols-4 gap-4 mt-2">
                     <div>
                         <label className="block text-sm font-medium leading-6 text-gray-900">Pressure (Pa)</label>
@@ -602,26 +601,47 @@ export function DroneInput() {
 
 
             <div className="col-span-full space-y-6 border-t border-gray-900/10 pt-8">
-                <div className="flex items-center justify-end gap-x-6">
-                    <button 
-                        type="button"
-                        onClick={() => {
-                            if (isEditMode) {
-                              navigate('/data-overview');
-                            } else {
-                              setFormData({ title: '', description: '', measurements: [] });
-                            }
-                          }}
-                        className="text-sm font-semibold leading-6 text-gray-900"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                    >
-                        {isEditMode ? 'Save Edit' : 'Save'}
-                    </button>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <ImportFlightData
+                            onImport={(data) => {
+                                setFormData(data);
+                                setNotification({
+                                    message: 'Data imported successfully!',
+                                    description: 'Your flight data has been imported.',
+                                    type: 'success'
+                                });
+                            }}
+                            onError={(error) => {
+                                setNotification({
+                                    message: 'Import Error',
+                                    description: error,
+                                    type: 'error'
+                                });
+                            }}
+                        />
+                    </div>
+                    <div className="flex items-center gap-x-6">
+                        <button 
+                            type="button"
+                            onClick={() => {
+                                if (isEditMode) {
+                                    navigate('/data-overview');
+                                } else {
+                                    setFormData({ title: '', description: '', measurements: [] });
+                                }
+                            }}
+                            className="text-sm font-semibold leading-6 text-gray-900"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                        >
+                            {isEditMode ? 'Save Edit' : 'Save'}
+                        </button>
+                    </div>
                 </div>
             </div>
             </div>

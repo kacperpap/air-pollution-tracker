@@ -1,5 +1,4 @@
 import { API_URL } from "../../../config";
-import { DroneFlightFormType } from "../../../types/DroneFlightFormType";
 
 export const deleteDroneFlight = async (flightId: number) => {
     const response = await fetch(`${API_URL}/drone/${flightId}`, {

@@ -7,6 +7,8 @@ import { DroneInput } from "./drone/DroneInput"
 import { SimulationInput } from "./simulation/SimulationInput"
 import { Overview } from "./overview/Overview"
 import { ErrorPage } from "./error/ErrorPage"
+import { SimulationOverview } from "./simulation/SimulationOverview"
+import MapSimulation from "./animation/MapSimulation"
 
 
 const publicRoutes: RouteObject[] = [
@@ -56,12 +58,20 @@ const privateRoutes: RouteObject[] = [
                 element: <Overview />
             },
             {
+                path: '/simulation-overview',
+                element: <SimulationOverview />
+            },
+            {
+                path: '/simulation-overview/:simulationId',
+                element: <SimulationOverview />
+            },
+            {
                 path: '/map/:flightId',
                 element: <Map />
             },
             {
-                path: '/map/run-simulation/:flightId',
-                element: <Map />
+                path: '/map/run-simulation/:simulationId',
+                element: <MapSimulation />
             }
         ]
     },

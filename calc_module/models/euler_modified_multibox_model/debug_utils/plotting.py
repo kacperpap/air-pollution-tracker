@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 
-def plot_concentration_grid(boxes, concentration_values, measurements, pollutant=None, save_image=False, image_path=None):
+def plot_concentration_grid(boxes, concentration_values, measurements, pollutant=None, image_path=None):
     """
     Rysuje siatkę pudełek z interpolowanymi/obliczonymi w kolejnych krokach symulacji wartościami stężeń oraz opcjonalnie zapisuje obraz.
     
@@ -53,11 +53,11 @@ def plot_concentration_grid(boxes, concentration_values, measurements, pollutant
     plt.colorbar(scatter, label=f'{pollutant} Concentration')
     plt.grid(True)
 
-    if save_image and image_path:
+    if image_path:
         plt.savefig(image_path)
         
         
-def plot_values_grid(boxes, values, measurements, values_type=None, save_image=False, image_path=None):
+def plot_values_grid(boxes, values, measurements, values_type=None, image_path=None):
     """
     Rysuje siatkę pudełek z interpolowanymi wartościami oraz opcjonalnie zapisuje obraz.
     
@@ -111,10 +111,10 @@ def plot_values_grid(boxes, values, measurements, values_type=None, save_image=F
     plt.colorbar(label=f'{values_type}')
     plt.grid(True)
 
-    if save_image and image_path:
+    if image_path:
         plt.savefig(image_path)
 
-def plot_wind_grid(boxes, u_values, v_values, measurements, grid_shape, save_image=False, image_path=None):
+def plot_wind_grid(boxes, u_values, v_values, measurements, grid_shape, image_path=None):
     """
     Rysuje siatkę pudełek z prędkością i kierunkiem wiatru (u, v) oraz opcjonalnie zapisuje obraz.
     
@@ -194,5 +194,5 @@ def plot_wind_grid(boxes, u_values, v_values, measurements, grid_shape, save_ima
     plt.colorbar(label='Wind Speed (m/s)')
     plt.grid(True)
 
-    if save_image and image_path:
+    if image_path:
         plt.savefig(image_path)

@@ -45,8 +45,14 @@ export function Login() {
                 setNotification({ message: 'Registration successful!', description: 'You can now log in with your credentials.', type: 'success'});
                 setType('login');
             }
-        } catch (error) {
-            setNotification({ message: 'Error', description: 'Invalid credentials or registration failed:\n' + error, type: 'error'});
+        } catch (error: any) {
+            console.error(error);
+            const errorMessage = error.message || 'Invalid credentials or registration failed';
+            setNotification({ 
+                message: 'Error', 
+                description: errorMessage, 
+                type: 'error'
+            });
         }
     };
 

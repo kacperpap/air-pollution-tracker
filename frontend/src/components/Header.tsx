@@ -19,6 +19,7 @@ import {
   CursorArrowRaysIcon,
   DocumentChartBarIcon,
   XMarkIcon,
+  VariableIcon
 } from '@heroicons/react/24/outline'
 import { ChevronDownIcon, PlayCircleIcon } from '@heroicons/react/20/solid'
 import { useIsLogged } from '../hooks/useIsLogged'
@@ -31,7 +32,8 @@ import { logout } from '../features/login/api/logout'
 
 const features = [
   { name: 'Drone flight', description: 'Set custom measurments points from your drone flight', href: '/drone-input', icon: CursorArrowRaysIcon },
-  { name: 'Data overview', description: 'See your drone flight measurements saved in database', href: '/data-overview', icon: DocumentChartBarIcon}
+  { name: 'Data overview', description: 'See your drone flight measurements saved in database', href: '/data-overview', icon: DocumentChartBarIcon},
+  { name: 'Simulation overview', description: 'Peek your simulations, their parameters and results', href: '/simulation-overview', icon: VariableIcon}
 ]
 const callsToAction = [
   { name: 'Simulate data pollution spread', href: '/simulation-input', icon: PlayCircleIcon }
@@ -51,8 +53,7 @@ export default function Header() {
     try {
       await logout()
       navigate('/')
-      setNotification({ message: 'Logout successfull', description: "You have successfully loged out from your account", type: 'success' })
-      navigate('/')
+      window.location.reload();
     } catch (error) {
       setNotification({ message: 'Logout Failed', description: "" + error, type: 'error' })
     }
@@ -175,7 +176,7 @@ export default function Header() {
                 </div>
                 <div className="grid bg-gray-50">
                   <a
-                    href="/logout"
+                    href="/"
                     onClick={handleLogout}
                     className="flex items-center justify-center gap-x-2.5 p-3 text-sm font-semibold leading-6 text-gray-900 hover:bg-gray-100"
                   >
@@ -258,7 +259,7 @@ export default function Header() {
                     </a>
                   ) : (
                     <a
-                      href="/logout"
+                      href="/"
                       onClick={handleLogout}
                       className="-mx-3 block rounded-lg py-2.5 px-3 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-400/10"
                     >

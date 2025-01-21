@@ -14,21 +14,25 @@ spec:
         apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.frontend.name }}
         apt.kubernetes.io/version: {{ include "apt.version" . }}
     spec:
-      # initContainers:
-      #   - name: wait-for-backend
-      #     image: busybox
-      #     command:
-      #       - sh
-      #       - -c
-      #       - >
-      #         until nslookup {{ include "apt.fullname" . }}-{{ .Values.frontend.name }};
-      #         do echo "Cannot start before backend...";
-      #         sleep 2;
-      #         done;
+      affinity:
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchLabels:
+                    apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.backend.name }}
+                    apt.kubernetes.io/version: {{ include "apt.version" . }}
+                topologyKey: "kubernetes.io/hostname"
       containers:
         - name: {{ .Values.frontend.name }}
           image: "{{ .Values.frontend.image.repository }}/{{ .Values.frontend.name }}:{{ .Values.frontend.image.tag }}"
           imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          resources:
+            requests:
+              memory: {{ .Values.frontend.resources.requests.memory }}
+              cpu: {{ .Values.frontend.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.frontend.resources.limits.memory }}
+              cpu: {{ .Values.frontend.resources.limits.cpu }}
           envFrom:
             - configMapRef:
                 name: {{ include "apt.fullname" . }}-config

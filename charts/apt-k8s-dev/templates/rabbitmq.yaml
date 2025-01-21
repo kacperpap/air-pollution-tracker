@@ -18,13 +18,13 @@ spec:
         - name: {{ .Values.rabbitmq.name }}
           image: "{{ .Values.rabbitmq.image.repository }}:{{ .Values.rabbitmq.image.tag }}"
           imagePullPolicy: {{ .Values.rabbitmq.image.pullPolicy }}
-          # volumeMounts:
-          #   - name: rabbitmq-config
-          #     mountPath: /etc/rabbitmq/rabbitmq.conf
-          #     subPath: rabbitmq.conf
-          # env:
-          #   - name: RABBITMQ_CONFIG_FILE
-          #     value: /etc/rabbitmq/rabbitmq.conf
+          resources:
+            requests:
+              memory: {{ .Values.rabbitmq.resources.requests.memory }}
+              cpu: {{ .Values.rabbitmq.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.rabbitmq.resources.limits.memory }}
+              cpu: {{ .Values.rabbitmq.resources.limits.cpu }}
           env:
             - name: RABBITMQ_DEFAULT_USER
               value: {{ .Values.rabbitmq.config.RABBITMQ_DEFAULT_USER }}
@@ -41,18 +41,17 @@ spec:
           livenessProbe:
             exec:
               command: ["rabbitmq-diagnostics", "status"]
-            initialDelaySeconds: 60
+            initialDelaySeconds: 90
             periodSeconds: 60
-            timeoutSeconds: 15
-          # readinessProbe:
-          #   exec:
-          #     command: ["rabbitmq-diagnostics", "check_port_connectivity"]
-          #   initialDelaySeconds: 20
-          #   periodSeconds: 60
-      # volumes:
-      #   - name: rabbitmq-config
-      #     configMap:
-      #       name: {{ include "apt.fullname" . }}-rabbitmq-config
+            timeoutSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command: ["rabbitmq-diagnostics", "check_port_connectivity"]
+            initialDelaySeconds: 90
+            periodSeconds: 60
+            timeoutSeconds: 30
+            failureThreshold: 3
 
 
             

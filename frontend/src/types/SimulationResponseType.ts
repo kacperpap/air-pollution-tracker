@@ -1,4 +1,3 @@
-import { DroneFlightType } from "./DroneFlightType";
 
 export type EnvironmentType = {
   pressure: number[];
@@ -27,7 +26,7 @@ export type PollutantDataType = {
 
 export type PollutantsType = {
   final_step: PollutantDataType;
-  steps: number[][][];
+  steps: PollutantDataType[];
 };
 
 export type SimulationResponseType = {

@@ -8,17 +8,9 @@
                     "Sid": "ECRPermissions",
                     "Effect": "Allow",
                     "Action": [
-                        "ecr:CreateRepository",
-                        "ecr:DescribeRepositories",
-                        "ecr:GetAuthorizationToken",
-                        "ecr:BatchCheckLayerAvailability",
-                        "ecr:BatchGetImage",
-                        "ecr:PutImage",
-                        "ecr:ListImages",
-                        "ecr:DeleteRepository",
-                        "ecr:DeleteRepositoryPolicy"
+                        "ecr:*"
                     ],
-                    "Resource": "arn:aws:ecr:*:*:repository/*"
+                    "Resource": "*"
                 },
                 {
                     "Sid": "ECRGlobalPermissions",
@@ -60,7 +52,10 @@
                     "ec2:*",
                     "eks:*",
                     "iam:*",
-                    "elasticloadbalancing:*"
+                    "elasticloadbalancing:*",
+                    "kms:*",
+                    "logs:*",
+                    "cloudwatch:*"
                 ],
                 "Resource": "*"
                 }
@@ -130,6 +125,8 @@
 
         aws iam list-attached-user-policies --user-name <user_name>
 
+        aws iam detach-user-policy --user-name <user_name> --policy-arn <policy_arn>
+
         aws iam list-user-policies --user-name <user_name> //inline policies
 
         aws iam delete-user-policy --user-name <user_name> --policy-name <policy_name>
@@ -158,18 +155,40 @@ aws iam delete-virtual-mfa-device --serial-number <SERIAL_NUMBER>
     aws ecr describe-images --repository-name YOUR_REPOSITORY_NAME --region YOUR_REGION
 
 3. Check all VPCs in region:
-    aws ec2 describe-vpcs --query "Vpcs[*].{ID:VpcId,CidrBlock:CidrBlock}" --output table
+    aws ec2 describe-vpcs --query "Vpcs[*].{ID:VpcId, CIDR:CidrBlock, Name:Tags[?Key=='Name']|[0].Value}" --output table
+
 
 4. Check subnets in created VPC:
     a. find VpcId for your VPC (ad. 2)
+    b. check specified vpc:
+        aws ec2 describe-vpcs --vpc-ids <vpc_id> --output json
     b. filter subnets 
         aws ec2 describe-subnets --filters "Name=vpc-id,Values=YOUR_VPC_ID" --query "Subnets[*].{ID:SubnetId,CidrBlock:CidrBlock,AZ:AvailabilityZone}" --output table
 
 5. Check NAT Gateway:
     aws ec2 describe-nat-gateways --query "NatGateways[*].{ID:NatGatewayId,State:State,VpcId:VpcId}" --output table
 
-6. Describe EKS cluster:
+6. Check all AZs:
+    aws ec2 describe-availability-zones --query "AvailabilityZones[*].ZoneName" --output table
+
+7. List NAT gateways in vpc:
+    aws ec2 describe-nat-gateways --query "NatGateways[*].{ID:NatGatewayId, VPC:VpcId, State:State}" --output table
+
+8. Describe EKS cluster:
+    a\ full description
+    aws eks describe-cluster --name apt --output json
+
+    b\ 
     aws eks describe-cluster --name YOUR_CLUSTER_NAME --query "cluster.{Name:name,Status:status,Endpoint:endpoint}" --output table
 
-7. AWS_ACCOUNT_ID:
+    aws eks describe-cluster --name apt --query "cluster.resourcesVpcConfig.subnetIds"
+
+    aws eks list-nodegroups --cluster-name apt --output text
+
+    aws eks describe-nodegroup --cluster-name apt --nodegroup-name <node-group> --query "nodegroup.iam.roleArn" --output text
+
+9. Check route tables in public subnets:
+    aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<eks-vpc-id>"
+
+9. AWS_ACCOUNT_ID:
     aws sts get-caller-identity --query Account --output text

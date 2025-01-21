@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "apt.fullname" . }}-{{ .Values.frontend.name }}
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  selector:
+    matchLabels:
+      apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.frontend.name }}
+      apt.kubernetes.io/version: {{ include "apt.version" . }}
+  template:
+    metadata:
+      labels:
+        apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.frontend.name }}
+        apt.kubernetes.io/version: {{ include "apt.version" . }}
+    spec:
+      containers:
+        - name: {{ .Values.frontend.name }}
+          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          resources:
+            requests:
+              memory: {{ .Values.frontend.resources.requests.memory }}
+              cpu: {{ .Values.frontend.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.frontend.resources.limits.memory }}
+              cpu: {{ .Values.frontend.resources.limits.cpu }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "apt.fullname" . }}-config
+          ports:
+            - containerPort: {{ .Values.frontend.container.targetPort }}
