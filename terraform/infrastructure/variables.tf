@@ -17,7 +17,7 @@ variable "cluster_name" {
 }
 
 variable "nginx_load_balancer_type" {
-  description = "Type of AWS Load Balancer for NGINX ingress (e.g., NLB or ALB)"
+  description = "Type of AWS Load Balancer for NGINX ingress"
   type        = string
   default     = "alb"
 }
@@ -25,6 +25,7 @@ variable "nginx_load_balancer_type" {
 variable "ssl_certificate_arn" {
   description = "ARN of the ACM SSL certificate for ALB (optional)"
   type        = string
-  default     = "" # Leave blank if no certificate
+  default     = "" 
 }
+
 

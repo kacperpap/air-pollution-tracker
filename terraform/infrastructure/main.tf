@@ -65,16 +65,50 @@ module "eks" {
   cluster_endpoint_public_access = true
 
   eks_managed_node_groups = {
-    staging = {
-      name           = "staging-node-group"
-      instance_types = ["t3.medium"]
-      min_size       = 1
-      max_size       = 2
-      desired_size   = 1
+    apt = {
+      name           = "apt-node"
+      instance_types = ["t3.small"]
+      min_size       = 2
+      max_size       = 3
+      desired_size   = 2
       labels = {
-        Environment = "staging"
+        deployment = "apt"
       }
     }
+
+    # production = {
+    #   name           = "production-node-group"
+    #   instance_types = ["t3.small"]
+    #   min_size       = 2
+    #   max_size       = 3
+    #   desired_size   = 2
+    #   labels = {
+    #     deployment = "production"
+    #   }
+    # },
+
+    # staging = {
+    #   name           = "staging-node-group"
+    #   instance_types = ["t3.small"]
+    #   min_size       = 2
+    #   max_size       = 3
+    #   desired_size   = 2
+    #   labels = {
+    #     deployment = "staging"
+    #   }
+    # }
+  }
+}
+
+resource "kubernetes_namespace" "production" {
+  metadata {
+    name = "production"
+  }
+}
+
+resource "kubernetes_namespace" "staging" {
+  metadata {
+    name = "staging"
   }
 }
 
@@ -95,21 +129,6 @@ resource "helm_release" "nginx_ingress" {
     value = "alb" 
   }
 
-  # set {
-  #   name  = "controller.service.annotations\\.service\\.beta\\.kubernetes\\.io/aws-load-balancer-type"
-  #   value = "nlb"  # Używamy Network Load Balancer zamiast ALB dla Nginx Ingress
-  # }
-
-  # set {
-  #   name  = "controller.service.annotations\\.service\\.beta\\.kubernetes\\.io/aws-load-balancer-cross-zone-load-balancing-enabled"
-  #   value = "true"
-  # }
-
-  # set {
-  #   name  = "controller.service.annotations.service.beta.kubernetes.io/aws-load-balancer-ssl-cert"
-  #   value = var.ssl_certificate_arn # Optional: Add an ACM SSL certificate if needed
-  # }
-
   set {
     name  = "controller.service.annotations.service.beta.kubernetes.io/aws-load-balancer-backend-protocol"
     value = "HTTP"
@@ -124,6 +143,31 @@ resource "helm_release" "nginx_ingress" {
     name  = "controller.replicaCount"
     value = 1
   }
+
+  # set {
+  #   name  = "controller.service.annotations.service.beta.kubernetes.io/aws-load-balancer-ssl-cert"
+  #   value = aws_acm_certificate.cert.arn
+  # }
+
+  # set {
+  #   name  = "controller.service.annotations.service.beta.kubernetes.io/aws-load-balancer-ssl-ports"
+  #   value = "443"
+  # }
+
+  # set {
+  #   name  = "controller.service.targetPorts.https"
+  #   value = "http"
+  # }
+
+  # set {
+  #   name  = "controller.service.ports.https"
+  #   value = "443"
+  # }
+}
+
+resource "time_sleep" "wait_for_ingress" {
+  depends_on = [helm_release.nginx_ingress]
+  create_duration = "60s"
 }
 
 data "kubernetes_service" "nginx_ingress" {
@@ -132,9 +176,8 @@ data "kubernetes_service" "nginx_ingress" {
     namespace = "ingress-nginx"
   }
 
-  depends_on = [helm_release.nginx_ingress]
+  depends_on = [time_sleep.wait_for_ingress]
 }
-
 
 data "terraform_remote_state" "ecr" {
   backend = "local" 
@@ -142,4 +185,5 @@ data "terraform_remote_state" "ecr" {
     path = "../registry/terraform.tfstate" 
   }
 }
+
 
