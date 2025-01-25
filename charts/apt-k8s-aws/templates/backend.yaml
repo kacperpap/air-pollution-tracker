@@ -1,8 +1,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "apt.fullname" . }}-{{ .Values.backend.name }}
+  name: {{ include "apt.name" . }}-{{ .Values.backend.name }}
 spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
   replicas: {{ .Values.backend.replicaCount }}
   selector:
     matchLabels:
@@ -14,6 +19,8 @@ spec:
         apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.backend.name }}
         apt.kubernetes.io/version: {{ include "apt.version" . }}
     spec:
+      nodeSelector:
+        deployment: {{ .Values.eks.cluster.nodeGroup }}
       containers:
         - name: {{ .Values.backend.name }}
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
@@ -29,15 +36,15 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "apt.fullname" . }}-secrets
+                  name: {{ include "apt.name" . }}-secrets
                   key: DATABASE_URL
             - name: JWT_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "apt.fullname" . }}-secrets
+                  name: {{ include "apt.name" . }}-secrets
                   key: JWT_KEY
           envFrom:
             - configMapRef:
-                name: {{ include "apt.fullname" . }}-config
+                name: {{ include "apt.name" . }}-config
           ports:
             - containerPort: {{ .Values.backend.container.targetPort }}

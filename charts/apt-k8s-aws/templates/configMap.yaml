@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "apt.fullname" . }}-config
+  name: {{ include "apt.name" . }}-config
 data:
-  REACT_APP_API_BASE_URL: "http://{{ .Values.ingress.host }}/api"
-  ORIGIN: "http://{{ .Values.ingress.host }}" 
+  REACT_APP_API_BASE_URL: "{{ if eq (.Values.backend.environment.SECURE | toString | lower) "true" }}https://{{ else }}http://{{ end }}{{ .Values.ingress.host }}/api"
+  ORIGIN: "{{ if eq (.Values.backend.environment.SECURE | toString | lower) "true" }}https://{{ else }}http://{{ end }}{{ .Values.ingress.host }}"
+  SECURE: {{ .Values.backend.environment.SECURE | quote }}
   PRISMA_CLI_BINARY_TARGETS: {{ .Values.backend.environment.PRISMA_CLI_BINARY_TARGETS | quote }}
   RABBITMQ_REQUEST_QUEUE: {{ .Values.backend.environment.RABBITMQ_REQUEST_QUEUE | quote }}
-  RABBITMQ_URL: "amqp://{{ .Values.rabbitmq.config.RABBITMQ_DEFAULT_USER }}:{{ .Values.rabbitmq.config.RABBITMQ_DEFAULT_PASS }}@{{ include "apt.fullname" . }}-{{ .Values.rabbitmq.name }}:{{ .Values.rabbitmq.service.ports.amqp }}"
-
+  RABBITMQ_URL: "amqp://{{ .Values.rabbitmq.config.RABBITMQ_DEFAULT_USER }}:{{ .Values.rabbitmq.config.RABBITMQ_DEFAULT_PASS }}@{{ include "apt.name" . }}-{{ .Values.rabbitmq.name }}:{{ .Values.rabbitmq.service.ports.amqp }}"

@@ -1,8 +1,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "apt.fullname" . }}-{{ .Values.rabbitmq.name }}
+  name: {{ include "apt.name" . }}-{{ .Values.rabbitmq.name }}
 spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
   replicas: 1
   selector:
     matchLabels:
@@ -14,6 +19,8 @@ spec:
         apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.rabbitmq.name }}
         apt.kubernetes.io/version: {{ include "apt.version" . }}
     spec:
+      nodeSelector:
+        deployment: {{ .Values.eks.cluster.nodeGroup }}
       containers:
         - name: {{ .Values.rabbitmq.name }}
           image: "{{ .Values.rabbitmq.image.repository }}:{{ .Values.rabbitmq.image.tag }}"
@@ -32,7 +39,7 @@ spec:
               value: {{ .Values.rabbitmq.config.RABBITMQ_DEFAULT_PASS }}
           envFrom:
             - configMapRef:
-                name: {{ include "apt.fullname" . }}-config
+                name: {{ include "apt.name" . }}-config
           ports:
             - containerPort: {{ .Values.rabbitmq.container.targetPorts.amqp }}
               name: amqp
