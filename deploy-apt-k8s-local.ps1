@@ -249,11 +249,11 @@ frontend:
     FAST_REFRESH: false
   resources:
     requests:
-      memory: "512Mi"
-      cpu: "500m"
+      memory: "128Mi"
+      cpu: "200m"
     limits:
-      memory: "1536Mi"
-      cpu: "1000m"
+      memory: "256Mi"
+      cpu: "500m"
 
 backend:
   name: backend
@@ -300,10 +300,10 @@ calc_module:
   resources:
     requests:
       memory: "128Mi"
-      cpu: "200m"
+      cpu: "400m"
     limits:
       memory: "512Mi"
-      cpu: "400m"
+      cpu: "600m"
 
 rabbitmq:
   name: rabbitmq
@@ -329,7 +329,7 @@ rabbitmq:
       cpu: "250m"
     limits:
       memory: "1Gi"
-      cpu: "500m"
+      cpu: "600m"
 
 ingress:
   host: $($variables.DOMAIN)
