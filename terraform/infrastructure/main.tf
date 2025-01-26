@@ -76,27 +76,6 @@ module "eks" {
       }
     }
 
-    # production = {
-    #   name           = "production-node-group"
-    #   instance_types = ["t3.small"]
-    #   min_size       = 2
-    #   max_size       = 3
-    #   desired_size   = 2
-    #   labels = {
-    #     deployment = "production"
-    #   }
-    # },
-
-    # staging = {
-    #   name           = "staging-node-group"
-    #   instance_types = ["t3.small"]
-    #   min_size       = 2
-    #   max_size       = 3
-    #   desired_size   = 2
-    #   labels = {
-    #     deployment = "staging"
-    #   }
-    # }
   }
 }
 
@@ -143,26 +122,6 @@ resource "helm_release" "nginx_ingress" {
     name  = "controller.replicaCount"
     value = 1
   }
-
-  # set {
-  #   name  = "controller.service.annotations.service.beta.kubernetes.io/aws-load-balancer-ssl-cert"
-  #   value = aws_acm_certificate.cert.arn
-  # }
-
-  # set {
-  #   name  = "controller.service.annotations.service.beta.kubernetes.io/aws-load-balancer-ssl-ports"
-  #   value = "443"
-  # }
-
-  # set {
-  #   name  = "controller.service.targetPorts.https"
-  #   value = "http"
-  # }
-
-  # set {
-  #   name  = "controller.service.ports.https"
-  #   value = "443"
-  # }
 }
 
 resource "time_sleep" "wait_for_ingress" {
@@ -177,6 +136,20 @@ data "kubernetes_service" "nginx_ingress" {
   }
 
   depends_on = [time_sleep.wait_for_ingress]
+}
+
+resource "null_resource" "update_duckdns" {
+  provisioner "local-exec" {
+    command = <<EOT
+      $resolved_ip = (Resolve-DnsName -Name "${data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].hostname}" -Type A).IPAddress
+      Invoke-RestMethod -Uri "https://www.duckdns.org/update?domains=${var.subdomain}&token=${var.duckdns_token}&ip=$resolved_ip&clear=false"
+    EOT
+    interpreter = ["PowerShell", "-Command"]
+  }
+
+  triggers = {
+    ingress_hostname = data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].hostname
+  }
 }
 
 data "terraform_remote_state" "ecr" {

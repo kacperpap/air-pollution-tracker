@@ -30,6 +30,12 @@ output "ingress_hostname" {
   )
 }
 
+output "duckdns_fqdn" {
+  description = "Fully qualified domain name for DuckDNS"
+  value       = "${var.subdomain}.duckdns.org"
+}
+
+
 ###############################################################
 #                     remote states                           #
 ###############################################################

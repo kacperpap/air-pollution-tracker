@@ -10,11 +10,13 @@ terraform/.terraform.*
 terraform/tfplan
 terraform/terraform.tfstate
 terraform/terraform.tfstate.*
+terraform/variables.tf
 terraform/*/.terraform
 terraform/*/.terraform.*
 terraform/*/tfplan
 terraform/*/terraform.tfstate
 terraform/*/terraform.tfstate.*
+terraform/*/variables.tf
 charts/*/generated-values.yaml
 .vscode/
 certs/

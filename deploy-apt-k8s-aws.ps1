@@ -37,6 +37,7 @@ $CLUSTER_ENDPOINT = terraform output -raw eks_cluster_endpoint
 $CLUSTER_NAME = terraform output -raw eks_cluster_name
 $CERT_AUTH = terraform output -raw eks_certificate_authority
 $INGRESS_HOST = terraform output -raw ingress_hostname
+$FQDN = terraform output -raw duckdns_fqdn
 
 Set-Location $PROJECT_ROOT
 
@@ -59,6 +60,10 @@ if ($ENVIRONMENT -eq "prod") {
 $HELM_RELEASE_NAME = "apt"
 $NODE = "apt"
 $APT_FULL_NAME = "air-pollution-tracker"
+$SECRET_TLS_NAME = "air-pollution-tracker-tls"
+$SSL_CERTIFICATE = ""
+$SSL_CERTIFICATE_KEY = ""
+
 
 Log "Sprawdzanie, czy Helm release '$HELM_RELEASE_NAME' istnieje w namespace '$NAMESPACE'..."
 $releaseExists = helm list -n $NAMESPACE -q | Where-Object { $_ -eq $HELM_RELEASE_NAME }
@@ -75,6 +80,33 @@ if (-not $ingressRunning) {
 }
 
 Set-Location "$PROJECT_ROOT/charts/apt-k8s-aws"
+
+if ($SECURE) {
+    $CERT_DIR = "$PROJECT_ROOT\dns\certs\archive\air-pollution-tracker.duckdns.org"
+    
+    $CERT_FILES = Get-ChildItem $CERT_DIR -Filter "fullchain*.pem" | Sort-Object LastWriteTime -Descending
+    $KEY_FILES = Get-ChildItem $CERT_DIR -Filter "privkey*.pem" | Sort-Object LastWriteTime -Descending
+
+    if ($CERT_FILES.Count -eq 0 -or $KEY_FILES.Count -eq 0) {
+        Error "Nie znaleziono certyfikatów Let's Encrypt"
+    }
+
+    $SSL_CERTIFICATE_RAW = Get-Content -Raw $CERT_FILES[0].FullName
+    $SSL_CERTIFICATE_KEY_RAW = Get-Content -Raw $KEY_FILES[0].FullName
+
+    $SSL_CERTIFICATE = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($SSL_CERTIFICATE_RAW))
+    $SSL_CERTIFICATE_KEY = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($SSL_CERTIFICATE_KEY_RAW))
+
+    if (-not $SSL_CERTIFICATE -or -not $SSL_CERTIFICATE_KEY) {
+        Error "Brak certyfikatu lub klucza SSL."
+    }
+
+    #dla generowania w skrypcie
+    # Create-TLSSecret -Namespace $NAMESPACE -SecretName $SECRET_TLS_NAME -CertPath $SSL_CERTIFICATE -KeyPath $SSL_CERTIFICATE_KEY
+    Log "Certyfikaty zostały zakodowane w Base64 i zapisane do zmiennych."
+} else {
+    Log "Brak włączonego zabezpieczenia SSL (SECURE=false), klucze nie zostaną ustawione w secretsTLS"
+}
 
 $valuesContent = @"
 frontend:
@@ -131,7 +163,6 @@ calc_module:
   namespace: $NAMESPACE
   replicaCount: 1
   image:
-    name: calc_module
     repository: $REPO_URL
     tag: calc-module-$ENVIRONMENT-latest
     pullPolicy: Always
@@ -184,13 +215,17 @@ rabbitmq:
 
 ingress:
   name: ingress
-  host:  $INGRESS_HOST
+  host: $INGRESS_HOST
+  fqdn: $FQDN 
   ssl:
-    enabled: false
+    enabled: $SECURE
+    secretName: $SECRET_TLS_NAME
 
 secrets:
   DATABASE_URL: $DATABASE_URL
   JWT_KEY: $JWT_KEY
+  SSL_CERTIFICATE: $SSL_CERTIFICATE
+  SSL_CERTIFICATE_KEY: $SSL_CERTIFICATE_KEY
 
 eks:
   cluster:
@@ -207,6 +242,8 @@ $maskedContent = $valuesContent
 $maskedContent = $maskedContent -replace [regex]::Escape($JWT_KEY), "********"
 $maskedContent = $maskedContent -replace [regex]::Escape($DATABASE_URL), "********"
 $maskedContent = $maskedContent -replace [regex]::Escape($CERT_AUTH), "********"
+$maskedContent = $maskedContent -replace [regex]::Escape($SSL_CERTIFICATE), "********"
+$maskedContent = $maskedContent -replace [regex]::Escape($SSL_CERTIFICATE_KEY), "********"
 
 Log "Wygenerowano plik values.yaml."
 Write-Host "----------------------------------------"
