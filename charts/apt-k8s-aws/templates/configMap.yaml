@@ -3,8 +3,8 @@ kind: ConfigMap
 metadata:
   name: {{ include "apt.name" . }}-config
 data:
-  REACT_APP_API_BASE_URL: "{{ if eq (.Values.backend.environment.SECURE | toString | lower) "true" }}https://{{ else }}http://{{ end }}{{ .Values.ingress.host }}/api"
-  ORIGIN: "{{ if eq (.Values.backend.environment.SECURE | toString | lower) "true" }}https://{{ else }}http://{{ end }}{{ .Values.ingress.host }}"
+  REACT_APP_API_BASE_URL: "{{ if eq (.Values.backend.environment.SECURE | toString | lower) "true" }}https://{{ else }}http://{{ end }}{{ .Values.ingress.fqdn }}/api"
+  ORIGIN: "{{ if eq (.Values.backend.environment.SECURE | toString | lower) "true" }}https://{{ else }}http://{{ end }}{{ .Values.ingress.fqdn }}"
   SECURE: {{ .Values.backend.environment.SECURE | quote }}
   PRISMA_CLI_BINARY_TARGETS: {{ .Values.backend.environment.PRISMA_CLI_BINARY_TARGETS | quote }}
   RABBITMQ_REQUEST_QUEUE: {{ .Values.backend.environment.RABBITMQ_REQUEST_QUEUE | quote }}
