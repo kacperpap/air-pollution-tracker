@@ -182,7 +182,7 @@ function Install-Certificate {
   Log "Generowanie lokalnego certyfikatu SSL dla domeny '$Domain'..."
   
   $PROJECT_ROOT = (git rev-parse --show-toplevel)
-  $certsPath = Join-Path $PROJECT_ROOT "certs"
+  $certsPath = Join-Path $PROJECT_ROOT "local-certs/domain"
   
   if (-not (Test-Path $certsPath)) {
       New-Item -ItemType Directory -Path $certsPath
