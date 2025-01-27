@@ -133,28 +133,36 @@ function Get-EnvVariables {
     if (-not (Test-Path $envPath)) {
         Error "Nie znaleziono pliku .env w katalogu głównym projektu"
     }
-    
+
     $envContent = Get-Content $envPath
-    $variables = @{
-        JWT_KEY = (($envContent | Where-Object { $_ -match "^JWT_KEY=" -and $_ -notmatch "^#" }) -replace "JWT_KEY=", "").Trim()
-        DATABASE_URL = (($envContent | Where-Object { $_ -match "^DATABASE_URL=" -and $_ -notmatch "^#" }) -replace "DATABASE_URL=", "").Trim()
-        ENVIRONMENT = (($envContent | Where-Object { $_ -match "^ENVIRONMENT=" -and $_ -notmatch "^#" }) -replace "ENVIRONMENT=", "").Trim()
-        SECURE = (($envContent | Where-Object { $_ -match "^SECURE=" -and $_ -notmatch "^#" }) -replace "SECURE=", "").Trim() -eq "true"
-        RABBITMQ_REQUEST_QUEUE = (($envContent | Where-Object { $_ -match "^RABBITMQ_REQUEST_QUEUE=" -and $_ -notmatch "^#" }) -replace "RABBITMQ_REQUEST_QUEUE=", "").Trim()
-        RABBITMQ_URL = (($envContent | Where-Object { $_ -match "^RABBITMQ_URL=" -and $_ -notmatch "^#" }) -replace "RABBITMQ_URL=", "").Trim()
-        DOMAIN = (($envContent | Where-Object { $_ -match "^DOMAIN=" -and $_ -notmatch "^#" }) -replace "DOMAIN=", "").Trim()
-    }
     
-    if (-not $variables.JWT_KEY -or -not $variables.DATABASE_URL -or -not $variables.ENVIRONMENT -or -not $variables.RABBITMQ_REQUEST_QUEUE -or -not $variables.RABBITMQ_URL -or -not $variables.DOMAIN) {
-        Error "Nie wszystkie wymagane zmienne środowiskowe zostały znalezione w pliku .env"
+    $variables = @{}
+
+    foreach ($line in $envContent) {
+        if ([string]::IsNullOrWhiteSpace($line) -or $line.TrimStart().StartsWith("#")) {
+            continue
+        }
+
+        $keyValue = $line -split '=', 2
+        if ($keyValue.Count -ge 2) {
+            $key = $keyValue[0].Trim()
+            $value = $keyValue[1] -split '#', 2 | Select-Object -First 1
+            $variables[$key] = $value.Trim()
+        }
     }
 
-    if ($variables.SECURE -eq $null) {
-        Error "Nie można odczytać wartości zmiennej 'SECURE' w pliku .env"
+    $requiredVariables = @("JWT_KEY", "DATABASE_URL", "ENVIRONMENT", "RABBITMQ_REQUEST_QUEUE", "RABBITMQ_URL", "DOMAIN", "SECURE")
+    foreach ($var in $requiredVariables) {
+        if (-not $variables.ContainsKey($var)) {
+            Error "Brak wymaganej zmiennej środowiskowej: $var"
+        }
     }
-    
+
+    $variables["SECURE"] = $variables["SECURE"].ToLower() -eq "true"
+
     return $variables
 }
+
 
 function Install-Certificate {
   param (
@@ -233,6 +241,8 @@ function Generate-ValuesFile {
     Set-Location $chartsPath
     
     $valuesContent = @"
+application:
+  environment: $($variables.ENVIRONMENT)
 frontend:
   name: frontend
   replicaCount: 1

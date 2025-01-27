@@ -23,3 +23,6 @@ terraform/*/lambda_package
 charts/*/generated-values.yaml
 .vscode/
 certs/
+local-certs/
+*.csr
+*.key
