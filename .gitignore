@@ -11,12 +11,15 @@ terraform/tfplan
 terraform/terraform.tfstate
 terraform/terraform.tfstate.*
 terraform/variables.tf
+terraform/*.tfvars
 terraform/*/.terraform
 terraform/*/.terraform.*
 terraform/*/tfplan
 terraform/*/terraform.tfstate
 terraform/*/terraform.tfstate.*
 terraform/*/variables.tf
+terraform/*/*.tfvars
+terraform/*/lambda_package
 charts/*/generated-values.yaml
 .vscode/
 certs/

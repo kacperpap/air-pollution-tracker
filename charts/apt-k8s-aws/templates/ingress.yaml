@@ -28,7 +28,7 @@ spec:
   tls:
   - hosts:
     - {{ .Values.ingress.fqdn }}
-    secretName: {{ .Values.ingress.ssl.secretName }}
+    secretName: {{ include "apt.name" . }}-tls
   {{- end }}
   rules:
     - host: {{ .Values.ingress.fqdn }}
