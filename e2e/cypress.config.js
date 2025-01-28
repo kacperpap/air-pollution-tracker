@@ -12,7 +12,7 @@ module.exports = defineConfig({
     experimentalModifyObstructiveThirdPartyCode: true,
     watchForFileChanges: false,
     supportFile: 'cypress/support/e2e.js',
-    video: false,
+    video: true,
     screenshotOnFailure: true,
     defaultCommandTimeout: 30000,
     viewportWidth: 1920,
