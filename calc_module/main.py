@@ -37,11 +37,11 @@ class SimulationWorker:
         self._thread.start()
         
     def stop(self):
+        self._shutdown_event.set()
         if self._loop:
             self._loop.call_soon_threadsafe(self._loop.stop)
-        if self._thread:
-            self._thread.join(timeout=5)
-        self._shutdown_event.set()
+        if self._thread and self._thread.is_alive():
+            self._thread.join(timeout=2)
 
 class SimulationPool:
     def __init__(self, max_workers: int = None):
@@ -65,7 +65,7 @@ class SimulationPool:
             for worker in self.workers.values():
                 worker.stop()
             self.workers.clear()
-        self.executor.shutdown(wait=True)
+        self.executor.shutdown(wait=False)
 
 class RabbitMQHandler:
     def __init__(self, url: str, queue_name: str):
@@ -76,21 +76,25 @@ class RabbitMQHandler:
         self._channel: Optional[aio_pika.Channel] = None
         self._connection_retry_delay = 5
         self._shutdown_event = asyncio.Event()
+        self._active_tasks: set = set()
+        self.SIMULATION_TIMEOUT = 600
         
     async def cleanup(self):
         log_with_time("Cleaning up RabbitMQ handler...")
+        self._shutdown_event.set()
+        
+        for task in self._active_tasks:
+            if not task.done():
+                task.cancel()
+                
+        if self._active_tasks:
+            await asyncio.gather(*self._active_tasks, return_exceptions=True)
         
         if self._channel:
-            try:
-                await self._channel.close()
-            except Exception:
-                pass
+            await self._channel.close()
                 
         if self._connection:
-            try:
-                await self._connection.close()
-            except Exception:
-                pass
+            await self._connection.close()
             
         self.simulation_pool.cleanup()
         log_with_time("RabbitMQ handler cleanup complete")
@@ -170,17 +174,26 @@ class RabbitMQHandler:
         correlation_id = message.correlation_id
         status = "failed"
         result = None
-        
+                    
+        loop = asyncio.get_running_loop()
+
         try:
             log_with_time(f'Processing message (Correlation ID: {correlation_id})')
             data = json.loads(message.body)
             
-            loop = asyncio.get_running_loop()
-            result, status = await loop.run_in_executor(
-                self.simulation_pool.executor,
-                self.run_simulation,
-                data
-            )
+            try:
+                result, status = await asyncio.wait_for(
+                    loop.run_in_executor(
+                        self.simulation_pool.executor,
+                        self.run_simulation,
+                        data
+                    ),
+                    timeout=self.SIMULATION_TIMEOUT
+                )
+            except asyncio.TimeoutError:
+                log_with_time(f'Simulation timeout exceeded for correlation ID: {correlation_id}')
+                status = "timeExceeded"
+                result = None
             
         except Exception as e:
             log_with_time(f'Error processing message: {str(e)}', 'error')
@@ -246,6 +259,8 @@ class Application:
         log_with_time("Application started successfully")
 
     async def shutdown(self, sig=None):
+        if self._shutdown_event.is_set():
+            return
         
         log_with_time("Shutting down application...")
         self._shutdown_event.set()
@@ -254,12 +269,18 @@ class Application:
             await self.rabbit_handler.cleanup()
             
         tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-        for task in tasks:
-            task.cancel()
-            
-        await asyncio.gather(*tasks, return_exceptions=True)
+        
+        try:
+            await asyncio.wait_for(asyncio.gather(*tasks, return_exceptions=True), timeout=5)
+        except asyncio.TimeoutError:
+            log_with_time("Some tasks did not complete in time, forcing shutdown")
+            for task in tasks:
+                task.cancel()
                     
         log_with_time("Application shutdown complete")
+        
+        if self._loop and self._loop.is_running():
+            self._loop.stop()
 
     async def run(self):
         await self.startup()
