@@ -1,6 +1,7 @@
 import asyncio
 import atexit
 import multiprocessing
+import signal
 import sys
 import time
 import traceback
@@ -78,26 +79,48 @@ class RabbitMQHandler:
         self._shutdown_event = asyncio.Event()
         self._active_tasks: set = set()
         self.SIMULATION_TIMEOUT = 600
+        self._cleanup_lock = asyncio.Lock()
         
     async def cleanup(self):
-        log_with_time("Cleaning up RabbitMQ handler...")
-        self._shutdown_event.set()
+        if self._cleanup_lock.locked():
+            return
         
-        for task in self._active_tasks:
-            if not task.done():
-                task.cancel()
-                
-        if self._active_tasks:
-            await asyncio.gather(*self._active_tasks, return_exceptions=True)
-        
-        if self._channel:
-            await self._channel.close()
-                
-        if self._connection:
-            await self._connection.close()
-            
-        self.simulation_pool.cleanup()
-        log_with_time("RabbitMQ handler cleanup complete")
+        async with self._cleanup_lock:
+            log_with_time("Cleaning up RabbitMQ handler...")
+            self._shutdown_event.set()
+
+            for task in self._active_tasks:
+                if not task.done():
+                    task.cancel()
+
+            if self._active_tasks:
+                try:
+                    done, pending = await asyncio.wait(self._active_tasks, timeout=1)
+                    for task in pending:
+                        task.cancel()
+                except Exception as e:
+                    log_with_time(f"Error cancelling tasks: {e}", 'error')
+
+            if self._channel:
+                try:
+                    if not self._channel.is_closed:
+                        await asyncio.wait_for(self._channel.close(), timeout=1)
+                except Exception as e:
+                    log_with_time(f"Error closing channel: {e}", 'error')
+                finally:
+                    self._channel = None
+
+            if self._connection:
+                try:
+                    if not self._connection.is_closed:
+                        await asyncio.wait_for(self._connection.close(), timeout=1)
+                except Exception as e:
+                    log_with_time(f"Error closing connection: {e}", 'error')
+                finally:
+                    self._connection = None
+
+            self.simulation_pool.cleanup()
+            log_with_time("RabbitMQ handler cleanup complete")
         
     async def ensure_connection(self) -> bool:
         while not self._shutdown_event.is_set():
@@ -223,33 +246,69 @@ class RabbitMQHandler:
                     self.queue_name,
                     durable=False
                 )
-                
+
                 log_with_time(f'Waiting for messages in "{self.queue_name}"')
-                
+
                 async with queue.iterator() as queue_iter:
-                    async for message in queue_iter:
-                        if self._shutdown_event.is_set():
-                            break
-                        asyncio.create_task(self.process_message(message))
-                        
+                    message = None
+                    try:
+                        async for message in queue_iter:
+                            if self._shutdown_event.is_set():
+                                break
+                            task = asyncio.create_task(self.process_message(message))
+                            self._active_tasks.add(task)
+                            task.add_done_callback(self._active_tasks.discard)
+                    except Exception as e:
+                        if not self._shutdown_event.is_set():
+                            log_with_time(f'Error in message iterator: {e}', 'error')
+                            if message:
+                                try:
+                                    await message.ack()
+                                except Exception:
+                                    pass
+                        break
+
             except aio_pika.exceptions.ConnectionClosed:
-                log_with_time('RabbitMQ connection lost, attempting to reconnect...', 'error')
-                continue
+                if not self._shutdown_event.is_set():
+                    log_with_time('RabbitMQ connection lost, attempting to reconnect...', 'error')
+                    await asyncio.sleep(self._connection_retry_delay)
             except Exception as e:
-                log_with_time(f'Unexpected error in message processing loop: {str(e)}', 'error')
-                await asyncio.sleep(self._connection_retry_delay)
-                continue
+                if not self._shutdown_event.is_set():
+                    log_with_time(f'Unexpected error in message processing loop: {e}', 'error')
+                    await asyncio.sleep(self._connection_retry_delay)
 
 class Application:
     def __init__(self):
         self.rabbit_handler: Optional[RabbitMQHandler] = None
         self._shutdown_event = asyncio.Event()
         self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._shutdown_lock = asyncio.Lock()
+
+        
+    def _handle_signal(self, signame):
+        log_with_time(f"Received signal {signame}")
+        if not self._shutdown_event.is_set():
+            if self._loop and self._loop.is_running():
+                self._loop.create_task(self.shutdown(sig=signame))
         
     async def startup(self):
         log_with_time("Starting application...")
         
         self._loop = asyncio.get_running_loop()
+            
+        if sys.platform != 'win32':
+            for sig in (signal.SIGTERM, signal.SIGINT):
+                self._loop.add_signal_handler(
+                    sig,
+                    lambda s=sig: self._handle_signal(s)
+                )
+        else:
+            def win_signal_handler():
+                if not self._shutdown_event.is_set():
+                    asyncio.create_task(self.shutdown(sig='SIGINT'))
+            
+            self._loop.set_exception_handler(lambda loop, context: win_signal_handler() 
+                if isinstance(context.get('exception'), KeyboardInterrupt) else None)
             
         self.rabbit_handler = RabbitMQHandler(
             url=os.getenv("RABBITMQ_URL", "amqp://localhost"),
@@ -259,34 +318,43 @@ class Application:
         log_with_time("Application started successfully")
 
     async def shutdown(self, sig=None):
-        if self._shutdown_event.is_set():
+        if self._shutdown_lock.locked() or self._shutdown_event.is_set():
             return
-        
-        log_with_time("Shutting down application...")
-        self._shutdown_event.set()
-        
-        if self.rabbit_handler:
-            await self.rabbit_handler.cleanup()
+
+        async with self._shutdown_lock:
+            log_with_time(f"Shutting down application... (Signal: {sig})")
+            self._shutdown_event.set()
+
+            if self.rabbit_handler:
+                await self.rabbit_handler.cleanup()
+
+            tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
             
-        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-        
-        try:
-            await asyncio.wait_for(asyncio.gather(*tasks, return_exceptions=True), timeout=5)
-        except asyncio.TimeoutError:
-            log_with_time("Some tasks did not complete in time, forcing shutdown")
-            for task in tasks:
-                task.cancel()
-                    
-        log_with_time("Application shutdown complete")
-        
-        if self._loop and self._loop.is_running():
-            self._loop.stop()
+            try:
+                done, pending = await asyncio.wait(tasks, timeout=2)
+                for task in pending:
+                    if not task.done():
+                        task.cancel()
+                
+                if pending:
+                    await asyncio.wait(pending, timeout=1)
+            except asyncio.TimeoutError:
+                log_with_time("Some tasks did not complete in time")
+            except Exception as e:
+                log_with_time(f"Error during shutdown: {e}", 'error')
+
+            log_with_time("Application shutdown complete")
+            
+            if self._loop and self._loop.is_running():
+                self._loop.stop()
 
     async def run(self):
         await self.startup()
         try:
             if self.rabbit_handler:
                 await self.rabbit_handler.start()
+        except asyncio.CancelledError:
+            pass
         except Exception as e:
             log_with_time(f"Error in main loop: {e}", 'critical')
             traceback.print_exc()
@@ -307,6 +375,8 @@ def main():
         else:
             log_with_time('Detected Unix platform, using default asyncio loop')
             asyncio.run(app.run())
+    except KeyboardInterrupt:
+        log_with_time("Received keyboard interrupt")
     except Exception as e:
         log_with_time(f"Fatal error: {e}", 'critical')
         traceback.print_exc()
