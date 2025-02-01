@@ -16,6 +16,8 @@ export function Login() {
 
     const [type, setType] = useState<'login' | 'register'>('login')
 
+    const [isLoading, setIsLoading] = useState(false);
+
     const [notification, setNotification] = useState<NotificationProps>({ message: '', description: '', type: ''});
 
     const [formData, setFormData] = useState<LoginFormType | RegisterFormType>({
@@ -32,9 +34,11 @@ export function Login() {
         }))
     }
 
-
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        if (isLoading) return;
+
+        setIsLoading(true);
         try {
             if (type === 'login') {
                 const { email, password } = formData as LoginFormType;
@@ -53,6 +57,8 @@ export function Login() {
                 description: errorMessage, 
                 type: 'error'
             });
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -99,8 +105,9 @@ export function Login() {
                                     value={(formData as LoginFormType).email || (formData as RegisterFormType).email}
                                     onChange={handleChange}
                                     required
+                                    disabled={isLoading}
                                     autoComplete="email"
-                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 />
                             </div>
                         </div>
@@ -118,7 +125,8 @@ export function Login() {
                                     value={(formData as RegisterFormType).name}
                                     onChange={handleChange}
                                     required
-                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    disabled={isLoading}
+                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 />
                             </div>
                         </div>
@@ -138,8 +146,9 @@ export function Login() {
                                     value={(formData as LoginFormType).password || (formData as RegisterFormType).password}
                                     onChange={handleChange}
                                     required
+                                    disabled={isLoading}
                                     autoComplete="current-password"
-                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 />
                             </div>
                         </div>
@@ -147,11 +156,14 @@ export function Login() {
                         <div>
                             <button
                                 type="submit"
-                                className={`flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600
-                                            ${ type === 'register' ? 'bg-indigo-600' : 'bg-indigo-600'}`   
-                                          }
+                                className={`flex w-full justify-center rounded-md px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600
+                                    ${isLoading 
+                                        ? 'bg-gray-400 cursor-not-allowed' 
+                                        : 'bg-indigo-600 hover:bg-indigo-500'}`}
                             >
-                                {type === 'register' ? 'Sign up' : 'Sign in'}
+                                {isLoading 
+                                    ? (type === 'register' ? 'Signing up...' : 'Signing in...') 
+                                    : (type === 'register' ? 'Sign up' : 'Sign in')}
                             </button>
                         </div>
                     </form>
@@ -161,7 +173,8 @@ export function Login() {
                             <>
                             Not a member?{' '}
                             <button
-                                className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
+                                disabled={isLoading}
+                                className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500 disabled:text-gray-400 disabled:cursor-not-allowed"
                                 onClick={() => setType('register')}
                             >
                                 Register account
@@ -171,7 +184,8 @@ export function Login() {
                             <>
                              Already have an account?{' '}
                             <button
-                                className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
+                                disabled={isLoading}
+                                className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500 disabled:text-gray-400 disabled:cursor-not-allowed"
                                 onClick={() => setType('login')}
                             >
                                 Log in

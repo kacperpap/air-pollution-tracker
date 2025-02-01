@@ -128,7 +128,7 @@ export function Overview() {
     }
 
     return (
-      <div className="max-w-[96rem] mx-auto p-6 bg-white shadow-md rounded-lg mt-6 mb-50 overflow-y-auto">
+      <>
         {notification.type && (
             <Notification
               message={notification.message}
@@ -137,240 +137,252 @@ export function Overview() {
               duration={4000}
               onClose={handleCloseNotification}
             />
-          )}
-        <ul role="list" className="divide-y divide-gray-100">
-          {droneFlights
-            .filter(droneFlight => droneFlight.id !== null)
-            .map((droneFlight) => (
-            <li key={droneFlight.id} className="flex flex-col gap-y-4 py-5">
-              <div className="flex justify-between items-center gap-x-6">
-                <div className="flex items-center gap-x-4">
-                  <div className="flex h-12 w-12 flex-none items-center justify-center rounded-lg bg-gray-50 hover:bg-white">
-                    <DocumentIcon className="h-6 w-6 text-gray-600 hover:text-indigo-600" />
+        )}
+
+        {!droneFlights.length ? (
+          <div className="flex items-center justify-center h-full w-full bg-gray-100">
+            <div className="text-center p-4">
+              <h1 className="text-xl font-bold text-gray-800">Empty</h1>
+              <p className="mt-2 font-semibold text-gray-600">There is no drone flights saved</p>
+            </div>
+          </div>
+        ) : (
+          <div className="max-w-[96rem] mx-auto p-6 bg-white shadow-md rounded-lg mt-6 mb-50 overflow-y-auto">
+            <ul role="list" className="divide-y divide-gray-100">
+            {droneFlights
+              .filter(droneFlight => droneFlight.id !== null)
+              .map((droneFlight) => (
+              <li key={droneFlight.id} className="flex flex-col gap-y-4 py-5">
+                <div className="flex justify-between items-center gap-x-6">
+                  <div className="flex items-center gap-x-4">
+                    <div className="flex h-12 w-12 flex-none items-center justify-center rounded-lg bg-gray-50 hover:bg-white">
+                      <DocumentIcon className="h-6 w-6 text-gray-600 hover:text-indigo-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold leading-6 text-gray-900">{droneFlight.title}</p>
+                    </div>
                   </div>
+                  <div className="flex items-center gap-x-4">
+                    <p className="text-sm leading-6 text-gray-900">
+                    Flight date: {droneFlight.date ? new Date(droneFlight.date).toISOString().substring(0,10) : 'Date not available'}
+                    </p>
+                    <p className="text-sm leading-6 text-gray-900">
+                      {droneFlight.measurements.length} {droneFlight.measurements.length === 1 ? 'measurement' : 'measurements'}
+                    </p>
+                    <button onClick={() => toggleExpand(droneFlight.id)} className="flex items-center gap-x-1 text-sm font-semibold leading-6 text-gray-900">
+                      {expandedFlight === droneFlight.id ? 'Collapse' : 'Expand'}
+                      {expandedFlight === droneFlight.id ? (
+                        <ChevronUpIcon aria-hidden="true" className="h-5 w-5 flex-none text-gray-400" />
+                      ) : (
+                        <ChevronDownIcon aria-hidden="true" className="h-5 w-5 flex-none text-gray-400" />
+                      )}
+                    </button>  
+                    <DownloadFlightData droneFlight={droneFlight} />
+                    <button
+                      onClick={() => openDeleteDialog(droneFlight.id)}
+                      className="flex h-12 w-12 flex-none items-center justify-center rounded-lg bg-gray-50 hover:bg-white hover:text-red-500"
+                    >
+                      <TrashIcon aria-hidden="true" className="h-6 w-6 text-gray-600 hover:text-red-500" />
+                    </button>
+                  </div>
+                </div>
+                {expandedFlight === droneFlight.id && (
                   <div>
-                    <p className="text-sm font-semibold leading-6 text-gray-900">{droneFlight.title}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-x-4">
-                  <p className="text-sm leading-6 text-gray-900">
-                  Flight date: {droneFlight.date ? new Date(droneFlight.date).toISOString().substring(0,10) : 'Date not available'}
-                  </p>
-                  <p className="text-sm leading-6 text-gray-900">
-                    {droneFlight.measurements.length} {droneFlight.measurements.length === 1 ? 'measurement' : 'measurements'}
-                  </p>
-                  <button onClick={() => toggleExpand(droneFlight.id)} className="flex items-center gap-x-1 text-sm font-semibold leading-6 text-gray-900">
-                    {expandedFlight === droneFlight.id ? 'Collapse' : 'Expand'}
-                    {expandedFlight === droneFlight.id ? (
-                      <ChevronUpIcon aria-hidden="true" className="h-5 w-5 flex-none text-gray-400" />
-                    ) : (
-                      <ChevronDownIcon aria-hidden="true" className="h-5 w-5 flex-none text-gray-400" />
-                    )}
-                  </button>  
-                  <DownloadFlightData droneFlight={droneFlight} />
-                  <button
-                    onClick={() => openDeleteDialog(droneFlight.id)}
-                    className="flex h-12 w-12 flex-none items-center justify-center rounded-lg bg-gray-50 hover:bg-white hover:text-red-500"
-                  >
-                    <TrashIcon aria-hidden="true" className="h-6 w-6 text-gray-600 hover:text-red-500" />
-                  </button>
-                </div>
-              </div>
-              {expandedFlight === droneFlight.id && (
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">Flight description</h3>
-                  
-                  <p className="mt-3 text-sm leading-5 text-gray-800">{droneFlight.description}</p>
-                  <div className="mt-4">
-                    <h3 className="text-lg font-semibold text-gray-800">Measurement Points</h3>
-                    <div className="mt-2 max-h-56 overflow-y-auto bg-gray-100 rounded-md shadow-sm p-4">
-                      <div className="grid grid-cols-[repeat(11,minmax(150px,1fr))] gap-4 text-sm font-semibold text-center text-gray-700">
-                        <div>Name</div>
-                        <div>Latitude (°)</div>
-                        <div>Longitude (°)</div>
-                        <div>Temperature (°C)</div>
-                        <div>Pressure (Pa)</div>
-                        <div>Wind Speed (m/s)</div>
-                        <div>Wind Direction (°)</div>
-                        <div>CO (μg/m3)</div>
-                        <div>O3 (μg/m3)</div>
-                        <div>SO2 (μg/m3)</div>
-                        <div>NO2 (μg/m3)</div>
+                    <h3 className="text-lg font-semibold text-gray-800">Flight description</h3>
+                    
+                    <p className="mt-3 text-sm leading-5 text-gray-800">{droneFlight.description}</p>
+                    <div className="mt-4">
+                      <h3 className="text-lg font-semibold text-gray-800">Measurement Points</h3>
+                      <div className="mt-2 max-h-56 overflow-y-auto bg-gray-100 rounded-md shadow-sm p-4">
+                        <div className="grid grid-cols-[repeat(11,minmax(150px,1fr))] gap-4 text-sm font-semibold text-center text-gray-700">
+                          <div>Name</div>
+                          <div>Latitude (°)</div>
+                          <div>Longitude (°)</div>
+                          <div>Temperature (°C)</div>
+                          <div>Pressure (Pa)</div>
+                          <div>Wind Speed (m/s)</div>
+                          <div>Wind Direction (°)</div>
+                          <div>CO (μg/m3)</div>
+                          <div>O3 (μg/m3)</div>
+                          <div>SO2 (μg/m3)</div>
+                          <div>NO2 (μg/m3)</div>
+                        </div>
+                        <div className="mt-2 max-h-56 bg-gray-100 p-2 rounded-md shadow-sm">
+                          {droneFlight.measurements.map((measurement, index) => (
+                            <div
+                              key={index}
+                              className="grid grid-cols-[repeat(11,minmax(150px,1fr))] gap-4 p-2 border-gray-300 shadow-sm relative"
+                            >
+                              <div className="flex items-center justify-center">
+                                <input
+                                    type="text"
+                                    value={measurement.name}
+                                    readOnly
+                                    className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                                />
+                              </div>
+                              <div className="flex items-center justify-center">
+                                <input
+                                    type="text"
+                                    value={measurement.latitude ?? ''}
+                                    readOnly
+                                    className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                                />
+                              </div>
+                              <div className="flex items-center justify-center">
+                                <input
+                                    type="text"
+                                    value={measurement.longitude ?? ''}
+                                    readOnly
+                                    className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                                />
+                              </div>
+                              <div className="flex items-center justify-center">
+                                <input
+                                    type="text"
+                                    value={measurement.temperature ?? ''}
+                                    readOnly
+                                    className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                                />
+                              </div>
+                              <div className="flex items-center justify-center">
+                                <input
+                                    type="text"
+                                    value={measurement.pressure ?? ''}
+                                    readOnly
+                                    className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                                />
+                              </div>
+                              <div className="flex items-center justify-center">
+                                <input
+                                    type="text"
+                                    value={measurement.windSpeed ?? ''}
+                                    readOnly
+                                    className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                                />
+                              </div>
+                              <div className="flex items-center justify-center">
+                                <input
+                                    type="text"
+                                    value={measurement.windDirection ?? ''}
+                                    readOnly
+                                    className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                                />
+                              </div>
+                              <div className="flex items-center justify-center">
+                                <input
+                                  type="text"
+                                  value={measurement.pollutionMeasurements.find(p => p.type === 'CO')?.value ?? ''}
+                                  readOnly
+                                  className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${measurement.pollutionMeasurements.find(p => p.type === 'CO') ? '' : 'bg-gray-200'}`}
+                                />
+                              </div>
+
+                              <div className="flex items-center justify-center">
+                                <input
+                                  type="text"
+                                  value={measurement.pollutionMeasurements.find(p => p.type === 'O3')?.value ?? ''}
+                                  readOnly
+                                  className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${measurement.pollutionMeasurements.find(p => p.type === 'O3') ? '' : 'bg-gray-200'}`}
+                                />
+                              </div>
+
+                              <div className="flex items-center justify-center">
+                                <input
+                                  type="text"
+                                  value={measurement.pollutionMeasurements.find(p => p.type === 'SO2')?.value ?? ''}
+                                  readOnly
+                                  className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${measurement.pollutionMeasurements.find(p => p.type === 'SO2') ? '' : 'bg-gray-200'}`}
+                                />
+                              </div>
+
+                              <div className="flex items-center justify-center">
+                                <input
+                                  type="text"
+                                  value={measurement.pollutionMeasurements.find(p => p.type === 'NO2')?.value ?? ''}
+                                  readOnly
+                                  className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${measurement.pollutionMeasurements.find(p => p.type === 'NO2') ? '' : 'bg-gray-200'}`}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div className="mt-2 max-h-56 bg-gray-100 p-2 rounded-md shadow-sm">
-                        {droneFlight.measurements.map((measurement, index) => (
-                          <div
-                            key={index}
-                            className="grid grid-cols-[repeat(11,minmax(150px,1fr))] gap-4 p-2 border-gray-300 shadow-sm relative"
-                          >
-                            <div className="flex items-center justify-center">
-                              <input
-                                  type="text"
-                                  value={measurement.name}
-                                  readOnly
-                                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
-                              />
-                            </div>
-                            <div className="flex items-center justify-center">
-                              <input
-                                  type="text"
-                                  value={measurement.latitude ?? ''}
-                                  readOnly
-                                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
-                              />
-                            </div>
-                            <div className="flex items-center justify-center">
-                              <input
-                                  type="text"
-                                  value={measurement.longitude ?? ''}
-                                  readOnly
-                                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
-                              />
-                            </div>
-                            <div className="flex items-center justify-center">
-                              <input
-                                  type="text"
-                                  value={measurement.temperature ?? ''}
-                                  readOnly
-                                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
-                              />
-                            </div>
-                            <div className="flex items-center justify-center">
-                              <input
-                                  type="text"
-                                  value={measurement.pressure ?? ''}
-                                  readOnly
-                                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
-                              />
-                            </div>
-                            <div className="flex items-center justify-center">
-                              <input
-                                  type="text"
-                                  value={measurement.windSpeed ?? ''}
-                                  readOnly
-                                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
-                              />
-                            </div>
-                            <div className="flex items-center justify-center">
-                              <input
-                                  type="text"
-                                  value={measurement.windDirection ?? ''}
-                                  readOnly
-                                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
-                              />
-                            </div>
-                            <div className="flex items-center justify-center">
-                              <input
-                                type="text"
-                                value={measurement.pollutionMeasurements.find(p => p.type === 'CO')?.value ?? ''}
-                                readOnly
-                                className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${measurement.pollutionMeasurements.find(p => p.type === 'CO') ? '' : 'bg-gray-200'}`}
-                              />
-                            </div>
-
-                            <div className="flex items-center justify-center">
-                              <input
-                                type="text"
-                                value={measurement.pollutionMeasurements.find(p => p.type === 'O3')?.value ?? ''}
-                                readOnly
-                                className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${measurement.pollutionMeasurements.find(p => p.type === 'O3') ? '' : 'bg-gray-200'}`}
-                              />
-                            </div>
-
-                            <div className="flex items-center justify-center">
-                              <input
-                                type="text"
-                                value={measurement.pollutionMeasurements.find(p => p.type === 'SO2')?.value ?? ''}
-                                readOnly
-                                className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${measurement.pollutionMeasurements.find(p => p.type === 'SO2') ? '' : 'bg-gray-200'}`}
-                              />
-                            </div>
-
-                            <div className="flex items-center justify-center">
-                              <input
-                                type="text"
-                                value={measurement.pollutionMeasurements.find(p => p.type === 'NO2')?.value ?? ''}
-                                readOnly
-                                className={`block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm ${measurement.pollutionMeasurements.find(p => p.type === 'NO2') ? '' : 'bg-gray-200'}`}
-                              />
-                            </div>
-                          </div>
-                        ))}
+                      <div className="mt-4 flex justify-end gap-6">
+                        <button
+                          type="button"
+                          onClick={() => showOnMap(expandedFlight)}
+                          className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                        >
+                          Show on map
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => editDroneInput(expandedFlight)}
+                          className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                        >
+                          Edit measurement
+                        </button>
                       </div>
                     </div>
-                    <div className="mt-4 flex justify-end gap-6">
-                      <button
-                        type="button"
-                        onClick={() => showOnMap(expandedFlight)}
-                        className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                      >
-                        Show on map
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => editDroneInput(expandedFlight)}
-                        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                      >
-                        Edit measurement
-                      </button>
-                    </div>
                   </div>
-                </div>
-              )}
-  
-              {openDialog === droneFlight.id && (
-                <Dialog open={true} onClose={closeDeleteDialog} className="relative z-10">
-                  <DialogBackdrop
-                    transition
-                    className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-                  />
-                  <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-                    <div className="flex min-h-full items-center justify-center p-4 text-center">
-                      <DialogPanel
-                        transition
-                        className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg"
-                      >
-                        <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                          <div className="sm:flex sm:items-start">
-                            <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                              <ExclamationTriangleIcon aria-hidden="true" className="h-6 w-6 text-red-600" />
-                            </div>
-                            <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
-                              <DialogTitle as="h3" className="text-base font-semibold leading-6 text-gray-900">
-                                Delete Flight
-                              </DialogTitle>
-                              <div className="mt-2">
-                                <p className="text-sm text-gray-500">
-                                  Are you sure you want to delete this flight? This action cannot be undone.
-                                </p>
+                )}
+    
+                {openDialog === droneFlight.id && (
+                  <Dialog open={true} onClose={closeDeleteDialog} className="relative z-10">
+                    <DialogBackdrop
+                      transition
+                      className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                    />
+                    <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+                      <div className="flex min-h-full items-center justify-center p-4 text-center">
+                        <DialogPanel
+                          transition
+                          className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg"
+                        >
+                          <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                            <div className="sm:flex sm:items-start">
+                              <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <ExclamationTriangleIcon aria-hidden="true" className="h-6 w-6 text-red-600" />
+                              </div>
+                              <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                                <DialogTitle as="h3" className="text-base font-semibold leading-6 text-gray-900">
+                                  Delete Flight
+                                </DialogTitle>
+                                <div className="mt-2">
+                                  <p className="text-sm text-gray-500">
+                                    Are you sure you want to delete this flight? This action cannot be undone.
+                                  </p>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteFlight(droneFlight.id)}
-                            className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto"
-                          >
-                            Delete
-                          </button>
-                          <button
-                            type="button"
-                            onClick={closeDeleteDialog}
-                            className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </DialogPanel>
+                          <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteFlight(droneFlight.id)}
+                              className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto"
+                            >
+                              Delete
+                            </button>
+                            <button
+                              type="button"
+                              onClick={closeDeleteDialog}
+                              className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </DialogPanel>
+                      </div>
                     </div>
-                  </div>
-                </Dialog>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
+                  </Dialog>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+        )}
+      </>
     );
 }

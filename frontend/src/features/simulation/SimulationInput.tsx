@@ -45,6 +45,7 @@ export function SimulationInput() {
 
     useEffect(() => {
         const fetchFlightData = async () => {
+          setLoading(true);
           try {
             const flights = await getAllDroneFlights(); 
             setDroneFlights(flights); 
@@ -54,6 +55,8 @@ export function SimulationInput() {
               description: 'Failed to fetch flight data: ' + error,
               type: 'error',
             });
+          } finally {
+            setLoading(false);
           }
         };
         fetchFlightData();
@@ -86,7 +89,7 @@ export function SimulationInput() {
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-    
+        
 
         if (formData.numSteps <= 0) {
             setNotification({
@@ -151,7 +154,7 @@ export function SimulationInput() {
           return;
         }
     
-
+        if(loading) return;
         try {
             setLoading(true)
             

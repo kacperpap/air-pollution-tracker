@@ -18,6 +18,8 @@ export function DroneInput() {
 
     const [isEditMode, setIsEditMode] = useState(false);
 
+    const [isSaving, setIsSaving] = useState(false);
+
     const [notification, setNotification] = useState<NotificationProps>({
         message: "",
         description: "",
@@ -207,6 +209,7 @@ export function DroneInput() {
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
+        if(isSaving) return;
 
         if (!formData.title.trim()) {
             setNotification({ message: 'Validation Error', description: 'Title is required.', type: 'error'
@@ -284,7 +287,7 @@ export function DroneInput() {
             })),
         };
         
-        
+        setIsSaving(true);
         try {
             if (isEditMode && flightId) {
                 await editDroneFlight(preparedEditData, Number(flightId));
@@ -310,6 +313,8 @@ export function DroneInput() {
                 description: 'Failed to save data: ' + error,
                 type: 'error'
             })
+        } finally {
+            setIsSaving(false);
         }
     }
 
@@ -619,11 +624,13 @@ export function DroneInput() {
                                     type: 'error'
                                 });
                             }}
+                            disabled={isSaving}
                         />
                     </div>
                     <div className="flex items-center gap-x-6">
                         <button 
                             type="button"
+                            disabled={isSaving}
                             onClick={() => {
                                 if (isEditMode) {
                                     navigate('/data-overview');
@@ -631,13 +638,14 @@ export function DroneInput() {
                                     setFormData({ title: '', description: '', measurements: [] });
                                 }
                             }}
-                            className="text-sm font-semibold leading-6 text-gray-900"
+                            className="text-sm font-semibold leading-6 text-gray-900 disabled:cursor-not-allowed"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                            disabled={isSaving}
+                            className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-100 disabled:cursor-not-allowed"
                         >
                             {isEditMode ? 'Save Edit' : 'Save'}
                         </button>
