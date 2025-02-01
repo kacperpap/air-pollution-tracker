@@ -186,7 +186,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
        * rabbit will distribute fairly all messages, so that each consumer executes max 1 
        * message at a time
        */
-      this.channel.prefetch(1, true);
+      this.channel.prefetch(4, true);
     
       this.channel.consume(
         replyTo,
