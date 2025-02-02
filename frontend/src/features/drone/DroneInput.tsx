@@ -390,6 +390,9 @@ export function DroneInput() {
     
             <div className="col-span-full">
                 <h3 className="text-lg font-semibold text-gray-800">Measurement Points</h3>
+                <p className="mt-1 text-sm leading-6 text-gray-600">
+                For valid simulation, you must specify at least two data points.
+                </p>
                 <div className="mt-2 max-h-56 overflow-y-auto overflow-x-auto bg-gray-100 p-2 rounded-md shadow-sm">
                     <div className="grid grid-cols-[repeat(12,minmax(150px,1fr))] gap-4 p-2">
                         <div className="flex items-center justify-center text-sm font-semibold text-center text-gray-700 mr-10">Name</div>
@@ -502,7 +505,7 @@ export function DroneInput() {
 
                 <div>
                     <h4 className="text-md font-semibold text-gray-800">Basic Data</h4>
-                    <p className="text-sm text-gray-600">Please enter the basic information for the point.</p>
+                    <p className="text-sm text-gray-600">Please enter the basic information for the point. Separate float values with dot instead of comma. Remember that latitude must be in range -90 and 90 degrees, and longitude in -180 and 180 degress.</p>
                     <div className="grid grid-cols-3 gap-4 mt-2">
                     <div>
                         <label className="block text-sm font-medium leading-6 text-gray-900">Name</label>

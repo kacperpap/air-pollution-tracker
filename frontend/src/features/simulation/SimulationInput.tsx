@@ -247,7 +247,7 @@ export function SimulationInput() {
           <div className="space-y-6 border-b border-gray-900/10 pb-8">
             <h3 className="text-base text-lg font-semibold leading-7 text-gray-900">Simulation Setup</h3>
             <p className="mt-1 text-sm leading-6 text-gray-600">
-              Use this form to configure a simulation based on data from a previously saved drone flight. Adjust parameters for better accuracy.
+              Use this form to configure a simulation based on data from previously saved drone flights. Adjust parameters for better accuracy.
             </p>
           </div>
     
@@ -287,7 +287,7 @@ export function SimulationInput() {
                 min='1'
                 className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
               />
-              <p className="text-sm text-gray-600 mt-1">Define the total number of simulation steps (iterations).</p>
+              <p className="text-sm text-gray-600 mt-1">Define the total number of simulation steps (iterations). Iteration is set by default as one second period of time, but this may change if stability condition is violated.</p>
             </div>
     
           
@@ -338,7 +338,7 @@ export function SimulationInput() {
                 max="0.99"
                 className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
               />
-              <p className="text-sm text-gray-600 mt-1">Set the exponenital decay rate for decay mechanism in simulation</p>
+              <p className="text-sm text-gray-600 mt-1">Set the exponenital decay rate for decay mechanism in simulation.</p>
             </div>
 
             {/* Emission rate (1/h) */}
@@ -354,7 +354,7 @@ export function SimulationInput() {
                 max="0.99"
                 className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
               />
-              <p className="text-sm text-gray-600 mt-1">Set the exponenital emission rate for emission mechanism in simulation</p>
+              <p className="text-sm text-gray-600 mt-1">Set the exponenital emission rate for emission mechanism in simulation.</p>
             </div>
 
     
@@ -414,7 +414,7 @@ export function SimulationInput() {
                 min="0"
                 className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
               />
-              <p className="text-sm text-gray-600 mt-1">Set the initial distance between particles.</p>
+              <p className="text-sm text-gray-600 mt-1">Set the initial distance for neighbours to be searched from given data point during intrpolation. This parameter enables you to make your interpolated data mor smooth (for higher value of param).</p>
             </div>
 
             {/* Snap interval */}
@@ -429,7 +429,7 @@ export function SimulationInput() {
                 max="100"
                 className="block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
               />
-              <p className="text-sm text-gray-600 mt-1">Define the frequency of simulation snap for further animation</p>
+              <p className="text-sm text-gray-600 mt-1">Define the frequency of simulation snap for further animation.</p>
             </div>
     
             <div className='flex items-cneter justify-end '>

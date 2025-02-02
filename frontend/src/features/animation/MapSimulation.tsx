@@ -116,7 +116,7 @@ export default function MapSimulation() {
   useEffect(() => {
     if (state.simulationData && state.map && state.flightData) {
       const { pollutants, environment } = state.simulationData;
-
+  
       const availableParameters = [
         ...Object.keys(pollutants.final_step)
           .filter((p): p is keyof PollutantDataType => p in pollutants.final_step)
@@ -126,20 +126,25 @@ export default function MapSimulation() {
           .filter(param => environment[param as keyof EnvironmentType]?.length > 0)
           .filter(param => param !== 'windSpeed' && param !== 'windDirection')
       ];
-
+  
       const initialParameter = availableParameters.length > 0 ? availableParameters[0] : '';
-
+  
       updateState({ 
         availableParameters,
         selectedParameter: initialParameter 
       });
-
+  
       if (initialParameter) {
         clearPreviousVisualization();
+  
+        const initialStep = state.simulationData.pollutants.steps
+          ? state.simulationData.pollutants.steps[0]
+          : state.simulationData.pollutants.final_step;
+  
         iniciateVisulaization({
           environment: state.simulationData.environment,
           grid: state.simulationData.grid,
-          step: state.simulationData.pollutants.final_step,
+          step: initialStep,
           flightData: state.flightData,
           map: state.map,
           selectedParameter: initialParameter,
@@ -151,6 +156,7 @@ export default function MapSimulation() {
       }
     }
   }, [state.simulationData, state.map, state.flightData, updateState]);
+  
 
 
 
