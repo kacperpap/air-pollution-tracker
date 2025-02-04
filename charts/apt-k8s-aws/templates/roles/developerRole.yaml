@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: apt-developer
+  namespace: staging
+rules:
+- apiGroups: ["", "apps", "networking.k8s.io"]
+  resources: ["pods", "services", "deployments", "replicasets", "configmaps", "ingresses"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get", "list"]

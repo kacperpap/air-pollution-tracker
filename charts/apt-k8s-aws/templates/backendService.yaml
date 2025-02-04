@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "apt.name" . }}-{{ .Values.backend.name }}
-  namespace: {{ .Values.backend.namespace }}
+  namespace: {{ .Values.application.namespace }}
 spec:
   type: {{ .Values.backend.service.type }}
   selector:

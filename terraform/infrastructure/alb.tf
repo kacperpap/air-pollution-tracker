@@ -41,7 +41,7 @@ resource "helm_release" "aws_load_balancer_controller" {
   chart      = "aws-load-balancer-controller"
   version    = "1.10.0" 
   namespace  = "kube-system"
-  depends_on = [module.eks, aws_iam_role.alb_controller_role]
+  depends_on = [module.eks, aws_iam_role.alb_controller_role, null_resource.helm_repo_update]
 
   set {
     name  = "clusterName"

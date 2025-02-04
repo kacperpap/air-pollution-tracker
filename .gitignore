@@ -26,3 +26,4 @@ certs/
 local-certs/
 *.csr
 *.key
+aws-user-certs/aws

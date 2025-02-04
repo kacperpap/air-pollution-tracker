@@ -3,11 +3,6 @@ kind: Deployment
 metadata:
   name: {{ include "apt.name" . }}-{{ .Values.rabbitmq.name }}
 spec:
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 0
   replicas: 1
   selector:
     matchLabels:
@@ -45,3 +40,11 @@ spec:
               name: amqp
             - containerPort: {{ .Values.rabbitmq.container.targetPorts.management }}
               name: management
+          readinessProbe:
+            exec:
+              command: ["rabbitmq-diagnostics", "check_port_connectivity"]
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          

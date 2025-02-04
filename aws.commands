@@ -55,7 +55,10 @@
                     "elasticloadbalancing:*",
                     "kms:*",
                     "logs:*",
-                    "cloudwatch:*"
+                    "cloudwatch:*",
+                    "secretsmanager:*",
+                    "ecs:*",
+                    "s3:*"
                 ],
                 "Resource": "*"
                 }
@@ -109,6 +112,10 @@
 
         3. Update existing policy:
             aws iam create-policy-version --policy-arn arn:aws:iam::<*********>:policy/<ExistingPolicyName> --policy-document file://updated-policy.json --set-as-default
+        
+        4. In case of error due to too many version of policy (5), remove the oldest one:
+            aws iam delete-policy-version --policy-arn arn:aws:iam::<*********>:policy/<ExistingPolicyName> --version-id v1
+
 
     d\ Verify user policies:
         aws iam list-attached-user-policies --user-name terraform
@@ -152,7 +159,11 @@ aws iam delete-virtual-mfa-device --serial-number <SERIAL_NUMBER>
     aws ecr describe-repositories --repository-names YOUR_REPOSITORY_NAME --output json
 
 2.a Descirbe images in repo:
+    a\
     aws ecr describe-images --repository-name YOUR_REPOSITORY_NAME --region YOUR_REGION
+
+    b\ delete image
+    aws ecr batch-delete-image --repository-name air-pollution-tracker --image-ids imageDigest=sha256:<sha>
 
 3. Check all VPCs in region:
     aws ec2 describe-vpcs --query "Vpcs[*].{ID:VpcId, CIDR:CidrBlock, Name:Tags[?Key=='Name']|[0].Value}" --output table
@@ -190,5 +201,32 @@ aws iam delete-virtual-mfa-device --serial-number <SERIAL_NUMBER>
 9. Check route tables in public subnets:
     aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<eks-vpc-id>"
 
-9. AWS_ACCOUNT_ID:
+10. AWS_ACCOUNT_ID:
     aws sts get-caller-identity --query Account --output text
+
+11. Check certificates:
+    a\ list certificates
+    aws acm list-certificates
+
+    b\ describe certificates
+    aws acm describe-certificate --certificate-arn <cert_arn>
+
+    c\ check in aws route 53 console if you have set below name servers for your hosted zone
+    ns-309.awsdns-38.com
+    ns-634.awsdns-15.net
+    ns-1638.awsdns-12.co.uk
+    ns-1250.awsdns-28.org
+
+    d\ check in wsl via dig tool propagation of your domain record
+    dig <ResourceRecord.name from b\>
+
+    dig returns:
+        QUESTION SECTION (question about ResourceRecord.name from b\)
+        ANSWER 
+            should be like:
+            ;; ANSWER SECTION:
+            ResourceRecord.name from b\ 60 IN CNAME ResourceRecord.value from b\
+            example:
+            _711c22c0b7c9759b41a93f9ba3b670e3.air-pollution-tracker.aws.com. 60 IN CNAME _1572fb9785ec9c0e8f216aaf12eeeeb6.zfyfvmchrl.acm-validations.aws.
+        AUTHORITY SECTION (DNS server responsible for domain)
+        HEADER, status NXDOMAIN tells that domain does not exist in DNS system

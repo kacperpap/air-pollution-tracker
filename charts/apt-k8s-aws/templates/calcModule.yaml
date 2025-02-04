@@ -4,10 +4,12 @@ metadata:
   name: {{ include "apt.name" . }}-{{ .Values.calc_module.name }}
 spec:
   strategy:
-    type: RollingUpdate
+    type: {{ .Values.backend.strategy.type }}
+    {{- if .Values.backend.strategy.type | toString | lower | eq "rollingupdate" }}
     rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 0
+      maxSurge: {{ .Values.backend.strategy.maxSurge }}
+      maxUnavailable: {{ .Values.backend.strategy.maxUnavailable }}
+    {{- end}}
   replicas: {{ .Values.calc_module.replicaCount }}
   selector:
     matchLabels:

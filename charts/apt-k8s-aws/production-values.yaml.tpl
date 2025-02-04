@@ -1,7 +1,10 @@
+application:
+  namespace: ${namespace}
+
 frontend:
   name: frontend
   namespace: ${namespace}
-  replicaCount: 1
+  replicaCount: 2
   image:
     repository: ${repository_url}
     tag: frontend-${environment}-latest
@@ -18,11 +21,15 @@ frontend:
     limits:
       memory: "256Mi"
       cpu: "500m"
+  strategy:
+    type: RollingUpdate
+    maxUnavailable: 0
+    maxSurge: 1
 
 backend:
   name: backend
   namespace: ${namespace}
-  replicaCount: 1
+  replicaCount: 2
   image:
     repository: ${repository_url}
     tag: backend-${environment}-latest
@@ -44,11 +51,15 @@ backend:
     limits:
       memory: "512Mi"
       cpu: "300m"
+  strategy:
+    type: RollingUpdate
+    maxUnavailable: 0
+    maxSurge: 1
 
 calc_module:
   name: calc-module
   namespace: ${namespace}
-  replicaCount: 1
+  replicaCount: 2
   image:
     repository: ${repository_url}
     tag: calc-module-${environment}-latest
@@ -68,6 +79,10 @@ calc_module:
     limits:
       memory: "512Mi"
       cpu: "600m"
+  strategy:
+    type: RollingUpdate
+    maxUnavailable: 0
+    maxSurge: 1
 
 rabbitmq:
   name: rabbitmq
