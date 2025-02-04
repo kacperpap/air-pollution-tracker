@@ -52,7 +52,7 @@ jobs:
 
       - name: Build e2e images
         run: |
-            docker build -t cypress-test -f ./e2e/cypress.Dockerfile ./e2e/
+            docker build -t cypress-test -f ./e2e/cypress.aws.Dockerfile ./e2e/
 
       - name: Configure AWS credentials for ECR
         uses: aws-actions/configure-aws-credentials@v1
