@@ -121,11 +121,6 @@ module "eks" {
   }
 }
 
-resource "time_sleep" "wait_for_eks" {
-  depends_on = [module.eks]
-  create_duration = "60s"
-}
-
 resource "kubernetes_namespace" "production" {
   depends_on = [module.eks]
   metadata {
@@ -151,11 +146,6 @@ resource "helm_release" "nginx_ingress" {
   set {
     name  = "controller.service.type"
     value = "LoadBalancer"
-  }
-
-  set {
-    name  = "controller.service.annotations.service.beta.kubernetes.io/aws-load-balancer-type"
-    value = "alb" 
   }
 
   set {
@@ -189,9 +179,10 @@ data "kubernetes_service" "nginx_ingress" {
 }
 
 resource "aws_secretsmanager_secret" "app_secrets" {
-  name                        = "${var.project_name}-${var.environment}-secrets"
-  tags                        = local.common_tags
-  force_overwrite_replica_secret = true
+  name                            = "${var.project_name}-${var.environment}-secrets"
+  tags                            = local.common_tags
+  force_overwrite_replica_secret  = true
+  recovery_window_in_days         = 0
 }
 
 resource "aws_secretsmanager_secret_version" "app_secrets" {
@@ -293,11 +284,13 @@ data "terraform_remote_state" "ecr" {
 }
 
 resource "aws_s3_bucket" "test_results_bucket" {
+  depends_on = [time_sleep.wait_for_apt_deployment]
   bucket = "${var.project_name}-e2e-results"
   force_destroy = true
 }
 
 resource "aws_ecs_cluster" "e2e_tests_cluster" {
+  depends_on = [aws_s3_bucket.test_results_bucket]
   name = "${var.project_name}-e2e-tests-cluster"
 }
 
@@ -366,6 +359,7 @@ resource "aws_iam_policy" "ecs_task_execution_policy" {
 
 
 resource "aws_ecs_task_definition" "e2e_tests" {
+  depends_on = [ aws_ecs_cluster.e2e_tests_cluster, aws_iam_policy.ecs_task_execution_policy, aws_iam_role.ecs_task_execution, time_sleep.wait_for_apt_deployment ]
   family                   = "e2e-tests"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
@@ -389,8 +383,8 @@ resource "aws_ecs_task_definition" "e2e_tests" {
           readOnly = false
         }
       ]
-      command = [
-        "sh", "-c", "npm run test:e2e -- --headed && aws s3 sync /app/cypress/videos s3://${aws_s3_bucket.test_results_bucket.bucket}/ && echo 'Copied successfully'"
+      "command": [
+        "sh", "-c", "npm run test:e2e -- --headed; echo 'Testy zakończone. Zawartość /app/cypress/videos:'; ls -la /app/cypress/videos; aws s3 sync /app/cypress/videos s3://${aws_s3_bucket.test_results_bucket.bucket}/ && echo 'Copied successfully'"
       ]
     }
   ])
@@ -399,21 +393,6 @@ resource "aws_ecs_task_definition" "e2e_tests" {
     name = "test-results"
   }
 }
-
-# resource "aws_ecs_service" "e2e_tests_service" {
-#   name           = "e2e-tests-service"
-#   cluster        = aws_ecs_cluster.e2e_tests_cluster.id
-#   desired_count  = 1
-#   launch_type    = "FARGATE"
-#   task_definition = aws_ecs_task_definition.e2e_tests.arn
-
-#   network_configuration {
-#     subnets         = module.vpc.public_subnets
-#     security_groups = [aws_security_group.e2e_tests_sg.id]
-#     assign_public_ip = true
-#   }
-# }
-
 
 resource "aws_security_group" "e2e_tests_sg" {
   name_prefix = "${var.project_name}-e2e-tests"
@@ -430,6 +409,18 @@ resource "aws_security_group" "e2e_tests_sg" {
 }
 
 resource "null_resource" "run_e2e_tests" {
+  triggers = {
+    run_time = timestamp()
+  }
+
+  depends_on = [
+    aws_ecs_task_definition.e2e_tests,
+    aws_ecs_cluster.e2e_tests_cluster,
+    aws_security_group.e2e_tests_sg,
+    helm_release.app,
+    time_sleep.wait_for_apt_deployment
+  ]
+
   provisioner "local-exec" {
     command = <<EOT
     Write-Host "Uruchamiam zadanie ECS dla testów e2e..."
@@ -437,7 +428,7 @@ resource "null_resource" "run_e2e_tests" {
       --cluster "${aws_ecs_cluster.e2e_tests_cluster.id}" `
       --launch-type FARGATE `
       --task-definition "${aws_ecs_task_definition.e2e_tests.family}" `
-      --network-configuration "awsvpcConfiguration={subnets=[${join(",", module.vpc.public_subnets)}],securityGroups=[${aws_security_group.e2e_tests_sg.id}],assignPublicIp=\"ENABLED\"}" `
+      --network-configuration "awsvpcConfiguration={subnets=[${join(",", module.vpc.public_subnets)}],securityGroups=[${aws_security_group.e2e_tests_sg.id}],assignPublicIp='ENABLED'}" `
       --query "tasks[0].taskArn" --output text
 
     Write-Host "Otrzymany ARN zadania: $TASK_ARN"
@@ -445,27 +436,33 @@ resource "null_resource" "run_e2e_tests" {
     aws ecs wait tasks-stopped --cluster "${aws_ecs_cluster.e2e_tests_cluster.id}" --tasks $TASK_ARN
     Write-Host "Zadanie zakończone."
     EOT
-
     interpreter = ["PowerShell", "-Command"]
   }
-
-  depends_on = [
-    aws_ecs_task_definition.e2e_tests,
-    aws_ecs_cluster.e2e_tests_cluster,
-    aws_security_group.e2e_tests_sg
-  ]
 }
-
-
-
 
 resource "null_resource" "download_results_from_s3" {
-  provisioner "local-exec" {
-    command = "aws s3 sync s3://${aws_s3_bucket.test_results_bucket.bucket}/ ../../e2e/videos --delete"
+  triggers = {
+    run_time = timestamp()
   }
-
+  
+  provisioner "local-exec" {
+    command = <<EOT
+    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $targetDir = "${path.cwd}\\videos_$timestamp"
+    if (!(Test-Path -Path $targetDir)) {
+      New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+    }
+    Write-Host "Pobieram wyniki testów do katalogu: $targetDir"
+    aws s3 sync s3://${aws_s3_bucket.test_results_bucket.bucket}/ $targetDir --delete
+    EOT
+    interpreter = ["PowerShell", "-Command"]
+  }
+  
   depends_on = [null_resource.run_e2e_tests]
 }
+
+
+
 
 resource "null_resource" "cleanup_s3" {
   provisioner "local-exec" {

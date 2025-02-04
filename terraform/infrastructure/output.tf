@@ -13,11 +13,6 @@ output "eks_certificate_authority" {
   value       = module.eks.cluster_certificate_authority_data
 }
 
-output "alb_controller_role_arn" {
-  description = "ARN role of ALB controller"
-  value       = aws_iam_role.alb_controller_role.arn
-}
-
 output "eks_oidc_issuer_url" {
   value = module.eks.cluster_oidc_issuer_url
 }
