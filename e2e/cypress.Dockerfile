@@ -4,7 +4,7 @@
 # which requires to set a secure (https) connection to perform cross site resource sharing as cookies (access-token)
 
 # apt.local must be a localhost ip adress of your docker machine (check ipconfig for vethernet)
-# docker run -e CYPRESS_FRONTEND_URL=https://apt.local -e API_BASE_URL=https://apt.local --add-host=apt.local:192.168.80.1 cypress-test
+# docker run -e CYPRESS_FRONTEND_URL=https://air-pollution-tracker.com -e API_BASE_URL=https://air-pollution-tracker.com --add-host=air-pollution-tracker.com:192.168.80.1 cypress-test
 
 FROM cypress/included:13.6.1
 

@@ -115,7 +115,7 @@ def simulate_pollution_spread(data, num_steps, pollutants, grid_density="medium"
           z_levels=10,  # Stała wysokość referencyjna dla turbulentnej dyfuzji
           box_size=dx,
           surface_roughness=surface_roughness,
-          method="turbulent") # "molecular" | "turbulent"
+          method="empirical") # "molecular" | "turbulent" | "empirical"
 
       K_y = K_x
                 

@@ -8,9 +8,10 @@ import { DroneMeasurementType } from "../../types/DroneMeasurementType"
 interface ImportFlightDataProps {
   onImport: (data: DroneFlightFormType) => void;
   onError: (message: string) => void;
+  disabled?: boolean;
 }
 
-const ImportFlightData: React.FC<ImportFlightDataProps> = ({ onImport, onError }) => {
+const ImportFlightData: React.FC<ImportFlightDataProps> = ({ onImport, onError, disabled = false }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -190,7 +191,12 @@ const ImportFlightData: React.FC<ImportFlightDataProps> = ({ onImport, onError }
       <button
         type="button"
         onClick={() => setOpenDialog(true)}
-        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+        disabled={disabled}
+        className={`rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm ${
+          disabled 
+            ? 'bg-gray-400 cursor-not-allowed' 
+            : 'bg-indigo-600 hover:bg-indigo-500'
+        }`}
       >
         <ArrowUpTrayIcon className="h-5 w-5 inline-block mr-1" />
         Import Data
@@ -201,10 +207,15 @@ const ImportFlightData: React.FC<ImportFlightDataProps> = ({ onImport, onError }
         ref={fileInputRef}
         className="hidden"
         onChange={handleFileChange}
+        disabled={disabled}
       />
 
       {openDialog && (
-        <Dialog open={true} onClose={() => setOpenDialog(false)} className="relative z-10">
+        <Dialog 
+          open={true} 
+          onClose={() => !disabled && setOpenDialog(false)} 
+          className="relative z-10"
+        >
           <DialogBackdrop
             transition
             className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
@@ -224,13 +235,23 @@ const ImportFlightData: React.FC<ImportFlightDataProps> = ({ onImport, onError }
                       <div className="mt-6 flex justify-center gap-4">
                         <button
                           onClick={() => triggerFileInput('txt')}
-                          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                          disabled={disabled}
+                          className={`rounded-md px-4 py-2 text-sm font-semibold text-white shadow-sm ${
+                            disabled 
+                              ? 'bg-gray-400 cursor-not-allowed' 
+                              : 'bg-indigo-600 hover:bg-indigo-500'
+                          }`}
                         >
                           Import from TXT
                         </button>
                         <button
                           onClick={() => triggerFileInput('xlsx')}
-                          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500"
+                          disabled={disabled}
+                          className={`rounded-md px-4 py-2 text-sm font-semibold text-white shadow-sm ${
+                            disabled 
+                              ? 'bg-gray-400 cursor-not-allowed' 
+                              : 'bg-emerald-600 hover:bg-emerald-500'
+                          }`}
                         >
                           Import from XLSX
                         </button>
@@ -242,7 +263,12 @@ const ImportFlightData: React.FC<ImportFlightDataProps> = ({ onImport, onError }
                   <button
                     type="button"
                     onClick={() => setOpenDialog(false)}
-                    className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                    disabled={disabled}
+                    className={`mt-3 inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold shadow-sm sm:mt-0 sm:w-auto ${
+                      disabled
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        : 'bg-white text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50'
+                    }`}
                   >
                     Cancel
                   </button>

@@ -39,7 +39,9 @@ describe('Simulation Overview', () => {
   
       cy.url().should('include', '/simulation-overview');
   
-      cy.wait('@simulations').its('response.statusCode').should('eq', 200);
+      cy.wait('@simulations').then((interception) => {
+        expect(interception.response.statusCode).to.be.oneOf([200, 304]);
+      });
 
     
       const checkSimulationStatus = (retries = 10) => {
@@ -49,7 +51,9 @@ describe('Simulation Overview', () => {
         cy.log(`Left retries of checkSimulationStatus: ${retries}`);
       
         cy.reload();
-        cy.wait('@simulations').its('response.statusCode').should('eq', 200);
+        cy.wait('@simulations').then((interception) => {
+          expect(interception.response.statusCode).to.be.oneOf([200, 304]);
+        });
       
         cy.contains('li', `Simulation #${testSimulation.id}`)
           .should('exist')

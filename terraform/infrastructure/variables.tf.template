@@ -1,0 +1,81 @@
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+  default     = ""
+}
+
+variable "project_name" {
+  description = "Project name"
+  type        = string
+  default     = ""
+}
+
+variable "environment" {
+  description = "Environment (prod/staging)"
+  type        = string
+  default     = ""
+}
+
+variable "database_url" {
+  description = "Database connection string"
+  type        = string
+  sensitive   = true
+}
+
+variable "jwt_key" {
+  description = "JWT secret key"
+  type        = string
+  sensitive   = true
+}
+
+variable "rabbitmq_request_queue" {
+  description = "RabbitMQ request queue name"
+  type        = string
+  default     = ""
+}
+
+variable "rabbitmq_url" {
+  description = "RabbitMQ connection URL"
+  type        = string
+  sensitive   = true
+}
+
+variable "secure" {
+  description = "Enable SSL/TLS"
+  type        = bool
+  default     = true
+}
+
+variable "cluster_name" {
+  description = "EKS cluster name"
+  type        = string
+  default     = ""
+}
+
+variable "nginx_load_balancer_type" {
+  description = "Type of AWS Load Balancer for NGINX ingress"
+  type        = string
+  default     = "alb"
+}
+
+variable "ssl_certificate_arn" {
+  description = "ARN of the ACM SSL certificate for ALB (optional)"
+  type        = string
+  default     = "" 
+}
+
+variable "subdomain" {
+  description = "Subdomain for duck dns"
+  type = string
+  default = ""
+}
+
+variable "duckdns_token" {
+  description = "DuckDNS token for validating user"
+  type = string
+  default = ""
+}
+
+
+
+

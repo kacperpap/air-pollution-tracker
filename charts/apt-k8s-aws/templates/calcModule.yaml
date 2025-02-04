@@ -1,8 +1,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "apt.fullname" . }}-{{ .Values.calc_module.name }}
+  name: {{ include "apt.name" . }}-{{ .Values.calc_module.name }}
 spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
   replicas: {{ .Values.calc_module.replicaCount }}
   selector:
     matchLabels:
@@ -14,6 +19,8 @@ spec:
         apt.kubernetes.io/tier: {{ include "apt.name" . }}-{{ .Values.calc_module.name }}
         apt.kubernetes.io/version: {{ include "apt.version" . }}
     spec:
+      nodeSelector:
+        deployment: {{ .Values.eks.cluster.nodeGroup }}
       containers:
         - name: {{ .Values.calc_module.name }}
           image: "{{ .Values.calc_module.image.repository }}:{{ .Values.calc_module.image.tag }}"
@@ -27,6 +34,6 @@ spec:
               cpu: {{ .Values.calc_module.resources.limits.cpu }}
           envFrom:
             - configMapRef:
-                name: {{ include "apt.fullname" . }}-config
+                name: {{ include "apt.name" . }}-config
           ports:
             - containerPort: {{ .Values.calc_module.container.targetPort }}

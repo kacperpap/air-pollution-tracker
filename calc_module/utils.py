@@ -11,29 +11,29 @@ from models.euler_modified_multibox_model.simulation_types.output_type import Ou
 #                                 Logger function                                            #
 ##############################################################################################
 
-_thread_context = threading.local()
+_context = threading.local()
 
-def set_thread_context(thread_id: int):
-    _thread_context.thread_id = thread_id
+def set_context_id(context_id: int):
+    _context.context_id = context_id
 
-def get_thread_context() -> int:
-    return getattr(_thread_context, 'thread_id', 'N/A')
+def get_context_id() -> Union[int, str]:
+    return getattr(_context, 'context_id', 'N/A')
 
-class ThreadContextFormatter(logging.Formatter):
+class ContextFormatter(logging.Formatter):
     def format(self, record):
-        if not hasattr(record, 'thread_id'):
-            record.thread_id = 'N/A'
+        if not hasattr(record, 'context_id'):
+            record.context_id = 'N/A'
         return super().format(record)
 
-class ThreadContextLogger(logging.getLoggerClass()):
+class ContextLogger(logging.getLoggerClass()):
     def makeRecord(self, name, level, fn, lno, msg, args, exc_info, func=None, extra=None, sinfo=None):
         record = super().makeRecord(name, level, fn, lno, msg, args, exc_info, func, extra, sinfo)
-        record.thread_id = get_thread_context()
+        record.context_id = get_context_id()
         return record
 
-logging.setLoggerClass(ThreadContextLogger)
+logging.setLoggerClass(ContextLogger)
 
-formatter = ThreadContextFormatter('%(asctime)s - %(levelname)s - Thread %(thread_id)s - %(message)s')
+formatter = ContextFormatter('%(asctime)s - %(levelname)s - Context %(context_id)s - %(message)s')
 
 handler = logging.StreamHandler()
 handler.setFormatter(formatter)
@@ -46,7 +46,6 @@ for h in root_logger.handlers[:]:
 root_logger.addHandler(handler)
 
 aio_pika_logger = logging.getLogger('aio_pika')
-
 for h in aio_pika_logger.handlers[:]:
     aio_pika_logger.removeHandler(h)
 aio_pika_logger.addHandler(handler)
@@ -55,7 +54,7 @@ logger = logging.getLogger(__name__)
 
 def log_with_time(message: str, level: str = 'info'):
     """
-    Log message with timestamp and thread context.
+    Log message with timestamp and additional context.
     """
     log_func = {
         'info': logger.info,

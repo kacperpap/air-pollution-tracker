@@ -9,6 +9,8 @@ import { Overview } from "./overview/Overview"
 import { ErrorPage } from "./error/ErrorPage"
 import { SimulationOverview } from "./simulation/SimulationOverview"
 import MapSimulation from "./animation/MapSimulation"
+import Quickstart from "./docs/Quickstart"
+import Documentation from "./docs/Documentation"
 
 
 const publicRoutes: RouteObject[] = [
@@ -27,6 +29,14 @@ const publicRoutes: RouteObject[] = [
         element: <Login />
     },
     {
+        path: '/quick-start',
+        element: <Quickstart />
+    },
+    {
+        path: '/documentation',
+        element: <Documentation />
+    },
+    {
         path: '*',
         element: <ErrorPage />
     }
@@ -37,6 +47,14 @@ const privateRoutes: RouteObject[] = [
         path: '/',
         element: <Layout />,
         children: [
+            {
+                path: '/quick-start',
+                element: <Quickstart />
+            },
+            {
+                path: '/documentation',
+                element: <Documentation />
+            },
             {
                 path: '/',
                 element: <Map />

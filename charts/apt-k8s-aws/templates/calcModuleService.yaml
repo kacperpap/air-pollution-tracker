@@ -1,7 +1,8 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "apt.fullname" . }}-{{ .Values.calc_module.name }}
+  name: {{ include "apt.name" . }}-{{ .Values.calc_module.name }}
+  namespace: {{ .Values.calc_module.namespace }}
 spec:
   type: {{ .Values.calc_module.service.type }}
   selector:

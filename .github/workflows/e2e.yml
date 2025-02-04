@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  workflow_dispatch:
+
+env:
+  ENVIRONMENT: ${{ github.ref_name == 'main' && 'prod' || github.ref_name == 'staging' && 'dev' }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}     
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
+  BRANCH_NAME: ${{ github.ref_name }}
+
+
+jobs:
+
+  verify-ecr:
+    name: Verify ECR Repository
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Check ECR repository
+        id: check-ecr
+        run: |
+          if ! aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} &>/dev/null; then
+            echo "::error::ECR repository ${{ env.ECR_REPOSITORY }} does not exist! Please create it using Terraform first."
+            exit 1
+          fi
+          echo "ECR repository ${{ env.ECR_REPOSITORY }} exists and is ready to use."
+
+  build-and-push:
+    name: Build and Push Docker Images to ECR
+    needs: verify-ecr
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH_NAME }}
+     
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          driver-opts: network=host
+
+      - name: Build e2e images
+        run: |
+            docker build -t cypress-test -f ./e2e/cypress.Dockerfile ./e2e/
+
+      - name: Configure AWS credentials for ECR
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+  
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+  
+      - name: Tag and Push e2e image to ECR
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker tag cypress-test ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:e2e-${{ env.ENVIRONMENT }}-${IMAGE_TAG}
+          docker tag cypress-test ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:e2e-${{ env.ENVIRONMENT }}-latest
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:e2e-${{ env.ENVIRONMENT }}-${IMAGE_TAG}
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:e2e-${{ env.ENVIRONMENT }}-latest
+  
+      
+
+
+
+

@@ -1,34 +1,50 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "apt.fullname" . }}-ingress
+  name: {{ include "apt.name" . }}-{{ .Values.ingress.name }}
+  namespace: {{ .Values.ingress.namespace }}
   annotations:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
     nginx.ingress.kubernetes.io/enable-access-log: "true"
     nginx.ingress.kubernetes.io/enable-rewrite-log: "true"
+    {{- if .Values.backend.environment.SECURE | toString | lower | eq "true" }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "{{ .Values.ingress.ssl.enabled | toString | lower }}"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "{{ .Values.ingress.ssl.enabled | toString | lower }}"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "{{ .Values.ingress.ssl.certificateArn }}"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "HTTP"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    {{- else }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    {{- end }}
 spec:
   ingressClassName: nginx
+  {{- if .Values.backend.environment.SECURE | toString | lower | eq "true" }}
+  tls:
+  - hosts:
+    - {{ .Values.ingress.fqdn }}
+    secretName: {{ include "apt.name" . }}-tls
+  {{- end }}
   rules:
-    - host: {{ .Values.ingress.host }}
+    - host: {{ .Values.ingress.fqdn }}
       http:
         paths:
           - path: /api
             pathType: Prefix
             backend:
               service:
-                name: {{ include "apt.fullname" . }}-backend
+                name: {{ include "apt.name" . }}-{{ .Values.backend.name }}
                 port:
                   number: {{ .Values.backend.service.port }}
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: {{ include "apt.fullname" . }}-frontend
+                name: {{ include "apt.name" . }}-{{ .Values.frontend.name }}
                 port:
                   number: {{ .Values.frontend.service.port }}
