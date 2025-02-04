@@ -22,6 +22,8 @@ export default function MapSimulation() {
 
   const [isAnimating, setIsAnimating] = useState(false);
 
+  const [isVisualizationReady, setIsVisualizationReady] = useState(false);
+
   const [notification, setNotification] = useState<NotificationProps>({
     message: "",
     description: "",
@@ -115,6 +117,7 @@ export default function MapSimulation() {
 
   useEffect(() => {
     if (state.simulationData && state.map && state.flightData) {
+
       const { pollutants, environment } = state.simulationData;
   
       const availableParameters = [
@@ -152,6 +155,14 @@ export default function MapSimulation() {
           setWindArrows: (windArrows) => updateState({ windArrows }),
           setMarkers: (markers) => updateState({ markers }),
           setNotification,
+        }).then(() => {
+          setIsVisualizationReady(true);
+        }).catch((error) => {
+          setNotification({
+            message: "Error",
+            description: `Initialization error: ${error}`,
+            type: "error",
+          });
         });
       }
     }
@@ -268,6 +279,7 @@ export default function MapSimulation() {
     setNotification({ message: "", description: "", type: "" });
   };
 
+
   return (
     <>
       {notification.type && (
@@ -279,9 +291,34 @@ export default function MapSimulation() {
           onClose={handleCloseNotification}
         />
       )}
-
+  
       <div id="mapSimulation" className="absolute inset-0 w-full h-full relative z-10"></div>
-
+  
+      {!isVisualizationReady && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-20">
+          <div className="space-x-4">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-solid border-r-transparent" role="status">
+              <span className="sr-only">Loading...</span>
+            </div>
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-green-500 border-solid border-r-transparent" role="status">
+              <span className="sr-only">Loading...</span>
+            </div>
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-red-500 border-solid border-r-transparent" role="status">
+              <span className="sr-only">Loading...</span>
+            </div>
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-yellow-500 border-solid border-r-transparent" role="status">
+              <span className="sr-only">Loading...</span>
+            </div>
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-solid border-r-transparent" role="status">
+              <span className="sr-only">Loading...</span>
+            </div>
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-solid border-r-transparent" role="status">
+              <span className="sr-only">Loading...</span>
+            </div>
+          </div>
+        </div>
+      )}
+  
       {location.pathname === `/map/run-simulation/${simulationId}` && state.selectedParameter && (
         <>
           <Legend 
@@ -309,5 +346,5 @@ export default function MapSimulation() {
         </>
       )}
     </>
-  );
+  );  
 }
