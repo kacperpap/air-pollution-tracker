@@ -103,7 +103,6 @@ class SimulationWorker(Process):
                     log_with_time(f"Worker process error: {e}", 'error')
                     continue
 
-                # Jeśli otrzymamy sentinel, wychodzimy z pętli
                 if task is SENTINEL:
                     break
 
@@ -115,9 +114,8 @@ class SimulationWorker(Process):
                     'result': result
                 })
         except KeyboardInterrupt:
-            pass  # W razie przerwania, po prostu zakończ worker
+            pass
         finally:
-            # Opcjonalnie możemy dodać log o zamykaniu procesu
             log_with_time(f"Worker {os.getpid()} shutting down.")
 
 
@@ -134,9 +132,9 @@ class SimulationPool:
             worker = SimulationWorker(self.task_queue, self.result_queue, self.shutdown_event)
             worker.start()
             self.workers.append(worker)
+        log_with_time(f"Initialised SimulationPool with {self.max_workers} workers")
             
     def cleanup(self):
-        # Sygnalizujemy zakończenie pracownikom
         self.shutdown_event.set()
         # Wysyłamy do kolejki SENTINEL – jeden dla każdego worker’a,
         # dzięki czemu nie zostaną zablokowani przy oczekiwaniu na zadanie.

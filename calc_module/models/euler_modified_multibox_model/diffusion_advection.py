@@ -28,7 +28,6 @@ def update_concentration_crank_nicolson(C, u, v, K_x, K_y, dx, dy, dt, S_c, nx, 
         for i in range(1, nx - 1):
             for j in range(1, ny - 1):
                 # Konwekcja (transport przez wiatr) dla Cranka-Nicolsona (średnie wartości między krokami n a n+1)
-                # --- Advection: Upwind Differencing ---
                 if u[i, j] > 0:
                     conv_x_n = -u[i, j] * (C[i, j] - C[i-1, j]) / dx
                 else:
@@ -109,12 +108,15 @@ def calculate_diffusion_coefficients(pollutant, temperatures, pressures, u_wind,
         if z_levels is None:
             raise ValueError("z_levels must be provided for turbulent diffusion.")
         K = turbulent_diffusion_coefficients_grid(u_wind, v_wind, z_levels, surface_roughness=surface_roughness)
+    elif method == "empirical":
+        K = empirical_diffusion_coefficients_grid(u_wind, v_wind, pressures, temperatures)
     else:
         raise ValueError(f"Unsupported diffusion method: {method}")
 
-    K_scaled = K * box_size
+    if method is not "empirical":
+        K = K * box_size
     
-    return K_scaled
+    return K
 
 
 def molecular_diffusion_coefficients_grid(pollutant, temperatures, pressures):
@@ -174,6 +176,39 @@ def turbulent_diffusion_coefficients_grid(u_wind, v_wind, z_levels=10, alpha=0.4
     K_grid = alpha * u_star * z_levels
 
     return K_grid
+
+def empirical_diffusion_coefficients_grid(u_wind, v_wind, pressure, temperature):
+    """
+    Oblicza empiryczne współczynniki turbulentnej dyfuzji K_x oraz K_y na podstawie
+    wektorów prędkości wiatru (u_wind, v_wind). 
+    Jako kryterium przypisania przyjmujemy uproszczone progi prędkości, odpowiadające
+    różnym klasom stabilności atmosferycznej (zgodnie z klasyfikacją Pasquill, Hanna, Briggs & Hosker (1982)).
+    """
+    
+    u_wind = np.array(u_wind, dtype=np.float64)
+    v_wind = np.array(v_wind, dtype=np.float64)
+    
+    wind_speed = np.sqrt(u_wind**2 + v_wind**2)
+    
+    K = np.zeros_like(wind_speed)
+        
+    # Uproszczone progi – przykładowe wartości (m²/s)
+    # Wartości te pochodzą z literatury:
+    #   - Klasa A (bardzo niestabilna): ~250-300 m²/s
+    #   - Klasa B (niestabilna): ~200-250 m²/s
+    #   - Klasa C (lekko niestabilna): ~150-200 m²/s
+    #   - Klasa D (neutralna): ~100-150 m²/s
+    #   - Klasa E (stabilna): ~50-100 m²/s
+    #   - Klasa F (bardzo stabilna): ~10-50 m²/s
+    
+    K[wind_speed < 2] = 30.0      # Klasa F: bardzo stabilna
+    K[(wind_speed >= 2) & (wind_speed < 4)] = 70.0   # Klasa E: stabilna
+    K[(wind_speed >= 4) & (wind_speed < 6)] = 120.0  # Klasa D: neutralna
+    K[(wind_speed >= 6) & (wind_speed < 8)] = 170.0  # Klasa C: lekko niestabilna
+    K[(wind_speed >= 8) & (wind_speed < 10)] = 220.0 # Klasa B: niestabilna
+    K[wind_speed >= 10] = 270.0     # Klasa A: bardzo niestabilna
+    
+    return K
 
 
 
