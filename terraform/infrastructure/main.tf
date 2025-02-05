@@ -359,7 +359,15 @@ resource "aws_iam_policy" "ecs_task_execution_policy" {
 
 
 resource "aws_ecs_task_definition" "e2e_tests" {
-  depends_on = [ aws_ecs_cluster.e2e_tests_cluster, aws_iam_policy.ecs_task_execution_policy, aws_iam_role.ecs_task_execution, time_sleep.wait_for_apt_deployment ]
+  
+  depends_on = [ 
+    aws_ecs_cluster.e2e_tests_cluster, 
+    aws_iam_policy.ecs_task_execution_policy, 
+    aws_iam_role.ecs_task_execution, 
+    time_sleep.wait_for_apt_deployment, 
+    aws_s3_bucket.test_results_bucket 
+  ]
+
   family                   = "e2e-tests"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
@@ -383,8 +391,24 @@ resource "aws_ecs_task_definition" "e2e_tests" {
           readOnly = false
         }
       ]
-      "command": [
-        "sh", "-c", "npm run test:e2e -- --headed; echo 'Testy zakończone. Zawartość /app/cypress/videos:'; ls -la /app/cypress/videos; aws s3 sync /app/cypress/videos s3://${aws_s3_bucket.test_results_bucket.bucket}/ && echo 'Copied successfully'"
+      command = [
+        "sh", "-c",
+        "npm run test:e2e -- --headed && echo 'Testy zakończone.' && sleep 10"
+      ]
+    },
+    {
+      name      = "aws-sync-sidecar"
+      image     = "${data.terraform_remote_state.ecr.outputs.repository_url}/aws-sync-${var.environment}-latest" 
+      essential = false
+      environment = [
+        { name = "S3_BUCKET", value = "${var.project_name}-e2e-results" }
+      ]
+      mountPoints = [
+        {
+          sourceVolume  = "test-results"
+          containerPath = "/app/cypress/videos"
+          readOnly      = false
+        }
       ]
     }
   ])
@@ -460,8 +484,6 @@ resource "null_resource" "download_results_from_s3" {
   
   depends_on = [null_resource.run_e2e_tests]
 }
-
-
 
 
 resource "null_resource" "cleanup_s3" {

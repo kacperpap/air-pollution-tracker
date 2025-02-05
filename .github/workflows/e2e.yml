@@ -1,4 +1,4 @@
-name: CI
+name: E2E
 
 on:
   workflow_dispatch:
@@ -50,9 +50,13 @@ jobs:
         with:
           driver-opts: network=host
 
-      - name: Build e2e images
+      - name: Build e2e image
         run: |
-            docker build -t cypress-test -f ./e2e/cypress.aws.Dockerfile ./e2e/
+            docker build -t cypress-test -f ./e2e/cypress.Dockerfile ./e2e/
+      
+      - name: Build sidecar image
+        run: |
+            docker build -t aws-sync -f ./e2e/aws.sync.Dockerfile ./e2e/
 
       - name: Configure AWS credentials for ECR
         uses: aws-actions/configure-aws-credentials@v1
@@ -65,7 +69,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
   
-      - name: Tag and Push e2e image to ECR
+      - name: Tag and Push e2e and sidecar images to ECR
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
@@ -73,6 +77,11 @@ jobs:
           docker tag cypress-test ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:e2e-${{ env.ENVIRONMENT }}-latest
           docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:e2e-${{ env.ENVIRONMENT }}-${IMAGE_TAG}
           docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:e2e-${{ env.ENVIRONMENT }}-latest
+
+          docker tag aws-sync ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:aws-sync-${{ env.ENVIRONMENT }}-${IMAGE_TAG}
+          docker tag aws-sync ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:aws-sync-${{ env.ENVIRONMENT }}-latest
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:aws-sync-${{ env.ENVIRONMENT }}-${IMAGE_TAG}
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:aws-sync-${{ env.ENVIRONMENT }}-latest
   
       
 
