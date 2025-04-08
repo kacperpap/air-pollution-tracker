@@ -20,6 +20,7 @@ terraform/*/terraform.tfstate.*
 terraform/*/variables.tf
 terraform/*/*.tfvars
 terraform/*/lambda_package
+terraform/*/video*
 charts/*/generated-values.yaml
 .vscode/
 certs/

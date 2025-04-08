@@ -201,12 +201,12 @@ def empirical_diffusion_coefficients_grid(u_wind, v_wind, pressure, temperature)
     #   - Klasa E (stabilna): ~50-100 m²/s
     #   - Klasa F (bardzo stabilna): ~10-50 m²/s
     
-    K[wind_speed < 2] = 30.0      # Klasa F: bardzo stabilna
-    K[(wind_speed >= 2) & (wind_speed < 4)] = 70.0   # Klasa E: stabilna
-    K[(wind_speed >= 4) & (wind_speed < 6)] = 120.0  # Klasa D: neutralna
-    K[(wind_speed >= 6) & (wind_speed < 8)] = 170.0  # Klasa C: lekko niestabilna
-    K[(wind_speed >= 8) & (wind_speed < 10)] = 220.0 # Klasa B: niestabilna
-    K[wind_speed >= 10] = 270.0     # Klasa A: bardzo niestabilna
+    K[wind_speed < 2] = 50.0      # Klasa F: bardzo stabilna
+    K[(wind_speed >= 2) & (wind_speed < 4)] = 100.0   # Klasa E: stabilna
+    K[(wind_speed >= 4) & (wind_speed < 6)] = 150.0  # Klasa D: neutralna
+    K[(wind_speed >= 6) & (wind_speed < 8)] = 200.0  # Klasa C: lekko niestabilna
+    K[(wind_speed >= 8) & (wind_speed < 10)] = 250.0 # Klasa B: niestabilna
+    K[wind_speed >= 10] = 300.0     # Klasa A: bardzo niestabilna
     
     return K
 

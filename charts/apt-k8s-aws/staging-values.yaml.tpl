@@ -3,6 +3,7 @@ application:
 
 frontend:
   name: frontend
+  namespace: ${namespace}
   replicaCount: 1
   image:
     repository: ${repository_url}
@@ -26,6 +27,7 @@ frontend:
 
 backend:
   name: backend
+  namespace: ${namespace}
   replicaCount: 1
   image:
     repository: ${repository_url}
@@ -53,6 +55,7 @@ backend:
 
 calc_module:
   name: calc-module
+  namespace: ${namespace}
   replicaCount: 1
   image:
     repository: ${repository_url}
@@ -78,6 +81,7 @@ calc_module:
 
 rabbitmq:
   name: rabbitmq
+  namespace: ${namespace}
   image:
     repository: rabbitmq
     tag: management
@@ -106,7 +110,6 @@ rabbitmq:
 
 ingress:
   name: ingress
-  namespace: ingress-nginx
   fqdn: ${fqdn}
   ssl:
     enabled: ${secure}

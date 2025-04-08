@@ -178,7 +178,19 @@ data "kubernetes_service" "nginx_ingress" {
   depends_on = [time_sleep.wait_for_ingress]
 }
 
+resource "null_resource" "delete_previous_secretsmanager" {
+  depends_on = [ helm_release.nginx_ingress ]
+
+  provisioner "local-exec" {
+    command = <<EOT
+      aws secretsmanager delete-secret --secret-id "${var.project_name}-${var.environment}-secrets" --force-delete-without-recovery
+    EOT
+    interpreter = ["PowerShell", "-Command"]
+  }
+}
+
 resource "aws_secretsmanager_secret" "app_secrets" {
+  depends_on = [ null_resource.delete_previous_secretsmanager ]
   name                            = "${var.project_name}-${var.environment}-secrets"
   tags                            = local.common_tags
   force_overwrite_replica_secret  = true
@@ -186,6 +198,7 @@ resource "aws_secretsmanager_secret" "app_secrets" {
 }
 
 resource "aws_secretsmanager_secret_version" "app_secrets" {
+  depends_on = [ aws_secretsmanager_secret.app_secrets ]
   secret_id = aws_secretsmanager_secret.app_secrets.id
   secret_string = jsonencode({
     DATABASE_URL            = var.database_url
@@ -254,7 +267,15 @@ resource "helm_release" "app" {
 #   depends_on = [data.kubernetes_service.nginx_ingress]
 # }
 
+# locals {
+#   ingress_hostname = try(
+#     data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].hostname,
+#     "pending"
+#   )
+# }
+
 resource "null_resource" "update_duckdns" {
+  
   provisioner "local-exec" {
     command = <<EOT
       $resolved_ip = (Resolve-DnsName -Name "${data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].hostname}" -Type A).IPAddress
@@ -267,7 +288,7 @@ resource "null_resource" "update_duckdns" {
     ingress_hostname = data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].hostname
   }
 
-  depends_on = [data.kubernetes_service.nginx_ingress]
+  depends_on = [data.kubernetes_service.nginx_ingress, time_sleep.wait_for_ingress]
 }
 
 resource "time_sleep" "wait_for_apt_deployment" {
@@ -396,21 +417,21 @@ resource "aws_ecs_task_definition" "e2e_tests" {
         "npm run test:e2e -- --headed && echo 'Testy zakończone.' && sleep 10"
       ]
     },
-    {
-      name      = "aws-sync-sidecar"
-      image     = "${data.terraform_remote_state.ecr.outputs.repository_url}/aws-sync-${var.environment}-latest" 
-      essential = false
-      environment = [
-        { name = "S3_BUCKET", value = "${var.project_name}-e2e-results" }
-      ]
-      mountPoints = [
-        {
-          sourceVolume  = "test-results"
-          containerPath = "/app/cypress/videos"
-          readOnly      = false
-        }
-      ]
-    }
+    # {
+    #   name      = "aws-sync-sidecar"
+    #   image     = "${data.terraform_remote_state.ecr.outputs.repository_url}/aws-sync-${var.environment}-latest" 
+    #   essential = false
+    #   environment = [
+    #     { name = "S3_BUCKET", value = "${var.project_name}-e2e-results" }
+    #   ]
+    #   mountPoints = [
+    #     {
+    #       sourceVolume  = "test-results"
+    #       containerPath = "/app/cypress/videos"
+    #       readOnly      = false
+    #     }
+    #   ]
+    # }
   ])
 
   volume {
