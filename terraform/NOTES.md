@@ -1,11 +1,14 @@
-## 1. registry and github workflow ci.yml:
+## 1. Registry and github workflow ci.yml:
+
+Amazon Elastic Container Registry (ECR) is used to sotre published images. It is needed hence, public repositories such as dockerhub, allows you to store limited number of images and their versions with free plan. To publish images to your private ECR, you need to create it and then run github workflow [ci.yml](https://github.com/kacperpap/air-pollution-tracker/blob/main/.github/workflows/ci.yml).
+
 Before running registry terraform scirpts make sure that:
 - [ ] you are authorized to aws local console as a user that have same policies as `terraform user` descirbed in [aws.commands](../aws.commands)
     ```
     aws iam list-users 
     aws iam list-attached-user-policies --user-name terraform
-    aws iam get-policy --policy-arn arn:aws:iam::619071343147:policy/FullEcrEc2EksIamKmsLogsAlbAccess
-    aws iam get-policy-version --policy-arn arn:aws:iam::619071343147:policy/FullEcrEc2EksIamKmsLogsAlbAccess --version-id v4
+    aws iam get-policy --policy-arn arn:aws:iam::********:policy/FullEcrEc2EksIamKmsLogsAlbAccess
+    aws iam get-policy-version --policy-arn arn:aws:iam::*********:policy/FullEcrEc2EksIamKmsLogsAlbAccess --version-id v4
     ```
 - [ ] if you are not using aws cli, you can just specify access key to the aws user as env variables:
     - create `.env.aws` file based on `.env.aws.template`
@@ -23,52 +26,91 @@ Before running registry terraform scirpts make sure that:
         terraform plan -out=tfplan
         terraform apply tfplan
         ```
-- [ ] check the created repository and if there is no images
+- [ ] check the created repository
     ```
     aws ecr describe-repositories --query "repositories[*].{Name:repositoryName,URI:repositoryUri}" --output table
+    ```
+- [ ] Before running github ci.yml workflow make sure that user github have same policies as `github user` descirbed in [aws.commands](../aws.commands) and that you have set all neede variables descirbed in env section in ci.yml script. After running it successfully, it will build and publish images to your ECR, which you can check using command:
+    ```
     aws ecr describe-images --repository-name air-pollution-tracker
     ```
-- [ ] Before running github ci.yml workflow make sure that user github have same policies as `github user` descirbed in [aws.commands](../aws.commands)
 
-## 2. infrastructure:
+## 2. Infrastructure and APT deployment:
+
+Terraform [terraform/infrastructure/main.tf](/terraform/infrastructure/main.tf) script will both create your infrastructure on AWS and deploy air-pollution-tracker apt. That is why you need to configure first your domain name, publish images to ECR, provide variables.tf file based on [variables.tf.template](https://github.com/kacperpap/air-pollution-tracker/blob/main/terraform/infrastructure/variables.tf.template)  and secrets file based on [terraform.tfvars.template](https://github.com/kacperpap/air-pollution-tracker/blob/main/terraform/infrastructure/terraform.tfvars.template).
+
 Before runninng infrastructure terraform scripts you need:
+
 - [ ] Make sure that you are running [registry](../terraform/registry/) terraform script due to dependency in remote output:
-```
-data "terraform_remote_state" "ecr" {
-  backend = "local" 
-  config = {
-    path = "../repository/terraform.tfstate" 
+  ```
+  data "terraform_remote_state" "ecr" {
+    backend = "local" 
+    config = {
+      path = "../repository/terraform.tfstate" 
+    }
   }
-}
-```
+  ```
+
 - [ ] log in aws console (local) by running:
-```
-aws configure
-```
+  ```
+  aws configure
+  ```
 *You will be prompted to pass same credentials as in .aws.env (access-key-id, access-key and region). It is needed because running  [terraform/infrastructure/main.tf](/terraform/infrastructure/main.tf) requires to execute get-token, to securly connect to eks module*
 
+- [ ] Check if you published images to ECR correctly:
+    ```
+    aws ecr describe-images --repository-name air-pollution-tracker
+    ```
+  ***NOTE, that deploying images must have proper prod/dev in name, taht will differenciate which images the script will deploy, and have latest tag, below section from variables.tf file which allows you to set environment, besed on which the proper images will be taken from ECR***
+
+    ```
+      variable "environment" {
+      description = "Environment (prod/dev)"
+      type        = string
+      default     = "prod"
+    }
+    ```
+
+- [ ] Created variables.tf file based on [variables.tf.template](https://github.com/kacperpap/air-pollution-tracker/blob/main/terraform/infrastructure/variables.tf.template), make sure to pass valid vars in duckdns section, for example, for air.pollution-tracker.duckdns.org and generated SSL/TLS certificate (next steps show how to get cert):
+    ```
+    variable "secure" {
+      description = "Enable SSL/TLS"
+      type        = bool
+      default     = true
+    }
+
+    variable "subdomain" {
+      description = "Subdomain for duck dns"
+      type = string
+      default = "air-pollution-tracker"
+    }
+    ```
+
+- [ ] Created secrets file based on [terraform.tfvars.template](https://github.com/kacperpap/air-pollution-tracker/blob/main/terraform/infrastructure/terraform.tfvars.template)
+
+- [ ] To enable quick generating and renewal of certificates for domain from **Let's Encrypt** refer to instruction: [DNS.md](https://github.com/kacperpap/air-pollution-tracker/blob/main/dns/DNS.md)
+
 - [ ] Now you can run scripts as follows:
-```
-cd ./terraform/infrastructure
-terraform init
-terraform apply
-```
+  ```
+  cd ./terraform/infrastructure
+  terraform init
+  terraform apply
+  ```
 **WARNING: you cannot run terraform plan here, due to that [output.tf](./infrastructure/output.tf) file requires to know ingress hostname on a runtime:**
-```
-output "ingress_hostname" {
-  description = "Public hostname or IP for the NGINX ingress"
-  value       = try(
-    data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].hostname,
-    "Load balancer hostname not available yet"
-  )
-}
-```
+  ```
+  output "ingress_hostname" {
+    description = "Public hostname or IP for the NGINX ingress"
+    value       = try(
+      data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].hostname,
+      "Load balancer hostname not available yet"
+    )
+  }
+  ```
 
 - [ ] after creating eks cluster, pin it to your local terminal by executing:
-```
-
-aws eks update-kubeconfig --name apt --region eu-central-1
-```
+  ```
+  aws eks update-kubeconfig --name apt --region eu-central-1
+  ```
 
 
 - [ ] check if your k8s cluster is available and if nginx is running correctly:
@@ -100,17 +142,6 @@ aws eks update-kubeconfig --name apt --region eu-central-1
       ingress-nginx-controller-admission   ClusterIP      172.20.24.169   <none>                               443/TCP                      176m
       ```
 
-- [ ] After veryfing this you can install application helm chart on created infrastructure
-
-**For this step you will need to pass output data from terraform, secrets from .env file (DATABASE_URL and JWT_KEY) and other variables to values.yaml files and deploy ingress and apt charts, to correctly deploy application. Be sure to run at first [deploy-apt-ingress-k8s-aws.ps1](../deploy-apt-ingress-k8s-aws.ps1) and then after deploying ingress, you can run [deploy-apt-k8s-aws.ps1](../deploy-apt-k8s-aws.ps1)**
-
-##### (PowerShell) Script [deploy-apt-ingress-k8s-aws.ps1](../deploy-apt-ingress-k8s-aws.ps1):
-
-> Generates new `generate-values.yaml` file with specified variables by outputs in terraform and .env secrets, then runs the helm with: 
-```
-helm install apt-ingress "$PROJECT_ROOT/charts/apt-ingress-k8s-aws" -f generated-values.yaml -n ingress-nginx
-```
- 
 - [ ] After successfull install of ingress you can check the status of your pods and services
     - Logs from pods:
       ```
@@ -122,94 +153,56 @@ helm install apt-ingress "$PROJECT_ROOT/charts/apt-ingress-k8s-aws" -f generated
       kubectl get events -n ingress-nginx --sort-by='.metadata.creationTimestamp'
       ```
 
+- [ ] After veryfing this you can verify installation of application
+**Remeber that deploying app via helm chart, requires generating values.yaml file, which is done based on variables provided in variables.tf and is done automatically by script. You can check the [values.yaml.tpl](https://github.com/kacperpap/air-pollution-tracker/blob/main/charts/apt-k8s-aws/values.yaml.tpl) to modify the default resources provided to your app. Terraform script based on that file generates generated-values.yaml in same directory.**
+- Logs from pods:
+  ```
+  kubectl logs pod/pod-name -n $NAMESPACE
+  ```
 
-##### (PowerShell) Script [deploy-apt-k8s-aws.ps1](../deploy-apt-k8s-aws.ps1):
+- Displaying all event from namespace by creation timestamp:
+  ```
+  kubectl get events -n $NAMESPACE --sort-by='.metadata.creationTimestamp'
+  ```
 
-> Generates new `generate-values.yaml` file with specified variables by outputs in terraform and .env secrets, then runs the helm with (be sure to specify in .env environment variable as prod if you want to deploy production images in production namespace or dev for staging version): 
+
+## 3. E2E tests (staging)
+**On staging branch, maain infrastructure script automates E2E test**. It does the following:
+ - creates Elastic Container Service task and policy
+ - based on image published to ECR registry via [e2e.yml](https://github.com/kacperpap/air-pollution-tracker/blob/main/.github/workflows/e2e.yml), runs container in FARGATE
+ - saves video from the cypress test to S3 bucket and then downloads it locally
+ - cleanups S3 bucket
+This functionality is not properly working yet, that's why it is only on staging branch, but to **run it manually** you need to:
+    - [ ] install dependencies from in e2e module
+      ```
+      cd ./e2e/ && npm install
+      ```
+    - [ ] build docker image by running:
+      ```
+      docker build -t cypress-test -f .\e2e\cypress.Dockerfile .\e2e\
+      ```
+    - [ ] run continer:
+      ```
+      docker run -e CYPRESS_FRONTEND_URL=https://air-pollution-tracker.duckdns.org -e API_BASE_URL=https://air-pollution-tracker.duckdns.org  cypress-test
+      ```
+    - [ ] as defined in **cypress.config.js** it should save a video from the test in e2e directory
+
+## 4. Roles (staging)
+On staging branch, there is being developed the functionality, that will enable k8s administrator to generate certificates for roles in cluster.
+
+
+## 5. Rolling update
+To perform rolling update of your application, first build and publish new images to your private AWS CER. After that consider running script [rolling-update-apt-k8s-aws.ps1](https://github.com/kacperpap/air-pollution-tracker/blob/main/rolling-update-apt-k8s-aws.ps1). The script scans your ECR to find any newer images that the ones being deployed, and if it finds any, deploys them as defined in strategy set in helm templates, which you can check in [templates catalogue for aws deployment](https://github.com/kacperpap/air-pollution-tracker/blob/main/charts/apt-k8s-aws/templates) (example for backend.yml below)
 ```
-helm install apt "$PROJECT_ROOT/charts/apt-k8s-aws" -f generated-values.yaml -n $NAMESPACE
+strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
 ```
 
-- [ ] After successfull install of application you can check the status of your pods and services
-    - Logs from pods:
-      ```
-      kubectl logs pod/pod-name -n $NAMESPACE
-      ```
-
-    - Displaying all event from namespace by creation timestamp:
-      ```
-      kubectl get events -n $NAMESPACE --sort-by='.metadata.creationTimestamp'
-      ```
-
-
-## 3. E2E tests
-
-
-
-## 4. Rolling update
-
-
-## 5. Domena od Duck DNS oraz certyfiakt z AWS Certificate Manager 
-### Domena
- - [ ] Logujemy się do DuckDNS za pomocą GitHub'a, wpisujemy wybraną domenę, aby ją poprawnie zaktualizować wywołujemy zapytanie curl lub GET w przeglądarce:
+## Troubleshooting:
+During running terraform infrastructure script, if it cannot create secrets managers due to "scheduled deletion", remove manually with below command:
   ```
-  https://www.duckdns.org/update?domains=air-pollution-tracker&token={YOURVALUE}&verbose=true&clear=false
+  aws secretsmanager delete-secret --secret-id "air-pollution-tracker-prod-secrets" --force-delete-without-recovery
   ```
-
-### Certyfikat AWS CM
-  - [ ] Aby wygenerować certyfikat w AWS CM podajemy wartość CNAME value wygenerowaną przez CM (ponieważ rekort TXT jest jedynym możliwym do dodania w DuckDNS do potwierdzenia kontroli nad domeną)
-  ```
-  https://www.duckdns.org/update?domains=air-pollution-tracker&token={YOURVALUE}&txt=_72ada2a896f8d48dfcdbd236b1112cd4.zfyfvmchrl.acm-validations.aws.&verbose=true
-  ```
-  Powinniśmy otrzymać potwierdzenie dodania
-  ```
-  OK
-  _72ada2a896f8d48dfcdbd236b1112cd4.zfyfvmchrl.acm-validations.aws.
-  UPDATED
-  ```
-  Można to również sprawdzić poprzez dig lub nslookup
-  ```
-  dig air-pollution-tracker.duckdns.org TXT
-  ```
-  Opcjonalnie można następnie usunąć ten rekor, po zweryfikowaniu i wystawieniu certyfikatu przez aws:
-  ```
-  https://www.duckdns.org/update?domains=air-pollution-tracker&token={YOURVALUE}&clear=true
-  ```
-### Certyfikat Let's Encrypt
-  - [ ] Uruchamiamy certbota w docker
-    ```
-    docker run -it --rm -v certs:/etc/letsencrypt certbot/certbot certonly --manual --preferred-challenges dns -d air-pollution-tracker.duckdns.org
-    ```
-
-  - [ ] Wygenerowaną wartość musimy ustawić w rekordzie DNS TXT _acme-challenge.air-pollution-tracker.duckdns.org.
-    ```
-    curl "https://www.duckdns.org/update?domains=_acme-challenge.air-pollution-tracker.duckdns.org.&token={YOURVALUE}&txt=_72ada2a896f8d48dfcdbd236b1112cd4.zfyfvmchrl.acm-validations.aws.&verbose=true&clear=false"
-    ```
- 
-
-
-### Roles
-# Generowanie klucza prywatnego dla administratora
-openssl genrsa -out apt-admin.key 2048
-
-# Generowanie Certificate Signing Request (CSR) dla administratora
-openssl req -new -key apt-admin.key -out apt-admin.csr -subj "/CN=apt-admin"
-
-# Analogicznie dla dewelopera
-openssl genrsa -out apt-developer.key 2048
-openssl req -new -key apt-developer.key -out apt-developer.csr -subj "/CN=apt-developer"
-
-# Dla administratora
-kubectl get csr apt-admin -o yaml | kubectl apply -f -
-kubectl certificate approve apt-admin
-
-# Dla dewelopera
-kubectl get csr apt-developer -o yaml | kubectl apply -f -
-kubectl certificate approve apt-developer
-
-
-
-
-## Problemy:
-Jeśli nie można utworzyć secrets manager z powodu "scheduled deletion", usuń ręcznie podczas wystąpienia błędu
-aws secretsmanager delete-secret --secret-id "air-pollution-tracker-prod-secrets" --force-delete-without-recovery
