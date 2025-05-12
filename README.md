@@ -8,6 +8,10 @@ For details, see [LICENSE.md](https://github.com/kacperpap/air-pollution-tracker
 Full desciption of the project, its goals and motivatian, and more comprehensive description of architectural decisions can be seen in my [thesis](https://github.com/kacperpap/air-pollution-tracker/blob/main/Zastosowanie_podejścia_Cloud_Native_i_metodyk_DevOps_w_implementacji_aplikacji_do_symulacji_rozprzestrzeniania_się_zanieczyszczenia_powietrza.pdf).
 
 ### APT architecture
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/76a62ab8-19a2-426d-aabe-3ba70af151be" width="400" />
+</p>
+
 
 ### Local deployment
 
@@ -122,6 +126,10 @@ After cloning the project:
  - [ ] For proper uninstallation of all app modules you can use [undeploy-apt-k8s-local.ps1](https://github.com/kacperpap/air-pollution-tracker/blob/main/undeploy-apt-k8s-local.ps1), but be aware that it will also uninstall ingress-nginx, which is not necessery if you run multiple times local deployment
 
 ### AWS APT infrastructure
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/cea15c1e-231c-4a3a-9d1b-b676b875d0e4" />
+</p>
+
 
 ### AWS deployment
 
