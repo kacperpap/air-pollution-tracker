@@ -1,0 +1,15 @@
+database_url            = "postgresql://apt-neondb_owner:*******@ep-raspy-resonance-a2x5dsag-pooler.eu-central-1.aws.neon.tech/apt-neondb?sslmode=require&connection_limit=112&pool_timeout=30"
+staging_database_url    = "postgresql://apt-neondb_owner:*******@ep-blue-forest-a25sqe5x-pooler.eu-central-1.aws.neon.tech/apt-neondb?sslmode=require&connection_limit=112&pool_timeout=30"
+rabbitmq_url            = "amqp://rabbitmq"
+jwt_key                 = "************************************"
+duckdns_token           = "************************************"
+ssl_certificate         = <<EOT
+-----BEGIN CERTIFICATE-----
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+-----END CERTIFICATE-----
+EOT
+ssl_certificate_key     = <<EOT
+-----BEGIN EC PRIVATE KEY-----
+-----END EC PRIVATE KEY-----
+EOT

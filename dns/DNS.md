@@ -1,3 +1,11 @@
+# Domena od Duck DNS oraz certyfiakt z Let's Encrypt 
+
+## Domena
+Logujemy się do DuckDNS za pomocą GitHub'a, wpisujemy wybraną domenę, aby ją poprawnie zaktualizować wywołujemy zapytanie curl lub GET w przeglądarce:
+```
+https://www.duckdns.org/update?domains=air-pollution-tracker&token={YOURVALUE}&verbose=true&clear=false
+```
+
 ## Budowanie obrazu
 Z poziomu katalagu `\dns` wywołujemy polecenie:
 ```
